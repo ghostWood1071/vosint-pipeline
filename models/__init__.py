@@ -1,0 +1,1 @@
+from .mongorepository import MongoRepository

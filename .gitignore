@@ -1,0 +1,9 @@
+__pycache__/
+env
+logs
+public
+jobs.sqlite
+secrets/
+static/
+lib/
+bin/
