@@ -357,37 +357,62 @@ class FeedAction(BaseAction):
                     #     pass
                     if kwargs["mode_test"] != True:
                         try:
-                            news_info["keywords"] = Keywords_Ext().extracting(
-                                document=news_info["data:content"], num_keywords=6
-                            )
+                            # news_info["keywords"] = Keywords_Ext().extracting(
+                            #     document=news_info["data:content"], num_keywords=6
+                            # )
+                            extkey_request = requests.post(settings.EXTRACT_KEYWORD_API, data=json.dumps({
+                                "number_keyword": 6,
+                                "text": news_info["data:content"]
+                            }))
+                            if not extkey_request.ok:
+                                raise Exception()
+                            news_info["keywords"] = extkey_request.json().get("translate_text")
                         except:
                             news_info["keywords"] = []
                         try:
-                            class_text_clustering = text_clustering(
-                                sentence=str(news_info["data:content"]),
-                                class_name="class_chude",
-                            )
+                            # class_text_clustering = text_clustering(
+                            #     sentence=str(news_info["data:content"]),
+                            #     class_name="class_chude",
+                            # )
+                            class_text_req = requests.post(settings.DOCUMENT_CLUSTERING_API, params={"text": news_info["data:content"]})
+                            if not class_text_req.ok:
+                                raise Exception()
+                            class_text_clustering = class_text_req.json()
                             news_info["data:class_chude"] = class_text_clustering
 
                         except:
                             pass
                         try:
-                            class_text_clustering = text_clustering(
-                                sentence=str(news_info["data:content"]),
-                                class_name="class_linhvuc",
-                            )
+                            # class_text_clustering = text_clustering(
+                            #     sentence=str(news_info["data:content"]),
+                            #     class_name="class_linhvuc",
+                            # )
+                            class_text_req = requests.post(settings.DOCUMENT_CLUSTERING_API, params={"text": news_info["data:content"]})
+                            if not class_text_req.ok:
+                                raise Exception()
+                            class_text_clustering = class_text_req.json()
                             news_info["data:class_linhvuc"] = class_text_clustering
                         except:
                             pass
                         try:
-                            kq = topic_sentiment_classification(
-                                news_info["data:content"]
-                            )
-                            if str(kq["sentiment_label"]) == "tieu_cuc":
+                            # kq = topic_sentiment_classification(
+                            #     news_info["data:content"]
+                            # )
+                            sentiment_req = requests.post(settings.SENTIMENT_API, data = json.dumps({
+                                'title': news_info["data:title"], 
+                                'content': news_info["data:content"]
+                            }))
+                            if not sentiment_req.ok:
+                                raise Exception()
+                            sentiments = sentiment_req.json().get("result")
+                            if len(sentiments) == 0:
+                                raise Exception()
+                            
+                            if sentiments[0] == "tieu_cuc":
                                 kq = "2"
-                            elif str(kq["sentiment_label"]) == "trung_tinh":
+                            elif sentiments[0] == "trung_tinh":
                                 kq = "0"
-                            elif str(kq["sentiment_label"]) == "tich_cuc":
+                            elif sentiments[0] == "tich_cuc":
                                 kq = "1"
                             else:
                                 kq = ""

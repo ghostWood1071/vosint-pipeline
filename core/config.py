@@ -77,5 +77,9 @@ class Settings(BaseSettings):
     TRANS_CONNECT_RU: str
     TRANS_CONNECT_CN: str
 
+    EXTRACT_KEYWORD_API: str
+    DOCUMENT_CLUSTERING_API: str
+    SENTIMENT_API: str
+
 
 settings = Settings()
