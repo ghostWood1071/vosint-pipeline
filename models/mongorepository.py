@@ -3,6 +3,7 @@ from bson.objectid import ObjectId
 from common.internalerror import *
 from utils import get_time_now_string
 from core.config import settings
+from typing import *
 
 
 class MongoRepository:
@@ -65,7 +66,7 @@ class MongoRepository:
         self,
         collection_name: str,
         filter_spec: dict = {},
-        order_spec: list[tuple] = [],
+        order_spec: List[tuple] = [],
         pagination_spec: dict = {},
     ) -> tuple[list, int]:
         if not collection_name:
@@ -143,7 +144,7 @@ class MongoRepository:
         collection_name: str,
         filter_spec: dict = {},
         filter_other=None,
-        order_spec: list[tuple] = [],
+        order_spec: List[tuple] = [],
         pagination_spec: dict = {},
     ) -> tuple[list, int]:
         if not collection_name:
@@ -228,7 +229,7 @@ class MongoRepository:
         self,
         collection_name: str,
         filter_spec: dict = {},
-        order_spec: list[tuple] = [],
+        order_spec: List[tuple] = [],
         pagination_spec: dict = {},
     ) -> tuple[list, int]:
         if not collection_name:
@@ -305,7 +306,7 @@ class MongoRepository:
         self,
         collection_name: str,
         filter_spec: dict = {},
-        order_spec: list[tuple] = [],
+        order_spec: List[tuple] = [],
         pagination_spec: dict = {},
     ) -> tuple[list, int]:
         if not collection_name:
