@@ -22,7 +22,7 @@ from models.kafka_producer import KafkaProducer_class
 from core.config import settings
 
 my_es = My_ElasticSearch(
-    host=[settings.ELASTIC_CONNECT], user="USER", password="PASS", verify_certs=False
+    host=settings.ELASTIC_CONNECT.split(','), user="USER", password="PASS", verify_certs=False
 )
 
 

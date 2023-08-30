@@ -10,7 +10,7 @@ from core.config import settings
 # warnings.simplefilter('ignore', ElasticsearchWarning)
 
 class My_ElasticSearch:
-    def __init__(self, host = [settings.ELASTIC_CONNECT], user='USER', password='PASS', verify_certs=False):
+    def __init__(self, host = settings.ELASTIC_CONNECT.split(','), user='USER', password='PASS', verify_certs=False):
         """Constructor function that initializes the ElasticSearch object with connection parameters."""
         self.host = host
         self.user = user
