@@ -27,8 +27,8 @@ def crawling_ttxvn(id: str):
 
 
 @router.post("/api/start_job/{pipeline_id}")
-async def start_job(pipeline_id: str):
-    await asyncio.create_task(job_controller.start_job(pipeline_id))
+def start_job(pipeline_id: str):
+    job_controller.start_job(pipeline_id)
     return JSONResponse({"done": "ok"})
 
 
