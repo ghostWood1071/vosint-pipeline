@@ -80,8 +80,9 @@ class Pipeline:
             input_val = action.run(pipeline_id=self.pipeline_id)
             #print(self.__first_action["params"]["source"])
             print("this is id source:" ,id_source)
-            source_mogo = MongoRepository().get_one(collection_name='infor',filter_spec={"_id":id_source})
-            # print("asdaaaaaaaaaaaaaaaaaaaaa",source_mogo)
+            source_mogo = MongoRepository().get_one('info',{"_id":id_source})
+            print("this is source mongo: ",source_mogo)
+            
             kwargs = {
                 "pipeline_id": self.pipeline_id,
                 "mode_test": self.mode_test,

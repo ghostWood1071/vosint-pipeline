@@ -5,6 +5,7 @@ from db.elastic_main import (
     My_ElasticSearch,
 )
 from pydantic import BaseModel
+import asyncio
 
 
 class Translate(BaseModel):
@@ -26,8 +27,9 @@ def crawling_ttxvn(id: str):
 
 
 @router.post("/api/start_job/{pipeline_id}")
-def start_job(pipeline_id: str):
-    return JSONResponse(job_controller.start_job(pipeline_id))
+async def start_job(pipeline_id: str):
+    await asyncio.create_task(job_controller.start_job(pipeline_id))
+    return JSONResponse({"done": "ok"})
 
 
 @router.post("/api/start_all_jobs")

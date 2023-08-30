@@ -17,6 +17,12 @@ class MongoRepository:
         self.__db = None
 
     def __connect(self):
+        print({
+            'host': self.__host,
+            'port': self.__port,
+            'username': self.__username,
+            'pass': self.__passwd
+        })
         self.__client = pymongo.MongoClient(
             host=self.__host,
             port=self.__port,
@@ -49,15 +55,11 @@ class MongoRepository:
         # Normalize _id field
         if "_id" in filter_spec and filter_spec["_id"]:
             filter_spec["_id"] = ObjectId(filter_spec["_id"])
-        print('this is filter spec:', filter_spec)
         doc = None
         try:
             self.__connect()
-            collection = self.__db[collection_name]
-            # print(filter_spec)
+            collection = self.__db[collection_name] 
             doc = collection.find_one(filter_spec, filter_other)
-           
-            # return doc #print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",doc)
         finally:
             self.__close()
         return doc

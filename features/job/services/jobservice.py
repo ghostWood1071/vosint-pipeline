@@ -119,6 +119,7 @@ class JobService:
 
     def start_job(self, id: str):
         pipeline_dto = self.__pipeline_service.get_pipeline_by_id(id)
+        print(pipeline_dto)
         if not pipeline_dto:
             raise InternalError(
                 ERROR_NOT_FOUND,
@@ -130,8 +131,6 @@ class JobService:
                 ERROR_NOT_FOUND,
                 params={"code": ["PIPELINE"], "msg": [f"Pipeline with id: {id}"]},
             )
-
-        pipeline_id = str(id)
         # Scheduler.instance().add_job(
         #     id, start_job, pipeline_dto.cron_expr, args=[pipeline_dto.schema, id]
         # )
