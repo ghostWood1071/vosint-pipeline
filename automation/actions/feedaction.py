@@ -228,22 +228,30 @@ class FeedAction(BaseAction):
 
                 try:
                     if kwargs["mode_test"] != True:
-                        if kwargs["source_language"] == "en":
-                            news_info["data:title_translate"] = call_tran(
-                                content=news_info["data:title"].encode("utf-8"),
-                                lang="en",
-                            ).replace("vi: ", "")
-                        elif kwargs["source_language"] == "ru":
-                            news_info["data:title_translate"] = call_tran(
-                                content=news_info["data:title"].encode("utf-8"),
-                                lang="ru",
-                            ).replace("vi: ", "")
-                        elif kwargs["source_language"] == "cn":
-                            # print('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
-                            news_info["data:title_translate"] = call_tran(
-                                content=news_info["data:title"].encode("utf-8"),
-                                lang="cn",
-                            ).replace("vi: ", "")
+                        # if kwargs["source_language"] == "en":
+                        #     news_info["data:title_translate"] = call_tran(
+                        #         content=news_info["data:title"].encode("utf-8"),
+                        #         lang="en",
+                        #     ).replace("vi: ", "")
+                        # elif kwargs["source_language"] == "ru":
+                        #     news_info["data:title_translate"] = call_tran(
+                        #         content=news_info["data:title"].encode("utf-8"),
+                        #         lang="ru",
+                        #     ).replace("vi: ", "")
+                        # elif kwargs["source_language"] == "cn":
+                        #     news_info["data:title_translate"] = call_tran(
+                        #         content=news_info["data:title"].encode("utf-8"),
+                        #         lang="cn",
+                        #     ).replace("vi: ", "")
+                        req = requests.post(settings.TRANSLATE_API, data=json.dumps(
+                            {
+                                "language": kwargs["source_language"],
+                                "text": news_info["data:title"].encode("utf-8")
+                            }
+                        ))
+                        news_info["data:title_translate"] = req.json().get("translate_text")
+                        if not req.ok:
+                            raise Exception()
                 except:
                     pass
 
