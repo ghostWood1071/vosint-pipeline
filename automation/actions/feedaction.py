@@ -621,8 +621,9 @@ class FeedAction(BaseAction):
                                     id=doc_es["id"],
                                     document=doc_es,
                                 )
-                            except:
+                            except Exception as ex:
                                 print("insert elastic search false")
+                                print(ex)
                         except:
                             print(
                                 "An error occurred while pushing data to the database!"
