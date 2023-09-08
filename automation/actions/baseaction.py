@@ -111,6 +111,8 @@ class BaseAction:
                 #his_log["id_schema"] = self.params['id_schema']
                 his_log['message_error'] = ''
                 try:
+                    print("error:  ")
+                    print(his_log)
                     MongoRepository().insert_one(collection_name="his_log", doc=his_log)
                 except:
                     pass
@@ -136,6 +138,8 @@ class BaseAction:
                 pass
             his_log['message_error'] = str(e).replace('=========================== logs ===========================','').replace('============================================================','')
             try:
+                print("error:  ")
+                print(his_log)
                 MongoRepository().insert_one(collection_name="his_log", doc=his_log)
             except:
                 pass

@@ -17,6 +17,7 @@ class GotoAction(BaseAction):
 
     def exec_func(self, input_val=None, **kwargs):
         if not input_val:
+            print ("Loi input url khong co ....")
             raise InternalError(
                 ERROR_REQUIRED, params={"code": ["INPUT_URL"], "msg": ["Input URL"]}
             )
