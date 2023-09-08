@@ -8,4 +8,4 @@ $ conda activate vosint-ingestion
 $ pip install -r requirements.txt
 ```
 slave: 649d26e83187a2a3e8d3907e
-master: 649d26e83187a2a3e8d3907e
+master: 649d3e443187a2a3e8d391c2
