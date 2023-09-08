@@ -24,6 +24,6 @@ COPY . .
 #ADD secrets /usr/local/lib/python3.10/site-packages/uvicorn/
 EXPOSE 6101
 #master
-CMD [ "python","main.py"]
+#CMD [ "python","main.py"]
 #slave
-#CMD [ "python","consumer.py"]
+CMD [ "python","consumer.py"]
