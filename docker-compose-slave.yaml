@@ -1,7 +1,9 @@
 version: '3.6'
 services:
     vosint-pipeline-slave:
-        image: vienai/vosint-pipeline-slave:1.0.0             
+        image: vienai/vosint-pipeline-slave:1.0.0  
+        ports: 
+        - 8101:6101             
         environment:
             MONGO_CONNECTION: mongodb://admin:kttv%400258@192.168.1.71:14680/admin?authSource=admin&authMechanism=SCRAM-SHA-256
             ENVIRONMENT: PRODUCTION
