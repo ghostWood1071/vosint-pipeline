@@ -126,24 +126,6 @@ class GetNewsInfoAction(BaseAction):
                 print("url already exist")
                 check_url_exist = "1"
                 raise Exception("exist url")
-        # news_info = {}
-        # page = input_val
-        # by = self.params["by"]
-        # time_expr = self.params["time"]['time_expr']
-        # time_format = self.params["time"]['time_format']
-        # print(time_format)
-        # if time_expr != "None" and time_expr !="":
-        #     elems = self.driver.select(page, by, time_expr)
-        #     if len(elems) > 0:
-        #         news_info["data:time"] = self.driver.get_content(elems[0])
-        #         #print(news_info["data:time"])
-
-        # a,b = MongoRepository().get_many(collection_name=collection_name,filter_spec={"data:url":url})
-        # del a
-        # if str(b) != '0':
-        #     #print(b)
-        #     print('url already exist')
-        #     return {}
 
         by = self.params["by"]
         title_expr = self.params["title_expr"]
@@ -154,6 +136,7 @@ class GetNewsInfoAction(BaseAction):
         # time_format = ['***',',','dd','/','mm','/','yyyy','-',"***"]
         content_expr = self.params["content_expr"]
         news_info = {}
+        news_info["source_favicon"]=kwargs["source_favicon"]
         news_info["source_name"] = kwargs["source_name"]
         news_info["source_host_name"] = kwargs["source_host_name"]
         news_info["source_language"] = kwargs["source_language"]
@@ -175,23 +158,16 @@ class GetNewsInfoAction(BaseAction):
                 # print('aaaaaaaaaaa',kwargs["source_language"])
                 try:
                     if kwargs["mode_test"] != True:
-                        if kwargs["source_language"] == "en":
-                            news_info["data:title_translate"] = call_tran(
-                                content=news_info["data:title"].encode("utf-8"),
-                                lang="en",
-                            ).replace("vi: ", "")
-                        elif kwargs["source_language"] == "ru":
-                            news_info["data:title_translate"] = call_tran(
-                                content=news_info["data:title"].encode("utf-8"),
-                                lang="ru",
-                            ).replace("vi: ", "")
-                        elif kwargs["source_language"] == "cn":
-                            # print('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
-                            news_info["data:title_translate"] = call_tran(
-                                content=news_info["data:title"].encode("utf-8"),
-                                lang="cn",
-                            ).replace("vi: ", "")
-                except:
+                        req = requests.post(settings.TRANSLATE_API, data=json.dumps(
+                            {
+                                "language": kwargs["source_language"],
+                                "text": news_info["data:title"]
+                            }
+                        ))
+                        news_info["data:title_translate"] = req.json().get("translate_text")
+                        if not req.ok:
+                            raise Exception()
+                except Exception as e:
                     pass
 
         if author_expr != "None" and author_expr != "":
@@ -311,7 +287,7 @@ class GetNewsInfoAction(BaseAction):
                         if not extkey_request.ok:
                             raise Exception()
                         news_info["keywords"] = extkey_request.json().get("translate_text")
-                    except:
+                    except Exception as e:
                         news_info["keywords"] = []
                     try:
                         # class_text_clustering = text_clustering(
@@ -324,7 +300,7 @@ class GetNewsInfoAction(BaseAction):
                             raise Exception()
                         class_text_clustering = class_text_req.json()
                         news_info["data:class_chude"] = class_text_clustering
-                    except:
+                    except Exception as e:
                         pass
                     try:
                         # class_text_clustering = text_clustering(
@@ -337,12 +313,13 @@ class GetNewsInfoAction(BaseAction):
                             raise Exception()
                         class_text_clustering = class_text_req.json()
                         news_info["data:class_linhvuc"] = class_text_clustering
-                    except:
+                    except Exception as e:
                         pass
                     try:
                         sentiment_req = requests.post(settings.SENTIMENT_API, data = json.dumps({
                                 'title': news_info["data:title"], 
-                                'content': news_info["data:content"]
+                                'content': news_info["data:content"],
+                                'description': 'string'
                             }))
                         if not sentiment_req.ok:
                             raise Exception()
@@ -359,7 +336,7 @@ class GetNewsInfoAction(BaseAction):
                         else:
                             kq = ""
                         news_info["data:class_sacthai"] = kq
-                    except:
+                    except Exception as e:
                         pass
             if news_info["data:content"] == "":
                 raise Exception("empty content")

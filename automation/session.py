@@ -5,7 +5,7 @@ from .storages import StorageFactory
 
 class Session:
     def __init__(
-        self, driver_name: str, storage_name: str, actions: list[dict], pipeline_id=None,mode_test =None
+        self, driver_name: str, storage_name: str, actions: list[dict], pipeline_id=None,mode_test =None,source_favicon=None
     ):
         #print('proxy',str(actions[0]['params']['proxy_list'][0]))
         if str(actions[0]['params']['proxy_list']) == '[]' or str(actions[0]['params']['proxy_list']) == '[None]':
@@ -13,7 +13,7 @@ class Session:
         else:
             self.__driver = DriverFactory(name = driver_name,id_proxy = actions[0]['params']['proxy_list'][0])
         self.__storage = StorageFactory(storage_name)
-        self.__pipeline = Pipeline(self.__driver, self.__storage, actions, pipeline_id ,mode_test,list_proxy = actions[0]['params']['proxy_list'])
+        self.__pipeline = Pipeline(self.__driver, self.__storage, actions, pipeline_id ,mode_test,list_proxy = actions[0]['params']['proxy_list'], source_favicon=source_favicon)
         #print(actions)
 
     def start(self):

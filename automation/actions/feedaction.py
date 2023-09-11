@@ -200,6 +200,7 @@ class FeedAction(BaseAction):
 
                 # news_info = {}
                 news_info = {}
+                news_info["source_favicon"] = kwargs["source_favicon"]
                 news_info["source_name"] = kwargs["source_name"]
                 news_info["source_host_name"] = kwargs["source_host_name"]
                 news_info["source_language"] = kwargs["source_language"]
@@ -228,21 +229,6 @@ class FeedAction(BaseAction):
 
                 try:
                     if kwargs["mode_test"] != True:
-                        # if kwargs["source_language"] == "en":
-                        #     news_info["data:title_translate"] = call_tran(
-                        #         content=news_info["data:title"].encode("utf-8"),
-                        #         lang="en",
-                        #     ).replace("vi: ", "")
-                        # elif kwargs["source_language"] == "ru":
-                        #     news_info["data:title_translate"] = call_tran(
-                        #         content=news_info["data:title"].encode("utf-8"),
-                        #         lang="ru",
-                        #     ).replace("vi: ", "")
-                        # elif kwargs["source_language"] == "cn":
-                        #     news_info["data:title_translate"] = call_tran(
-                        #         content=news_info["data:title"].encode("utf-8"),
-                        #         lang="cn",
-                        #     ).replace("vi: ", "")
                         req = requests.post(settings.TRANSLATE_API, data=json.dumps(
                             {
                                 "language": kwargs["source_language"],

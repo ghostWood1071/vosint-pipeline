@@ -22,12 +22,13 @@ my_es = My_ElasticSearch()
 from .crawling_ttxvn import crawl_ttxvn
 
 
-def start_job(actions: list[dict], pipeline_id=None):
+def start_job(actions: list[dict], pipeline_id=None, source_favicon=None):
     session = Session(
         driver_name="playwright",
         storage_name="hbase",
         actions=actions,
         pipeline_id=pipeline_id,
+        source_favicon = source_favicon
     )
     # print('aaaaaaaaaaaa',pipeline_id)
     return session.start()
@@ -130,7 +131,8 @@ class JobService:
                 ERROR_NOT_FOUND,
                 params={"code": ["PIPELINE"], "msg": [f"Pipeline with id: {id}"]},
             )
-        start_job(pipeline_dto.schema, id)
+        source_favicon = pipeline_dto.source_favicon
+        start_job(pipeline_dto.schema, id, source_favicon)
 
     def start_all_jobs(self, pipeline_ids: list[str] = None):
         # Split pipeline_ids from string to list of strings
