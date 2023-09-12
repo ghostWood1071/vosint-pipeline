@@ -3,6 +3,7 @@ from typing import Callable
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.jobstores.mongodb import MongoDBJobStore
 from common.internalerror import *
 from core.config import settings
@@ -50,6 +51,12 @@ class Scheduler:
         # print('args..............',args)
         self.__bg_scheduler.add_job(
             id=id, func=func, args=args, trigger=CronTrigger.from_crontab(cron_expr)
+        )
+
+    def add_job_interval(self, job_id: str, func: Callable, interval: float, args: list = []):
+        # print('args..............',args)
+        self.__bg_scheduler.add_job(
+            id=job_id, func=func, args=args, trigger=IntervalTrigger(seconds=interval)
         )
 
     def remove_job(self, id: str):

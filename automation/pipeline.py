@@ -16,7 +16,8 @@ class Pipeline:
         actions: list[dict],
         pipeline_id=None,
         mode_test = None,
-        list_proxy = None
+        list_proxy = None,
+        source_favicon=None
     ):
         if not driver:
             raise InternalError(
@@ -69,7 +70,7 @@ class Pipeline:
         self.pipeline_id = pipeline_id
         self.mode_test = mode_test
         self.list_proxy = list_proxy
-
+        self.source_favicon = source_favicon
     def run(self):
         try:
             # Run first action
@@ -92,7 +93,8 @@ class Pipeline:
                 "source_language":source_mogo['language'],
                 "source_publishing_country":source_mogo['publishing_country'],
                 "source_source_type":source_mogo['source_type'],
-                "first_action":self.__first_action
+                "first_action":self.__first_action,
+                "source_favicon": self.source_favicon
             }
 
             # Run from 2nd action

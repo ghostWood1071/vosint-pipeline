@@ -10,6 +10,7 @@ class PipelineForDetailsDto(BaseDto):
         self.logs = record["logs"]  # TODO ['running...', 'waiting...', 'finished!']
         self.enabled = record["enabled"]
         self.actived = record["actived"]
+        self.source_favicon = record.get("source_favicon")
 
     def to_dict(self) -> dict:
         return {

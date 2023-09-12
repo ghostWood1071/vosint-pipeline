@@ -1,5 +1,6 @@
 from .services import JobService
-
+from threading import Thread, Timer
+from scheduler import Scheduler
 
 def get_depth(mylist):
     if isinstance(mylist, list):
@@ -13,8 +14,8 @@ class JobController:
         self.__job_service = JobService()
 
     def start_job(self, pipeline_id: str):
-        self.__job_service.start_job(pipeline_id)
-
+        job_thread = Thread(target=self.__job_service.start_job,args=[pipeline_id])
+        job_thread.start()
         return {"success": True}
 
     def start_all_jobs(self, pipeline_ids):
