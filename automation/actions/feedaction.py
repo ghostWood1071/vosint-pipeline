@@ -229,9 +229,15 @@ class FeedAction(BaseAction):
 
                 try:
                     if kwargs["mode_test"] != True:
+                        lang_dict = {
+                            'cn': 'chinese',
+                            'ru': 'russia',
+                            'en': 'english'
+                        }
+                        lang_code = lang_dict.get(kwargs["source_language"])
                         req = requests.post(settings.TRANSLATE_API, data=json.dumps(
                             {
-                                "language": kwargs["source_language"],
+                                "language": lang_code,
                                 "text": news_info["data:title"].encode("utf-8")
                             }
                         ))

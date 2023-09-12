@@ -57,6 +57,3 @@ def run_only_job(pipeline_id: str, mode_test=True):
 #         return JSONResponse(job_controller.crawling_ttxvn(id))
 #     except:
 #         return JSONResponse({"succes: false"})
-
-
-
