@@ -5,7 +5,7 @@ time_waiting = random.randint(1,7)
 
 
 from playwright.sync_api import sync_playwright
-def fb_page(browser,link_cookies='/home/ds1/vosint/v-osint-backend/vosint_ingestion/facebook/cookies.json',link_person = ''):
+def fb_page(browser,link_cookies='automation/actions/facebook_crawler/cookies.json',link_person = ''):
     data = {}
 #with sync_playwright()as p:
     # Launch a new browser instance
