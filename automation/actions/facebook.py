@@ -12,6 +12,7 @@ from models import MongoRepository
 from bson.objectid import ObjectId
 from pymongo.errors import PyMongoError
 from typing import *
+import re
 
 
 class FacebookAction(BaseAction):
@@ -53,12 +54,15 @@ class FacebookAction(BaseAction):
 
     def get_facebook_data(self, account:Dict[str, Any]):
         try:
+            
+            link = account.get("account_link")
+            link = re.sub("www\.", "mbasic.", link)
             if str(account.get("social_type")) == "Object":
-                datas = fb_canhan(browser=self.driver.get_driver(), link_person=account.get("account_link"))
+                datas = fb_canhan(browser=self.driver.get_driver(), link_person=link)
             elif str(account.get("social_type")) == "Group":
-                datas = fb_groups(browser=self.driver.get_driver(), link_person=account.get("account_link"))
+                datas = fb_groups(browser=self.driver.get_driver(), link_person=link)
             else:
-                datas = fb_page(browser=self.driver.get_driver(), link_person=account.get("account_link") + "?v=timeline")
+                datas = fb_page(browser=self.driver.get_driver(), link_person=link + "?v=timeline")
             return datas
         except Exception as e:
             raise e

@@ -20,7 +20,7 @@ def fb_page(browser,link_cookies='automation/actions/facebook_crawler/cookies.js
         cookies = json.load(f)
 
     # Add cookies to the browser context
-    context.add_cookies(cookies)
+    # context.add_cookies(cookies)
 
     # Navigate to a page that requires authentication
     #page = context.new_page()
@@ -28,8 +28,9 @@ def fb_page(browser,link_cookies='automation/actions/facebook_crawler/cookies.js
     # Navigate to the login page
     page.goto(link_person)
     time.sleep(time_waiting)
+    elem = page.locator("#m_login_email")
     #page.goto("https://mbasic.facebook.com/groups/zui.vn")
-
+    
     page.keyboard.press('End')
     page.wait_for_selector('body')
     time.sleep(2)
