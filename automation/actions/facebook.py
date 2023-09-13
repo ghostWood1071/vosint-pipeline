@@ -52,17 +52,20 @@ class FacebookAction(BaseAction):
         except Exception as e:
             raise e
 
-    def get_facebook_data(self, account:Dict[str, Any]):
+    def get_facebook_data(self, account:Dict[str, Any], source_account:Dict[str, Any]):
         try:
-            
+            cookies = json.loads(source_account.get("cookie"))
+            username = source_account.get("username")
+            password = source_account.get("password")
+            source_account_id = str(source_account.get("_id"))
             link = account.get("account_link")
             link = re.sub("www\.", "mbasic.", link)
             if str(account.get("social_type")) == "Object":
-                datas = fb_canhan(browser=self.driver.get_driver(), link_person=link)
+                datas = fb_canhan(browser=self.driver.get_driver(), link_person=link, cookies = cookies, account=username, password=password, source_acc_id=source_account_id)
             elif str(account.get("social_type")) == "Group":
-                datas = fb_groups(browser=self.driver.get_driver(), link_person=link)
+                datas = fb_groups(browser=self.driver.get_driver(), link_person=link, cookies = cookies, account=username, password=password, source_acc_id=source_account_id)
             else:
-                datas = fb_page(browser=self.driver.get_driver(), link_person=link + "?v=timeline")
+                datas = fb_page(browser=self.driver.get_driver(), link_person=link + "?v=timeline", cookies = cookies, account=username, password=password, source_acc_id=source_account_id)
             return datas
         except Exception as e:
             raise e
@@ -105,7 +108,8 @@ class FacebookAction(BaseAction):
             data = []
             for account in followed_users:
                 try:
-                    fb_data = self.get_facebook_data(account)
+                    fb_data = self.get_facebook_data(account, source_account)
+                    source_account = self.get_source_account(self.params['account'])
                     data.extend(fb_data)
                 except Exception as e:
                     pass
