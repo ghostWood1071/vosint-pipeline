@@ -203,7 +203,8 @@ class Pipeline_Kafka:
                 "source_host_name":self.kwargs['source_host_name'],
                 "source_language":self.kwargs['source_language'],
                 "source_publishing_country":self.kwargs['source_publishing_country'],
-                "source_source_type":self.kwargs['source_source_type']
+                "source_source_type":self.kwargs['source_source_type'],
+                "source_favicon": self.kwargs['source_fav_icon']
             }
 
             # Run from 2nd action
