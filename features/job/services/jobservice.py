@@ -317,3 +317,5 @@ class JobService:
                 Scheduler.instance().remove_job(pipeline_dto._id)
             except InternalError as error:
                 Logger.instance().error(str(error))
+
+    
