@@ -38,7 +38,7 @@ class FacebookAction(BaseAction):
             ],
             z_index=14,
         )
-
+        
     def exec_func(self, input_val=None, **kwargs):
         collection_name = "facebook"
         # if not input_val:

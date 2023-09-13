@@ -16,6 +16,7 @@ class JobController:
     def start_job(self, pipeline_id: str):
         job_thread = Thread(target=self.__job_service.start_job,args=[pipeline_id])
         job_thread.start()
+        job_thread.join()
         return {"success": True}
 
     def start_all_jobs(self, pipeline_ids):

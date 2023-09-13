@@ -6,11 +6,11 @@ from playwright.sync_api import sync_playwright
 
 def fb_canhan(
     browser,
-    link_cookies="/home/ds1/vosint/v-osint-backend/vosint_ingestion/facebook/cookies.json",
+    link_cookies="automation/actions/facebook_crawler/cookies.json",
     link_person="",
 ):
     def select(from_element, expr, by="css="):
-        element = from_element.locator(f"{by}{expr}")
+        element = from_element.locator(f"{expr}")
         element = [element.nth(i) for i in range(element.count())]
         return element
 
@@ -44,9 +44,15 @@ def fb_canhan(
             expr='//*[@id="root"]/div[1]/div[1]/div[4]/a[1]',
             from_element=page,
         )
+        if len(a) == 0:
+            a = select(
+                by="xpath=",
+                expr='//*[@id="root"]/div[2]/div[1]/div[4]/a[1]',
+                from_element=page,
+            )
         a[0].click()
         time.sleep(1)
-    except:
+    except Exception as e:
         pass
 
     page.keyboard.press("End")
@@ -142,7 +148,7 @@ def fb_canhan(
                     except:
                         pass
             # print(data)
-        except:
+        except Exception as e:
             pass
 
         # comment = select(person[i],'.nowrap')
