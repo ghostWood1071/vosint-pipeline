@@ -14,9 +14,9 @@ services:
             restart_policy:
                 condition: on-failure
             replicas: 1  
-            placement:
-                constraints:
-                  - node.hostname==srv1      
+            #placement:
+                #constraints:
+                  #- node.hostname==srv1      
         networks:
             - vosint3_system_network
 
