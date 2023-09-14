@@ -48,17 +48,10 @@ class JobService:
             actions=pipeline_dto.schema,
             pipeline_id=id,
             mode_test=mode_test,
+            source_favicon=pipeline_dto.source_favicon
         )
         result = session.start()
-        # try:
-        #     results={
-        #     'id_pipeline' : str(id),
-        #     'time' : get_time_now_string(),
-        #     'result' : str(result)}
-        #     self.__mongo_repo.insert_one(collection_name='Test',doc=results)
-        # except:
-        #     print('mongo error insert')
-        return result  # pipeline_dto.schema #
+        return result
 
     def get_result_job(self, News, order_spec, pagination_spec, filter):
         results = self.__mongo_repo.get_many_News(
