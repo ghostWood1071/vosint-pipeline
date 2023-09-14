@@ -22,8 +22,8 @@ router = APIRouter()
 
 
 @router.post("/api/crawling_ttxvn")
-def crawling_ttxvn(id: str):
-    return JSONResponse(job_controller.crawling_ttxvn(id))
+def crawling_ttxvn(job_id: str):
+    return JSONResponse(job_controller.crawling_ttxvn(job_id))
 
 
 @router.post("/api/start_job/{pipeline_id}")

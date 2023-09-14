@@ -148,10 +148,10 @@ class JobService:
     def stop_job(self, id: str):
         Scheduler.instance().remove_job(id)
 
-    def crawling_ttxvn(self, id):
+    def crawling_ttxvn(self, job_id):
         try:
             data = MongoRepository().get_one(
-                collection_name="ttxvn", filter_spec={"_id": id}
+                collection_name="ttxvn", filter_spec={"_id": job_id}
             )
             doc_es = data.copy()
             # print(data)
