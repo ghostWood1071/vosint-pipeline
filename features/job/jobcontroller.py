@@ -108,8 +108,8 @@ class JobController:
             ],
         }
 
-    def crawling_ttxvn(self, id):
-        return self.__job_service.crawling_ttxvn(id)
+    def crawling_ttxvn(self, job_id):
+        return self.__job_service.crawling_ttxvn(job_id)
 
     def run_only(self, pipeline_id: str, mode_test):
         result = self.__job_service.run_only(pipeline_id, mode_test)

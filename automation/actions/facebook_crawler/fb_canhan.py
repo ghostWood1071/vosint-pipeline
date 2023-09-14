@@ -2,51 +2,40 @@ import json
 import time
 
 from playwright.sync_api import sync_playwright
-
+from .authenticate import authenticate
 
 def fb_canhan(
-    browser,
-    link_cookies="/home/ds1/vosint/v-osint-backend/vosint_ingestion/facebook/cookies.json",
-    link_person="",
+    browser, cookies,link_person, account, password, source_acc_id,
 ):
     def select(from_element, expr, by="css="):
-        element = from_element.locator(f"{by}{expr}")
+        element = from_element.locator(f"{expr}")
         element = [element.nth(i) for i in range(element.count())]
         return element
 
     data = {}
-    # with sync_playwright()as p:
-    # Launch a new browser instance
-    # browser = p.chromium.launch()
-
-    # Create a new browser context and page
     context = browser.new_context()
     page = context.new_page()
-
-    # Load cookies from file
-    with open(link_cookies, "r") as f:
-        cookies = json.load(f)
-
-    # Add cookies to the browser context
-    context.add_cookies(cookies)
-
-    # Navigate to a page that requires authentication
-    # page = context.new_page()
-
-    # Navigate to the login page
     page.goto(link_person)
-    # page.goto("https://mbasic.facebook.com/groups/zui.vn")
-    page.keyboard.press("End")
-    page.wait_for_selector("body")
+    time.sleep(2)
+    page = authenticate(browser, cookies, link_person, account, password, source_acc_id)
+    page.keyboard.press('End')
+    page.wait_for_selector('body')
+    time.sleep(2)
     try:
         a = select(
             by="xpath=",
             expr='//*[@id="root"]/div[1]/div[1]/div[4]/a[1]',
             from_element=page,
         )
+        if len(a) == 0:
+            a = select(
+                by="xpath=",
+                expr='//*[@id="root"]/div[2]/div[1]/div[4]/a[1]',
+                from_element=page,
+            )
         a[0].click()
         time.sleep(1)
-    except:
+    except Exception as e:
         pass
 
     page.keyboard.press("End")
@@ -142,7 +131,7 @@ def fb_canhan(
                     except:
                         pass
             # print(data)
-        except:
+        except Exception as e:
             pass
 
         # comment = select(person[i],'.nowrap')

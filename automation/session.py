@@ -8,7 +8,7 @@ class Session:
         self, driver_name: str, storage_name: str, actions: list[dict], pipeline_id=None,mode_test =None,source_favicon=None
     ):
         #print('proxy',str(actions[0]['params']['proxy_list'][0]))
-        if str(actions[0]['params']['proxy_list']) == '[]' or str(actions[0]['params']['proxy_list']) == '[None]':
+        if str(actions[0]['params']['proxy_list']) == '[]' or str(actions[0]['params']['proxy_list']) == '[None]' or str(actions[0]['params']['proxy_list']) == 'None':
             self.__driver = DriverFactory(driver_name)
         else:
             self.__driver = DriverFactory(name = driver_name,id_proxy = actions[0]['params']['proxy_list'][0])

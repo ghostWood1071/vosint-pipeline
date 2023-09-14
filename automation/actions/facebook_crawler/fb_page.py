@@ -2,10 +2,10 @@ import json
 import time
 import random
 time_waiting = random.randint(1,7)
-
+from .authenticate import authenticate
 
 from playwright.sync_api import sync_playwright
-def fb_page(browser,link_cookies='/home/ds1/vosint/v-osint-backend/vosint_ingestion/facebook/cookies.json',link_person = ''):
+def fb_page(browser, cookies,link_person, account, password, source_acc_id):
     data = {}
 #with sync_playwright()as p:
     # Launch a new browser instance
@@ -14,22 +14,9 @@ def fb_page(browser,link_cookies='/home/ds1/vosint/v-osint-backend/vosint_ingest
     # Create a new browser context and page
     context = browser.new_context()
     page = context.new_page()
-
-    # Load cookies from file
-    with open(link_cookies, 'r') as f:
-        cookies = json.load(f)
-
-    # Add cookies to the browser context
-    context.add_cookies(cookies)
-
-    # Navigate to a page that requires authentication
-    #page = context.new_page()
-
-    # Navigate to the login page
     page.goto(link_person)
     time.sleep(time_waiting)
-    #page.goto("https://mbasic.facebook.com/groups/zui.vn")
-
+    page = authenticate(browser, cookies, link_person, account, password, source_acc_id)
     page.keyboard.press('End')
     page.wait_for_selector('body')
     time.sleep(2)

@@ -22,8 +22,8 @@ router = APIRouter()
 
 
 @router.post("/api/crawling_ttxvn")
-def crawling_ttxvn(id: str):
-    return JSONResponse(job_controller.crawling_ttxvn(id))
+def crawling_ttxvn(job_id: str):
+    return JSONResponse(job_controller.crawling_ttxvn(job_id))
 
 
 @router.post("/api/start_job/{pipeline_id}")
@@ -43,11 +43,6 @@ def start_all_jobs(
 def run_only_job(pipeline_id: str, mode_test=True):
     if str(mode_test) == "True" or str(mode_test) == "true":
         mode_test = True
-    # url = "http://vosint.aiacademy.edu.vn/api/pipeline/Pipeline/api/get_action_infos"
-    # requests.get(url)
-    # url = "http://vosint.aiacademy.edu.vn/api/pipeline/Pipeline/api/get_pipeline_by_id/"+str(pipeline_id)
-    # requests.get(url)
-    # time.sleep(5)
     return JSONResponse(job_controller.run_only(pipeline_id, mode_test))
 
 
