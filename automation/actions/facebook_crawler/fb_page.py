@@ -3,6 +3,8 @@ import time
 import random
 time_waiting = random.randint(1,7)
 from .authenticate import authenticate
+import re
+from .nlp import get_sentiment, get_keywords
 
 from playwright.sync_api import sync_playwright
 def fb_page(browser, cookies,link_person, account, password, source_acc_id):
@@ -55,6 +57,16 @@ def fb_page(browser, cookies,link_person, account, password, source_acc_id):
             data['content'] = abc[0].inner_text()
         except:
             pass
+        
+        try:
+            data['sentiment'] = get_sentiment(data['header'], data['content'])
+        except Exception as e:
+            data['sentiment'] = "0"
+        
+        try:
+            data['keywords'] = get_keywords(data['content'])
+        except Exception as e:
+            data['keywords'] = []
 
         try:
             abc = select(person[i],'abbr')
@@ -78,34 +90,45 @@ def fb_page(browser, cookies,link_person, account, password, source_acc_id):
         try:
             abc = select(person[i],'footer div')
             footer_str =abc[2].inner_text()
+            interact_counts = re.findall(r'\d+',footer_str)
+            try:
+                data['like']=interact_counts[0]
+            except:
+                data['like'] = 0
+            try:
+                data['comments'] = interact_counts[1]
+            except:
+                data['comments'] = 0
+            data['share'] = 0
             
-            tmp = footer_str.split(" ")
+            # tmp = footer_str.split(" ")
             #print(tmp)
         
-            for j in range(2,len(tmp)):
-                if tmp[j] == "Like":
-                    try:
-                        sl = int(tmp[j-1])
-                        data['like']=sl
-                    except:
-                        try:
-                            sl = int(tmp[j-2])
-                            data['like']=sl
-                        except:
-                            pass
-                elif tmp[j] == "Comments":
-                    try:
-                        sl = int(tmp[j-1])
-                        data['comments']=sl
-                    except:
-                        pass
-                elif tmp[j] == "Share":
-                    try:
-                        sl = int(tmp[j-1])
-                        data['share']=sl
-                    except:
-                        pass
+            # for j in range(2,len(tmp)):
+                # if tmp[j] == "Like":
+                #     try:
+                #         sl = int(tmp[j-1])
+                #         data['like']=sl
+                #     except:
+                #         try:
+                #             sl = int(tmp[j-2])
+                #             data['like']=sl
+                #         except:
+                #             pass
+                # elif tmp[j] == "Comments":
+                #     try:
+                #         sl = int(tmp[j-1])
+                #         data['comments']=sl
+                #     except:
+                #         pass
+                # elif tmp[j] == "Share":
+                #     try:
+                #         sl = int(tmp[j-1])
+                #         data['share']=sl
+                #     except:
+                #         pass
             #print(data)
+            
         except:
             pass
         

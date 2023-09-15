@@ -14,10 +14,13 @@ class PipelineService:
 
         # self.__hbase_repo = HBaseRepository()
 
-    def get_pipeline_by_id(self, id: str) -> PipelineForDetailsDto:
+    def get_pipeline_by_id(self, id: str, collection_name:str = None, is_multithread:bool = False) -> PipelineForDetailsDto:
         # Query from the database
         print("oke")
-        pipeline = self.__mongo_repo.get_one(self.__collection_name, {"_id": id})
+        if is_multithread:
+            pipeline = MongoRepository().get_one(collection_name, {"_id": id})
+        else:
+            pipeline = self.__mongo_repo.get_one(self.__collection_name, {"_id": id})
         print("oke2")
         # Map to dto
         jobs = Scheduler.instance().get_jobs()
