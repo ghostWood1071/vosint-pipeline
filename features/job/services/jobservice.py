@@ -112,7 +112,7 @@ class JobService:
         return session.start()
 
     def start_job(self, id: str):
-        pipeline_dto = self.__pipeline_service.get_pipeline_by_id(id)
+        pipeline_dto = self.__pipeline_service.get_pipeline_by_id(id, 'pipelines', True)
         if not pipeline_dto:
             raise InternalError(
                 ERROR_NOT_FOUND,
