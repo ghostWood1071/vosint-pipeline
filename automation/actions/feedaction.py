@@ -402,7 +402,8 @@ class FeedAction(BaseAction):
                             # )
                             sentiment_req = requests.post(settings.SENTIMENT_API, data = json.dumps({
                                 'title': news_info["data:title"], 
-                                'content': news_info["data:content"]
+                                'content': news_info["data:content"],
+                                'description': 'string'
                             }))
                             if not sentiment_req.ok:
                                 raise Exception()
