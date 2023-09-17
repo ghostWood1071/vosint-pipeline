@@ -10,7 +10,9 @@
             "request": "launch",
             "module": "uvicorn",
             "args": [
-                "main:app"
+                "main:app",
+                "--port",
+                "3101"
             ],
             "jinja": true,
             "justMyCode": true

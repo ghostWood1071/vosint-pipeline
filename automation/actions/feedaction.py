@@ -238,7 +238,7 @@ class FeedAction(BaseAction):
                         req = requests.post(settings.TRANSLATE_API, data=json.dumps(
                             {
                                 "language": lang_code,
-                                "text": news_info["data:title"].encode("utf-8")
+                                "text": news_info["data:title"]
                             }
                         ))
                         news_info["data:title_translate"] = req.json().get("translate_text")
