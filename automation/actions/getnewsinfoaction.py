@@ -305,7 +305,7 @@ class GetNewsInfoAction(BaseAction):
                     except Exception as e:
                         news_info["keywords"] = []
                     try:
-                        class_text_req = requests.post(settings.KEYWORD_CLUSTERING_API, params={"text": news_info["data:content"]})
+                        class_text_req = requests.post(settings.KEYWORD_CLUSTERING_API, data=json.dumps({"text": news_info["data:content"]}))
                         if not class_text_req.ok:
                             raise Exception()
                         class_text_clustering = class_text_req.json()
@@ -313,7 +313,7 @@ class GetNewsInfoAction(BaseAction):
                     except Exception as e:
                         pass
                     try:
-                        class_text_req = requests.post(settings.DOCUMENT_CLUSTERING_API, params={"text": news_info["data:content"]})
+                        class_text_req = requests.post(settings.DOCUMENT_CLUSTERING_API, data=json.dumps({"text": news_info["data:content"]}))
                         if not class_text_req.ok:
                             raise Exception()
                         class_text_clustering = class_text_req.json()
