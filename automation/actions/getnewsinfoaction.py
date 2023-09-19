@@ -342,7 +342,7 @@ class GetNewsInfoAction(BaseAction):
                             kq = ""
                         news_info["data:class_sacthai"] = kq
                     except Exception as e:
-                        pass
+                        news_info["data:class_sacthai"] = "0"
             if news_info["data:content"] == "":
                 raise Exception("empty content")
 
