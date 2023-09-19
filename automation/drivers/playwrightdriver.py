@@ -9,20 +9,18 @@ class PlaywrightDriver(BaseDriver):
     def __init__(self,ip_proxy = None, port = None, username = None, password = None):
         if ip_proxy != None and port != None and username != None and password != None:
             proxy_server = {
-                'server': ip_proxy,
-                'port': port,
+                'server': ip_proxy+":"+port,
                 'username': username,
                 'password': password
             }
             self.playwright = sync_playwright().start()
-            self.driver = self.playwright.chromium.launch(channel="chrome",
-                                                          proxy={
-                                                                'server': proxy_server['server'] + ':' + str(proxy_server['port']),
-                                                                'username': proxy_server['username'],
-                                                                'password': proxy_server['password']
-                                                            })
-            self.page = self.driver.new_page()
-
+            self.driver = self.playwright.chromium.launch(channel="chrome",proxy=proxy_server)
+            self.page = self.driver.new_page(proxy={
+                'server': ip_proxy+":"+port,
+                'username': username,
+                'password': password
+            }) #self.driver.new_page()
+            print("using proxy ...")
         else:
 
             self.playwright = sync_playwright().start()

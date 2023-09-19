@@ -23,5 +23,8 @@ class GotoAction(BaseAction):
             )
 
         url = input_val
+        
         #print(input_val)
-        return self.driver.goto(url)
+        result = self.driver.goto(url)
+        print("this is result of go to: ", result.content())
+        return result
