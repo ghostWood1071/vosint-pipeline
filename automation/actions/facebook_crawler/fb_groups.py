@@ -6,8 +6,9 @@ time_waiting = random.randint(1,7)
 
 
 from playwright.sync_api import sync_playwright
-def fb_groups(browser, cookies,link_person, account, password, source_acc_id):
+def fb_groups(browser, cookies,link_person, account, password, source_acc_id,crawl_acc_id):
     data = {}
+    data['id_social'] = crawl_acc_id
     context = browser.new_context()
     page = context.new_page()
     page.goto(link_person)

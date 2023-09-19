@@ -61,11 +61,11 @@ class FacebookAction(BaseAction):
             link = account.get("account_link")
             link = re.sub("www\.", "mbasic.", link)
             if str(account.get("social_type")) == "Object":
-                datas = fb_canhan(browser=self.driver.get_driver(), link_person=link, cookies = cookies, account=username, password=password, source_acc_id=source_account_id)
+                datas = fb_canhan(browser=self.driver.get_driver(), link_person=link, cookies = cookies, account=username, password=password, source_acc_id=source_account_id, crawl_acc_id = account.get("_id"))
             elif str(account.get("social_type")) == "Group":
-                datas = fb_groups(browser=self.driver.get_driver(), link_person=link, cookies = cookies, account=username, password=password, source_acc_id=source_account_id)
+                datas = fb_groups(browser=self.driver.get_driver(), link_person=link, cookies = cookies, account=username, password=password, source_acc_id=source_account_id, crawl_acc_id = account.get("_id"))
             else:
-                datas = fb_page(browser=self.driver.get_driver(), link_person=link + "?v=timeline", cookies = cookies, account=username, password=password, source_acc_id=source_account_id)
+                datas = fb_page(browser=self.driver.get_driver(), link_person=link + "?v=timeline", cookies = cookies, account=username, password=password, source_acc_id=source_account_id, crawl_acc_id = account.get("_id"))
             return datas
         except Exception as e:
             raise e

@@ -5,9 +5,9 @@ time_waiting = random.randint(1,7)
 from .authenticate import authenticate
 import re
 from .nlp import get_sentiment, get_keywords
-
+from bson.objectid import ObjectId
 from playwright.sync_api import sync_playwright
-def fb_page(browser, cookies,link_person, account, password, source_acc_id):
+def fb_page(browser, cookies,link_person, account, password, source_acc_id, crawl_acc_id):
     data = {}
 #with sync_playwright()as p:
     # Launch a new browser instance
@@ -44,6 +44,7 @@ def fb_page(browser, cookies,link_person, account, password, source_acc_id):
         data = {}
         data['id'] = link_person.replace('https://','').replace('mbasic.facebook.com/','').replace('?v=timeline','')
         data["id_data_ft"] = person[i].get_attribute('data-ft')
+        data['id_social'] = crawl_acc_id
         try:
             abc = select(person[i],'header')
             #print('header',abc[0].inner_text())
