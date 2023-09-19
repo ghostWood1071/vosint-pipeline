@@ -449,6 +449,37 @@ class MongoRepository:
 
         return success
 
+    def update_many(
+        self, collection_name: str, filter_spec: dict, action: dict
+    ) -> bool:
+        if not collection_name:
+            raise InternalError(
+                ERROR_REQUIRED,
+                params={"code": ["COLLECTION_NAME"], "msg": ["Collection name"]},
+            )
+
+        if not filter_spec:
+            raise InternalError(
+                ERROR_REQUIRED, params={"code": ["FILTER"], "msg": ["filter"]}
+            )
+
+        if not action:
+            raise InternalError(
+                ERROR_REQUIRED, params={"code": ["ACTION"], "msg": ["action"]}
+            )
+
+        success = False
+        try:
+            self.__connect()
+            collection = self.__db[collection_name]
+            # Update
+            update_res = collection.update_many(filter_spec, action)
+            success = update_res.modified_count > 0
+        finally:
+            self.__close()
+
+        return success
+
     def delete_one(self, collection_name: str, filter_spec: dict) -> bool:
         if not collection_name:
             raise InternalError(

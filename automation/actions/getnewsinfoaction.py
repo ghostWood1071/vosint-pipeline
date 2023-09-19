@@ -6,16 +6,9 @@ from .baseaction import BaseAction
 from models.mongorepository import MongoRepository
 from datetime import datetime
 from utils import get_time_now_string_y_m_now
-
-# from nlp.keyword_extraction.keywords_ext import Keywords_Ext
-# from nlp.toan.v_osint_topic_sentiment_main.sentiment_analysis import (
-#     topic_sentiment_classification,
-# )
-# from nlp.hieu.vosintv3_text_clustering_main_15_3.src.inference import text_clustering
-
 import requests
-
 import json
+import re
 from elasticsearch import Elasticsearch
 from db.elastic_main import My_ElasticSearch
 import time
@@ -102,6 +95,30 @@ class GetNewsInfoAction(BaseAction):
             ],
             z_index=4,
         )
+    
+    def get_keyword_regex(self,keyword_dict):
+        pattern = ""
+        for key in list(keyword_dict.keys()):
+            pattern = pattern + keyword_dict.get(key) +","
+        keyword_arr = [keyword.strip() for keyword in pattern.split(",")]
+        pattern = "|".join(list(filter(lambda x: x!="", keyword_arr)))
+        return pattern
+        
+            
+    
+    def add_news_to_object(self, news, news_id):
+        objects,_ = MongoRepository().get_many("object", {})
+        object_ids = []
+        for object in objects:
+            pattern = self.get_keyword_regex(object.get("keywords")).lower()
+            if pattern == "":
+                continue
+            if re.match(pattern, news['data:content'].lower()) or \
+               re.match(pattern, news['data:title'].lower()) or \
+               re.match(pattern, news['data:title_translate'].lower() if news['data:title_translate'] != None else ""):
+                object_ids.append(object.get('_id'))
+        if(len(object_ids)>0):
+            MongoRepository().update_many('object', {"_id": {"$in": object_ids}}, {"$push": {"news_list": news_id}})
 
     def exec_func(self, input_val=None, **kwargs):
         collection_name = "News"
@@ -276,16 +293,8 @@ class GetNewsInfoAction(BaseAction):
                 check_content = True
 
                 news_info["data:content_translate"] = ""
-                # try:
-                #     if kwargs["source_language"] == "en":
-                #         news_info["data:content_translate"] = call_tran_en_vi(news_info["data:content"]).replace('vi: ','')
-                # except:
-                #     pass
                 if kwargs["mode_test"] != True:
                     try:
-                        # news_info["keywords"] = Keywords_Ext().extracting(
-                        #     document=news_info["data:content"], num_keywords=6
-                        # )
                         extkey_request = requests.post(settings.EXTRACT_KEYWORD_API, data=json.dumps({
                                 "number_keyword": 6,
                                 "text": news_info["data:content"]
@@ -296,12 +305,7 @@ class GetNewsInfoAction(BaseAction):
                     except Exception as e:
                         news_info["keywords"] = []
                     try:
-                        # class_text_clustering = text_clustering(
-                        #     sentence=str(news_info["data:content"]),
-                        #     class_name="class_chude",
-                        # )
-                        # news_info["data:class_chude"] = class_text_clustering
-                        class_text_req = requests.post(settings.DOCUMENT_CLUSTERING_API, params={"text": news_info["data:content"]})
+                        class_text_req = requests.post(settings.KEYWORD_CLUSTERING_API, params={"text": news_info["data:content"]})
                         if not class_text_req.ok:
                             raise Exception()
                         class_text_clustering = class_text_req.json()
@@ -309,11 +313,6 @@ class GetNewsInfoAction(BaseAction):
                     except Exception as e:
                         pass
                     try:
-                        # class_text_clustering = text_clustering(
-                        #     sentence=str(news_info["data:content"]),
-                        #     class_name="class_linhvuc",
-                        # )
-                        # news_info["data:class_linhvuc"] = class_text_clustering
                         class_text_req = requests.post(settings.DOCUMENT_CLUSTERING_API, params={"text": news_info["data:content"]})
                         if not class_text_req.ok:
                             raise Exception()
@@ -369,29 +368,12 @@ class GetNewsInfoAction(BaseAction):
                 #         self.driver.get_html(i), ""
                 #     )
         if kwargs["mode_test"] != True:
-            # check_url_exist = "0"
-            # a, b = MongoRepository().get_many(
-            #     collection_name=collection_name, filter_spec={"data:url": url}
-            # )
-            # del a
-            # if str(b) != "0":
-            #     print("url already exist")
-            #     check_url_exist = "1"
-            # try:
-            #     message = {
-            #         "title":str(news_info["data:title"]),
-            #         "content":str(news_info["data:content"]),
-            #         "pubdate":str(news_info["pub_date"]),
-            #         "id_new":"123"
-            #     }
-            #     KafkaProducer_class().write('events',message)
-            # except:
-            #     pass
             if check_content and check_url_exist == "0":
                 try:
                     _id = MongoRepository().insert_one(
                         collection_name=collection_name, doc=news_info
                     )
+                    self.add_news_to_object(news_info, _id)
                     # print(type(_id))
                     try:
                         message = {
@@ -403,7 +385,7 @@ class GetNewsInfoAction(BaseAction):
                         KafkaProducer_class().write("events", message)
                     except:
                         print("kafka write message error")
-                except:
+                except Exception as e:
                     print("An error occurred while pushing data to the database!")
 
                 # elastícearch
@@ -534,17 +516,5 @@ class GetNewsInfoAction(BaseAction):
                         print("insert elastic search false")
                 except:
                     print("An error occurred while pushing data to the database!")
-
-            # if check_content and check_url_exist == '1':
-            #     print('aaaaaaaaaaaaaaaaaaaaaa')
-            #     try:
-            #         a = MongoRepository().get_one(collection_name=collection_name,filter_spec={"data:url":url})
-            #         #print('abcccccccccccccccccccccccccccccccccccccccccccc',a["_id"])
-            #         news_info_tmp = news_info
-            #         news_info_tmp["_id"] = str(a["_id"])
-            #         MongoRepository().update_one(collection_name=collection_name, doc=news_info_tmp)
-            #         print('update new ....')
-            #     except:
-            #         print("An error occurred while pushing data to the database!")
 
         return news_info

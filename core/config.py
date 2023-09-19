@@ -79,6 +79,7 @@ class Settings(BaseSettings):
 
     EXTRACT_KEYWORD_API: str
     DOCUMENT_CLUSTERING_API: str
+    KEYWORD_CLUSTERING_API: str
     SENTIMENT_API: str
     TRANSLATE_API: str
 
