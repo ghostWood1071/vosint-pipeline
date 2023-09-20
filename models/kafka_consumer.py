@@ -59,8 +59,8 @@ class KafkaConsumer_class:
         #a = message['id_proxy']
         #self.driver = DriverFactory(name='playwright',id_proxy=a)
         try:
-            a = message['id_proxy']
-            self.driver = DriverFactory(name='playwright',id_proxy=a)
+            proxy_id = message.get("kwagrs").get("list_proxy")[0]
+            self.driver = DriverFactory(name='playwright',id_proxy=proxy_id)
         except:
             self.driver = DriverFactory('playwright')
         pipe_line = Pipeline_Kafka(driver=self.driver,storage=self.storage,actions=message['actions'],pipeline_id=message['kwargs']['pipeline_id'],mode_test=message['kwargs']['mode_test'],input_val = message['input_val'],kwargs=message['kwargs'])
