@@ -5,7 +5,7 @@ from playwright.sync_api import sync_playwright
 from .authenticate import authenticate
 
 def fb_canhan(
-    browser, cookies,link_person, account, password, source_acc_id,
+    browser, cookies,link_person, account, password, source_acc_id,crawl_acc_id
 ):
     def select(from_element, expr, by="css="):
         element = from_element.locator(f"{expr}")
@@ -13,6 +13,7 @@ def fb_canhan(
         return element
 
     data = {}
+    data['id_social'] = crawl_acc_id
     context = browser.new_context()
     page = context.new_page()
     page.goto(link_person)
