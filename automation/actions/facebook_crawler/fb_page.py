@@ -90,7 +90,7 @@ def get_article_data(article_raw:Locator, crawl_social_id):
         data["id_data_ft"] = data_ft
         data["post_id"] = json.loads(data_ft).get("mf_story_key")
         data["footer_type"] = "page"
-        data["social_id"] = crawl_social_id
+        data["id_social"] = crawl_social_id
         return data
     except:
         raise Exception("post none")
