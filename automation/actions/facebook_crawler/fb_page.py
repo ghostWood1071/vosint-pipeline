@@ -7,197 +7,74 @@ import re
 from .nlp import get_sentiment, get_keywords
 from bson.objectid import ObjectId
 from playwright.sync_api import sync_playwright
-def fb_page(browser, cookies,link_person, account, password, source_acc_id, crawl_acc_id):
-    data = {}
-#with sync_playwright()as p:
-    # Launch a new browser instance
-    #browser = p.chromium.launch()
+from playwright.sync_api import Browser, Page, Locator
+from typing import *
+from .util import *
 
-    # Create a new browser context and page
-    context = browser.new_context()
-    page = context.new_page()
-    page.goto(link_person)
-    time.sleep(time_waiting)
-    page = authenticate(browser, cookies, link_person, account, password, source_acc_id)
-    page.keyboard.press('End')
-    page.wait_for_selector('body')
-    time.sleep(2)
 
-    # # Fill in the login form
-    # # page.fill("#m_login_email", "don.chicharito@gmail.com")
-    by = "css="
-    # expr = "#m_login_email"
-    # from_element = page.locator(f"{by}{expr}")
-    # from_element.type("don.chicharito@gmail.com")
-
-    # expr = 'input[type="password"]'
-    # from_element = page.locator(f"{by}{expr}")
-    # from_element.type("vjetanh8h")
-    def select(from_element, expr, by = "css="):
-        element = from_element.locator(f"{by}{expr}")
-        element = [element.nth(i) for i in range(element.count())]
-        return element
-    person = select(page,"article")
-    #person = select(person[0],"article")
-    datas = []
-    for i in range(len(person)):
-        data = {}
-        data['id'] = link_person.replace('https://','').replace('mbasic.facebook.com/','').replace('?v=timeline','')
-        data["id_data_ft"] = person[i].get_attribute('data-ft')
-        data['id_social'] = crawl_acc_id
-        try:
-            abc = select(person[i],'header')
-            #print('header',abc[0].inner_text())
-            data['header'] = abc[0].inner_text()
-        except:
-            pass
         
+def get_article_data(article_raw:Locator, crawl_social_id):
+    try:
+        data_ft = article_raw.get_attribute("data-ft")
+        content_div_tag = select(article_raw, ">:nth-child(1)")[0]
+        header = select(content_div_tag, "header")[0]
+        info = select(header, "a")[1].text_content()
+        footer_date = select(header, 'div[data-sigil="m-feed-voice-subtitle"]')[0].text_content()
+        data = {
+            "header":info,
+            "footer_date": convert_to_std_date(footer_date.split('·')[0].strip()).strftime("%d/%m/%Y"),
+        }
+        content_div_child_tag = select(content_div_tag, ">:nth-child(2)")[0]
+        continue_content = select(content_div_child_tag, 'span[data-sigil="more"]')
+        if len(continue_content) > 0:
+            continue_a_tag = select(continue_content[0], "a")[0]
+            continue_a_tag.click()
+        content_div_child_tag = select(content_div_tag, ">:nth-child(2)")[0]
+        data["content"] = content_div_child_tag.text_content().replace("… Xem thêm","").replace("See Translation","")
+        footer_tag = select(article_raw,"footer>:nth-child(1)>:nth-child(1)>:nth-child(1)>:nth-child(1)")[0]
         try:
-            abc = select(person[i],'div[data-ft=\'{"tn":"*s"}\']')
-            #print('content',abc[0].inner_text())
-            data['content'] = abc[0].inner_text()
+            data["like"] = process_like(select(footer_tag, ">:nth-child(1)")[0].text_content())
         except:
-            pass
-        
+            data["like"] = 0
         try:
-            data['sentiment'] = get_sentiment(data['header'], data['content'])
+            data["comments"] = re.findall(r'\d+',select(footer_tag,">:nth-child(2)>:nth-child(1)")[0].text_content())[0]
+        except:
+            data["comments"] = "0"
+        try:
+            data["share"] =re.findall(r'\d+',select(footer_tag,">:nth-child(2)>:nth-child(2)")[0].text_content())[0]
         except Exception as e:
-            data['sentiment'] = "0"
-        
-        try:
-            data['keywords'] = get_keywords(data['content'])
-        except Exception as e:
-            data['keywords'] = []
-
-        try:
-            abc = select(person[i],'abbr')
-            #print('date',abc[0].inner_text())
-            date = abc[0].inner_text()
-            
-            abc = select(person[i],'footer div abbr')
-            # print('footer_date',abc[0].inner_text())
-            data['footer_date'] = abc[0].inner_text()
+            data["share"] = "0"
+        data["id_data_ft"] = data_ft
+        data["post_id"] = json.loads(data_ft).get("mf_story_key")
+        data["footer_type"] = "page"
+        data["id_social"] = crawl_social_id
+        data["sentiment"] = get_sentiment(data["header"], data["content"])
+        data["keywords"] = get_keywords(data["content"])
+        return data
+    except:
+        raise Exception("post none")
+#this is action
+def get_articles(page:Page, got_article:int, crawl_social_id)->bool:
+    articles = select(page, "article")
+    subset_articles = articles[got_article:len(articles)]
+    for article in subset_articles:
+        try: 
+            data = get_article_data(article, crawl_social_id)
+            success = check_and_insert_to_db(data)
+            if not success:
+                print("is_existed")
+                return 0
         except:
-            pass
-        
-        try:
-            # abc = select(person[i],'footer div')
-            # footer_type =abc[1].inner_text()
-            # print("footer_type",footer_type)
-            data['footer_type'] = 'page'#footer_type
-        except:
-            pass
-        
-        try:
-            abc = select(person[i],'footer div')
-            footer_str =abc[2].inner_text()
-            interact_counts = re.findall(r'\d+',footer_str)
-            try:
-                data['like']=interact_counts[0]
-            except:
-                data['like'] = 0
-            try:
-                data['comments'] = interact_counts[1]
-            except:
-                data['comments'] = 0
-            data['share'] = 0
-            
-            # tmp = footer_str.split(" ")
-            #print(tmp)
-        
-            # for j in range(2,len(tmp)):
-                # if tmp[j] == "Like":
-                #     try:
-                #         sl = int(tmp[j-1])
-                #         data['like']=sl
-                #     except:
-                #         try:
-                #             sl = int(tmp[j-2])
-                #             data['like']=sl
-                #         except:
-                #             pass
-                # elif tmp[j] == "Comments":
-                #     try:
-                #         sl = int(tmp[j-1])
-                #         data['comments']=sl
-                #     except:
-                #         pass
-                # elif tmp[j] == "Share":
-                #     try:
-                #         sl = int(tmp[j-1])
-                #         data['share']=sl
-                #     except:
-                #         pass
-            #print(data)
-            
-        except:
-            pass
-        
-        # comment = select(person[i],'.nowrap')
-        # comment[0].click()
-        # time.sleep(2)
+            continue
+    return len(articles)
 
-        # try:
-        #     abc = select(page,'div[data-ft=\'{"tn":"*s"}\']')
-        #     #print('content',abc[0].inner_text())
-        #     data['content'] = abc[0].inner_text()
-        # except:
-        #     pass
-
-        # #abc = select(page,'#m_story_permalink_view')
-        # abc = select(page,'.dh')
-        # # print(abc[0].inner_text())
-        # comments_content = []
-        # for k in abc:
-        #     tmp={}
-        #     header = select(k,'a.di.bf')
-        #     # print(header)
-        #     tmp['header_href'] = header[0].get_attribute('href')
-        #     tmp['herder']= header[0].inner_text()
-        #     tmp['content']= select(k,'div.dj')[0].inner_text()
-        #     comments_content.append(tmp)
-        # data['comments_content'] = comments_content
-
-        # try:
-
-
-        #     comment = select(person[i],'.nowrap')
-        #     comment[0].click()
-        #     time.sleep(2)
-
-        #     try:
-        #         abc = select(page,'div[data-ft=\'{"tn":"*s"}\']')
-        #         #print('content',abc[0].inner_text())
-        #         data['content'] = abc[0].inner_text()
-        #     except:
-        #         pass
-
-        #     abc = select(page,'#m_story_permalink_view')
-        #     abc = select(abc[0],'.dh')
-        #     # print(abc[0].inner_text())
-        #     comments_content = []
-        #     for k in abc:
-                
-        #         tmp={}
-        #         header = select(k,'a.di.bf')
-        #         # print(header[0].inner_text())
-        #         tmp['header_href'] = header[0].get_attribute('href')
-        #         tmp['herder']= header[0].inner_text()
-        #         tmp['content']= select(k,'div.dj')[0].inner_text()
-        #         comments_content.append(tmp)
-        #     data['comments_content'] = comments_content
-        # except:
-        #     pass
-        # finally:
-        #     page.goto(link_person)
-        #     #page.goto("https://mbasic.facebook.com/groups/zui.vn")
-
-        #     page.keyboard.press('End')
-        #     page.wait_for_selector('body')
-        #     time.sleep(1)
-        
-        datas.append(data)
-    #print(datas)
-    return datas
+def fb_page(browser:Browser, cookies,link_person, account, password, source_acc_id, crawl_acc_id):
+    page:Page = authenticate(browser, cookies, link_person, account, password, source_acc_id) 
+    # articles = select(page, "article")
+    # for article in articles:
+    #      get_article_data(article) 
+    scroll_loop(get_articles, page=page, crawl_social_id=crawl_acc_id)
+    
+         
 
 #fb_groups(link_person="https://mbasic.facebook.com/thanh.bi.73")     
