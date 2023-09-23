@@ -183,7 +183,7 @@ class JobService:
             except:
                 print("insert to elasstic vosint_ttxvn error")
             return {"succes": "True"}
-        except:
+        except Exception as e:
             return {"succes": "False"}
 
     def elt_search(self, start_date, end_date, sac_thai, language_source, text_search):

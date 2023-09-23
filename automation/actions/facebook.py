@@ -13,7 +13,7 @@ from bson.objectid import ObjectId
 from pymongo.errors import PyMongoError
 from typing import *
 import re
-
+import traceback
 
 class FacebookAction(BaseAction):
     @classmethod
@@ -59,7 +59,7 @@ class FacebookAction(BaseAction):
             password = source_account.get("password")
             source_account_id = str(source_account.get("_id"))
             link = account.get("account_link")
-            link = re.sub("www\.", "mbasic.", link)
+            link = re.sub("www\.", "m.", link)
             if str(account.get("social_type")) == "Object":
                 datas = fb_canhan(browser=self.driver.get_driver(), link_person=link, cookies = cookies, account=username, password=password, source_acc_id=source_account_id, crawl_acc_id = account.get("_id"))
             elif str(account.get("social_type")) == "Group":
@@ -105,14 +105,15 @@ class FacebookAction(BaseAction):
         try:
             source_account = self.get_source_account(self.params['account'])
             followed_users =  self.get_user_follow(source_account.get("users_follow"))
-            data = []
             for account in followed_users:
                 try:
-                    fb_data = self.get_facebook_data(account, source_account)
+                    self.get_facebook_data(account, source_account)
+                    print("______________________________________________________________")
                     source_account = self.get_source_account(self.params['account'])
-                    data.extend(fb_data)
+                    # data.extend(fb_data)
                 except Exception as e:
-                    pass
-            self.insert_data(data, collection_name)
+                    print(e)
+                    traceback.print_exc()
+            # self.insert_data(data, collection_name)
         except Exception as e:
             pass

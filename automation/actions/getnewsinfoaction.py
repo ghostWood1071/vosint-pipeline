@@ -104,8 +104,71 @@ class GetNewsInfoAction(BaseAction):
         pattern = "|".join(list(filter(lambda x: x!="", keyword_arr)))
         return pattern
         
+    def get_sentiment(self, title:str, content:str):
+        sentiment = "0"
+        try:
+            sentiment_req = requests.post(settings.SENTIMENT_API, data = json.dumps({
+                    'title': title, 
+                    'content': content,
+                    'description': 'string'
+                }))
+            if not sentiment_req.ok:
+                raise Exception()
+            sentiments = sentiment_req.json().get("result")
+            if len(sentiments) == 0:
+                raise Exception()
             
+            if sentiments[0] == "tieu_cuc":
+                kq = "2"
+            elif sentiments[0] == "trung_tinh":
+                kq = "0"
+            elif sentiments[0] == "tich_cuc":
+                kq = "1"
+            else:
+                kq = ""
+            sentiment = kq
+        except Exception as e:
+            sentiment = "0"
+        return sentiment
     
+    def get_chude(self,content:str):
+        chude = []
+        try:
+            class_text_req = requests.post(settings.KEYWORD_CLUSTERING_API, data=json.dumps({"text": content}))
+            if not class_text_req.ok:
+                raise Exception()
+            class_text_clustering = class_text_req.json()
+            chude = class_text_clustering
+        except Exception as e:
+            chude = []
+        return chude
+
+    def get_keywords(self, content:str):
+        keywords = []
+        try:
+            extkey_request = requests.post(settings.EXTRACT_KEYWORD_API, data=json.dumps({
+                    "number_keyword": 6,
+                    "text": content
+                }))
+            if not extkey_request.ok:
+                raise Exception()
+            keywords = extkey_request.json().get("translate_text")
+        except Exception as e:
+            keywords = []
+        return keywords
+    
+    def get_linhvuc(self, content:str):
+        linhvuc = []
+        try:
+            class_text_req = requests.post(settings.DOCUMENT_CLUSTERING_API, data=json.dumps({"text": content}))
+            if not class_text_req.ok:
+                raise Exception()
+            class_text_clustering = class_text_req.json()
+            linhvuc = class_text_clustering
+        except Exception as e:
+            linhvuc
+        return linhvuc
+
     def add_news_to_object(self, news, news_id):
         objects,_ = MongoRepository().get_many("object", {})
         object_ids = []
@@ -289,60 +352,21 @@ class GetNewsInfoAction(BaseAction):
                 elif len(elems) > 1:
                     news_info["data:content"] = ""
                     for i in range(len(elems)):
-                        news_info["data:content"] += self.driver.get_content(elems[i])
+                        news_info["data:content"] += self.driver.get_content(elems[i]) +"\n"
                 check_content = True
 
                 news_info["data:content_translate"] = ""
+
                 if kwargs["mode_test"] != True:
-                    try:
-                        extkey_request = requests.post(settings.EXTRACT_KEYWORD_API, data=json.dumps({
-                                "number_keyword": 6,
-                                "text": news_info["data:content"]
-                            }))
-                        if not extkey_request.ok:
-                            raise Exception()
-                        news_info["keywords"] = extkey_request.json().get("translate_text")
-                    except Exception as e:
-                        news_info["keywords"] = []
-                    try:
-                        class_text_req = requests.post(settings.KEYWORD_CLUSTERING_API, data=json.dumps({"text": news_info["data:content"]}))
-                        if not class_text_req.ok:
-                            raise Exception()
-                        class_text_clustering = class_text_req.json()
-                        news_info["data:class_chude"] = class_text_clustering
-                    except Exception as e:
-                        pass
-                    try:
-                        class_text_req = requests.post(settings.DOCUMENT_CLUSTERING_API, data=json.dumps({"text": news_info["data:content"]}))
-                        if not class_text_req.ok:
-                            raise Exception()
-                        class_text_clustering = class_text_req.json()
-                        news_info["data:class_linhvuc"] = class_text_clustering
-                    except Exception as e:
-                        pass
-                    try:
-                        sentiment_req = requests.post(settings.SENTIMENT_API, data = json.dumps({
-                                'title': news_info["data:title"], 
-                                'content': news_info["data:content"],
-                                'description': 'string'
-                            }))
-                        if not sentiment_req.ok:
-                            raise Exception()
-                        sentiments = sentiment_req.json().get("result")
-                        if len(sentiments) == 0:
-                            raise Exception()
-                        
-                        if sentiments[0] == "tieu_cuc":
-                            kq = "2"
-                        elif sentiments[0] == "trung_tinh":
-                            kq = "0"
-                        elif sentiments[0] == "tich_cuc":
-                            kq = "1"
-                        else:
-                            kq = ""
-                        news_info["data:class_sacthai"] = kq
-                    except Exception as e:
-                        news_info["data:class_sacthai"] = "0"
+                    
+                    news_info["keywords"] = self.get_keywords(news_info['data:content'])
+                    #--------------------------------------------------------
+                    news_info["data:class_chude"] = self.get_chude(news_info["data:content"])
+                    #--------------------------------------------------------
+                    news_info["data:class_linhvuc"] = self.get_linhvuc(news_info["data:content"])
+                    #--------------------------------------------------------
+                    news_info["data:class_sacthai"] = self.get_sentiment(news_info["data:title"], news_info["data:content"])
+
             if news_info["data:content"] == "":
                 raise Exception("empty content")
 
