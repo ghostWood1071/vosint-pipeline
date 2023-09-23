@@ -20,35 +20,11 @@ from db.elastic_main import My_ElasticSearch
 import time
 from models.kafka_producer import KafkaProducer_class
 from core.config import settings
+import feedparser
 
 my_es = My_ElasticSearch(
     host=[settings.ELASTIC_CONNECT], user="USER", password="PASS", verify_certs=False
 )
-
-
-def call_tran(content="", lang="en"):
-    result = ""
-    if lang == "en":
-        url = settings.TRANS_CONNECT_EN
-    elif lang == "cn":
-        url = settings.TRANS_CONNECT_CN
-    elif lang == "ru":
-        url = settings.TRANS_CONNECT_RU
-    headers = {
-        "Content-Type": "application/json"
-    }  # Set the content type of the request body
-
-    # Make the POST request with the request body
-    response = requests.post(url, headers=headers, data=content)
-    try:
-        result = response.text
-    except:
-        pass
-
-    return result
-
-
-import feedparser
 
 rss_version_2_0 = {
     "author": "author",
@@ -162,9 +138,210 @@ class FeedAction(BaseAction):
                     default_val="None",
                     validators=["required_"],
                 ),
+                ParamInfo(
+                    name="send_queue",
+                    display_name="Send queue",
+                    val_type="bool",
+                    default_val="False",
+                    validators=["required_"],
+                ),
             ],
             z_index=4,
         )
+
+    def create_es_doc(self, doc_es, news_info):
+        try:
+            doc_es["id"] = str(doc_es["_id"])
+            doc_es.pop("_id", None)
+        except:
+            pass
+        try:
+            doc_es["data:title"] = news_info["data:title"]
+        except:
+            pass
+        try:
+            doc_es["data:author"] = news_info["data:author"]
+        except:
+            pass
+        try:
+            doc_es["data:time"] = news_info["data:time"]
+        except:
+            pass
+        try:
+            doc_es["pub_date"] = (
+                str(news_info["pub_date"]).split(" ")[0]
+                + "T00:00:00Z"
+            )
+        except:
+            pass
+        try:
+            doc_es["data:content"] = news_info["data:content"]
+        except:
+            pass
+        try:
+            doc_es["keywords"] = news_info["keywords"]
+        except:
+            pass
+        try:
+            doc_es["data:url"] = news_info["data:url"]
+        except:
+            pass
+        try:
+            doc_es["data:html"] = news_info["data:html"]
+        except:
+            pass
+        try:
+            doc_es["data:class_chude"] = news_info[
+                "data:class_chude"
+            ]
+        except:
+            pass
+        try:
+            doc_es["data:class_linhvuc"] = news_info[
+                "data:class_linhvuc"
+            ]
+        except:
+            pass
+        try:
+            doc_es["source_name"] = news_info["source_name"]
+        except:
+            pass
+        try:
+            doc_es["source_host_name"] = news_info[
+                "source_host_name"
+            ]
+        except:
+            pass
+        try:
+            doc_es["source_language"] = news_info["source_language"]
+        except:
+            pass
+        try:
+            doc_es["source_publishing_country"] = news_info[
+                "source_publishing_country"
+            ]
+        except:
+            pass
+        try:
+            doc_es["source_source_type"] = news_info[
+                "source_source_type"
+            ]
+        except:
+            pass
+        try:
+            doc_es["created_at"] = (
+                news_info["created_at"]
+                .split(" ")[0]
+                .replace("/", "-")
+                + "T"
+                + news_info["created_at"].split(" ")[1]
+                + "Z"
+            )
+        except:
+            pass
+        try:
+            doc_es["modified_at"] = (
+                news_info["modified_at"]
+                .split(" ")[0]
+                .replace("/", "-")
+                + "T"
+                + news_info["modified_at"].split(" ")[1]
+                + "Z"
+            )
+        except:
+            pass
+        try:
+            doc_es["data:class_sacthai"] = news_info[
+                "data:class_sacthai"
+            ]
+        except:
+            pass
+        try:
+            doc_es["class_tinmau"] = news_info["class_tinmau"]
+        except:
+            pass
+        try:
+            doc_es["class_object"] = news_info["class_object"]
+        except:
+            pass
+        try:
+            doc_es["data:title_translate"] = news_info[
+                "data:title_translate"
+            ]
+        except:
+            pass
+        try:
+            doc_es["data:content_translate"] = news_info[
+                "data:content_translate"
+            ]
+        except:
+            pass
+        return doc_es
+
+    def get_chude(self, content):
+        chude = []
+        try:
+            class_text_req = requests.post(settings.KEYWORD_CLUSTERING_API, params={"text": content})
+            if not class_text_req.ok:
+                raise Exception()
+            class_text_clustering = class_text_req.json()
+            chude = class_text_clustering
+        except:
+            return []
+        return chude
+    
+    def get_linhvuc(self, content):
+        linhvuc=[]
+        try:
+            class_text_req = requests.post(settings.DOCUMENT_CLUSTERING_API, params={"text": content})
+            if not class_text_req.ok:
+                raise Exception()
+            class_text_clustering = class_text_req.json()
+            linhvuc = class_text_clustering
+        except:
+            return []
+        return linhvuc
+    
+    def get_sentiment(self, content, title):
+        sentiment = "0"
+        try:
+            sentiment_req = requests.post(settings.SENTIMENT_API, data = json.dumps({
+                'title': title, 
+                'content': content,
+                'description': 'string'
+            }))
+            if not sentiment_req.ok:
+                raise Exception()
+            sentiments = sentiment_req.json().get("result")
+            if len(sentiments) == 0:
+                raise Exception()
+            
+            if sentiments[0] == "tieu_cuc":
+                kq = "2"
+            elif sentiments[0] == "trung_tinh":
+                kq = "0"
+            elif sentiments[0] == "tich_cuc":
+                kq = "1"
+            else:
+                kq = ""
+            sentiment = kq
+        except:
+            return "0"
+        return sentiment
+
+    def get_keywords(self, content):
+        keywords = []
+        try:
+            extkey_request = requests.post(settings.EXTRACT_KEYWORD_API, data=json.dumps({
+                "number_keyword": 6,
+                "text": content
+            }))
+            if not extkey_request.ok:
+                raise Exception()
+            keywords = extkey_request.json().get("translate_text")
+        except:
+            return []
+        return keywords
 
     def exec_func(self, input_val=None, **kwargs):
         print("exec_ feeeeeeeeeeeeeeedddddddddd")
@@ -179,6 +356,7 @@ class FeedAction(BaseAction):
         time_expr = self.params["time"]["time_expr"]
         time_format = self.params["time"]["time_format"]
         content_expr = self.params["content_expr"]
+        is_send_queue = self.params["send_queue"]
         data_feeds = feed(url=url)
         print(data_feeds)
         for data_feed in data_feeds:
@@ -344,82 +522,21 @@ class FeedAction(BaseAction):
                     elif len(elems) > 1:
                         news_info["data:content"] = ""
                         for i in range(len(elems)):
-                            news_info["data:content"] += self.driver.get_content(
-                                elems[i]
-                            )
+                            news_info["data:content"] += self.driver.get_content(elems[i])+"\n"
                     check_content = True
 
                     news_info["data:content_translate"] = ""
-                    # try:
-                    #     if kwargs["source_language"] == "en":
-                    #         news_info["data:content_translate"] = call_tran_en_vi(news_info["data:content"]).replace('vi: ','')
-                    # except:
-                    #     pass
-                    if kwargs["mode_test"] != True:
-                        try:
-                            # news_info["keywords"] = Keywords_Ext().extracting(
-                            #     document=news_info["data:content"], num_keywords=6
-                            # )
-                            extkey_request = requests.post(settings.EXTRACT_KEYWORD_API, data=json.dumps({
-                                "number_keyword": 6,
-                                "text": news_info["data:content"]
-                            }))
-                            if not extkey_request.ok:
-                                raise Exception()
-                            news_info["keywords"] = extkey_request.json().get("translate_text")
-                        except:
-                            news_info["keywords"] = []
-                        try:
-                            # class_text_clustering = text_clustering(
-                            #     sentence=str(news_info["data:content"]),
-                            #     class_name="class_chude",
-                            # )
-                            class_text_req = requests.post(settings.DOCUMENT_CLUSTERING_API, params={"text": news_info["data:content"]})
-                            if not class_text_req.ok:
-                                raise Exception()
-                            class_text_clustering = class_text_req.json()
-                            news_info["data:class_chude"] = class_text_clustering
 
-                        except:
-                            pass
-                        try:
-                            # class_text_clustering = text_clustering(
-                            #     sentence=str(news_info["data:content"]),
-                            #     class_name="class_linhvuc",
-                            # )
-                            class_text_req = requests.post(settings.DOCUMENT_CLUSTERING_API, params={"text": news_info["data:content"]})
-                            if not class_text_req.ok:
-                                raise Exception()
-                            class_text_clustering = class_text_req.json()
-                            news_info["data:class_linhvuc"] = class_text_clustering
-                        except:
-                            pass
-                        try:
-                            # kq = topic_sentiment_classification(
-                            #     news_info["data:content"]
-                            # )
-                            sentiment_req = requests.post(settings.SENTIMENT_API, data = json.dumps({
-                                'title': news_info["data:title"], 
-                                'content': news_info["data:content"],
-                                'description': 'string'
-                            }))
-                            if not sentiment_req.ok:
-                                raise Exception()
-                            sentiments = sentiment_req.json().get("result")
-                            if len(sentiments) == 0:
-                                raise Exception()
-                            
-                            if sentiments[0] == "tieu_cuc":
-                                kq = "2"
-                            elif sentiments[0] == "trung_tinh":
-                                kq = "0"
-                            elif sentiments[0] == "tich_cuc":
-                                kq = "1"
-                            else:
-                                kq = ""
-                            news_info["data:class_sacthai"] = kq
-                        except:
-                            pass
+                    if kwargs["mode_test"] != True:
+                        
+                        news_info["keywords"] = self.get_keywords(news_info["data:content"])
+                        #----------------------------------------------------------------------------        
+                        news_info["data:class_chude"] = self.get_chude(news_info["data:content"])
+                        #----------------------------------------------------------------------------
+                        news_info["data:class_linhvuc"] = self.get_linhvuc(news_info["data:content"])
+                        #--------------------------------------------------------------------------------    
+                        news_info["data:class_sacthai"] = self.get_sentiment(news_info["data:content"], news_info["data:title"])
+                        #-----------------------------------------------------------------------------
                 if news_info["data:content"] == "":
                     raise Exception("empty content")
                 news_info["data:url"] = url
@@ -439,15 +556,7 @@ class FeedAction(BaseAction):
                         news_info["data:html"] = ""
                         for i in range(len(elems)):
                             news_info["data:html"] += self.driver.get_html(elems[i])
-                # news_info["data:class_chude"] = []
-                # news_info["data:class_linhvuc"] = []
-
-                # news_info['source_name'] = kwargs['source_name']
-                # news_info['source_host_name'] = kwargs['source_host_name']
-                # news_info['source_language'] = kwargs['source_language']
-                # news_info['source_publishing_country'] = kwargs['source_publishing_country']
-                # news_info['source_source_type'] = kwargs['source_source_type']
-
+               
                 if kwargs["mode_test"] != True:
                     if check_content and check_url_exist == "0":
                         try:
@@ -473,139 +582,7 @@ class FeedAction(BaseAction):
 
                         # elastícearch
                         try:
-                            # doc_es = {}
-                            doc_es = news_info.copy()
-                            # try:
-                            #     doc_es['_id'] = _id
-                            # except:
-                            #     pass
-                            try:
-                                doc_es["id"] = str(doc_es["_id"])
-                                doc_es.pop("_id", None)
-                            except:
-                                pass
-                            try:
-                                doc_es["data:title"] = news_info["data:title"]
-                            except:
-                                pass
-                            try:
-                                doc_es["data:author"] = news_info["data:author"]
-                            except:
-                                pass
-                            try:
-                                doc_es["data:time"] = news_info["data:time"]
-                            except:
-                                pass
-                            try:
-                                doc_es["pub_date"] = (
-                                    str(news_info["pub_date"]).split(" ")[0]
-                                    + "T00:00:00Z"
-                                )
-                            except:
-                                pass
-                            try:
-                                doc_es["data:content"] = news_info["data:content"]
-                            except:
-                                pass
-                            try:
-                                doc_es["keywords"] = news_info["keywords"]
-                            except:
-                                pass
-                            try:
-                                doc_es["data:url"] = news_info["data:url"]
-                            except:
-                                pass
-                            try:
-                                doc_es["data:html"] = news_info["data:html"]
-                            except:
-                                pass
-                            try:
-                                doc_es["data:class_chude"] = news_info[
-                                    "data:class_chude"
-                                ]
-                            except:
-                                pass
-                            try:
-                                doc_es["data:class_linhvuc"] = news_info[
-                                    "data:class_linhvuc"
-                                ]
-                            except:
-                                pass
-                            try:
-                                doc_es["source_name"] = news_info["source_name"]
-                            except:
-                                pass
-                            try:
-                                doc_es["source_host_name"] = news_info[
-                                    "source_host_name"
-                                ]
-                            except:
-                                pass
-                            try:
-                                doc_es["source_language"] = news_info["source_language"]
-                            except:
-                                pass
-                            try:
-                                doc_es["source_publishing_country"] = news_info[
-                                    "source_publishing_country"
-                                ]
-                            except:
-                                pass
-                            try:
-                                doc_es["source_source_type"] = news_info[
-                                    "source_source_type"
-                                ]
-                            except:
-                                pass
-                            try:
-                                doc_es["created_at"] = (
-                                    news_info["created_at"]
-                                    .split(" ")[0]
-                                    .replace("/", "-")
-                                    + "T"
-                                    + news_info["created_at"].split(" ")[1]
-                                    + "Z"
-                                )
-                            except:
-                                pass
-                            try:
-                                doc_es["modified_at"] = (
-                                    news_info["modified_at"]
-                                    .split(" ")[0]
-                                    .replace("/", "-")
-                                    + "T"
-                                    + news_info["modified_at"].split(" ")[1]
-                                    + "Z"
-                                )
-                            except:
-                                pass
-                            try:
-                                doc_es["data:class_sacthai"] = news_info[
-                                    "data:class_sacthai"
-                                ]
-                            except:
-                                pass
-                            try:
-                                doc_es["class_tinmau"] = news_info["class_tinmau"]
-                            except:
-                                pass
-                            try:
-                                doc_es["class_object"] = news_info["class_object"]
-                            except:
-                                pass
-                            try:
-                                doc_es["data:title_translate"] = news_info[
-                                    "data:title_translate"
-                                ]
-                            except:
-                                pass
-                            try:
-                                doc_es["data:content_translate"] = news_info[
-                                    "data:content_translate"
-                                ]
-                            except:
-                                pass
-                            # print(doc_es)
+                            doc_es = self.create_es_doc(news_info.copy(), news_info)
                             try:
                                 my_es.insert_document(
                                     index_name="vosint",
@@ -618,18 +595,6 @@ class FeedAction(BaseAction):
                             print(
                                 "An error occurred while pushing data to the database!"
                             )
-
-                    # if check_content and check_url_exist == '1':
-                    #     print('aaaaaaaaaaaaaaaaaaaaaa')
-                    #     try:
-                    #         a = MongoRepository().get_one(collection_name=collection_name,filter_spec={"data:url":url})
-                    #         #print('abcccccccccccccccccccccccccccccccccccccccccccc',a["_id"])
-                    #         news_info_tmp = news_info
-                    #         news_info_tmp["_id"] = str(a["_id"])
-                    #         MongoRepository().update_one(collection_name=collection_name, doc=news_info_tmp)
-                    #         print('update new ....')
-                    #     except:
-                    #         print("An error occurred while pushing data to the database!")
             except:
                 pass
             if kwargs["mode_test"] != True:
