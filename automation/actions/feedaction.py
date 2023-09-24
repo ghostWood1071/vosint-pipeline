@@ -278,7 +278,7 @@ class FeedAction(BaseAction):
             pass
         return doc_es
 
-    def get_chude(self, content):
+    def get_chude(self, content:str):
         chude = []
         try:
             class_text_req = requests.post(settings.KEYWORD_CLUSTERING_API, params={"text": content})
@@ -290,7 +290,7 @@ class FeedAction(BaseAction):
             return []
         return chude
     
-    def get_linhvuc(self, content):
+    def get_linhvuc(self, content:str):
         linhvuc=[]
         try:
             class_text_req = requests.post(settings.DOCUMENT_CLUSTERING_API, params={"text": content})
@@ -302,7 +302,7 @@ class FeedAction(BaseAction):
             return []
         return linhvuc
     
-    def get_sentiment(self, content, title):
+    def get_sentiment(self, content:str, title:str):
         sentiment = "0"
         try:
             sentiment_req = requests.post(settings.SENTIMENT_API, data = json.dumps({
@@ -329,7 +329,7 @@ class FeedAction(BaseAction):
             return "0"
         return sentiment
 
-    def get_keywords(self, content):
+    def get_keywords(self, content:str):
         keywords = []
         try:
             extkey_request = requests.post(settings.EXTRACT_KEYWORD_API, data=json.dumps({
@@ -343,6 +343,290 @@ class FeedAction(BaseAction):
             return []
         return keywords
 
+    def translate(self, language:str, content:str):
+        result = ""
+        try:
+            lang_dict = {
+                'cn': 'chinese',
+                'ru': 'russia',
+                'en': 'english'
+            }
+            lang_code = lang_dict.get(language)
+            req = requests.post(settings.TRANSLATE_API, data=json.dumps(
+                {
+                    "language": lang_code,
+                    "text": content
+                }
+            ))
+            result = req.json().get("translate_text")
+            if not req.ok:
+                raise Exception()
+        except:
+            result = ""
+        return result
+
+    def get_title(self, page, feed_title, title_expr, by):
+        if (
+            title_expr != "None"
+            and title_expr != ""
+            and feed_title == ""
+        ):
+            elems = self.driver.select(page, by, title_expr)
+            if len(elems) > 0:
+                return self.driver.get_content(elems[0])
+            else:
+                return ""
+        else:
+            return feed_title
+            
+    def get_author(self, page, feed_author, author_expr, by):
+        if (
+            author_expr != "None"
+            and author_expr != ""
+            and feed_author == ""
+        ):
+            elems = self.driver.select(page, by, author_expr)
+            if len(elems) > 0:
+                return self.driver.get_content(elems[0])
+            else:
+                return ""
+        else:
+            return feed_author
+
+    def get_time (self, page, feed_date, time_expr, by):
+        if (
+            time_expr != "None"
+            and time_expr != ""
+            and feed_date == ""
+        ):
+            elems = self.driver.select(page, by, time_expr)
+            if len(elems) > 0:
+               return self.driver.get_content(elems[0])
+            else:
+               return ""
+        else:
+            return feed_date
+    
+    def get_publish_date(self, time_format):
+        result = ""
+        try:
+            format = [",", ".", "/", "_", "-", " "]
+            my_concat = lambda arr: "".join(arr)
+            len_time_format = len(time_format)
+            time_result = {}
+            for i in range(len_time_format):
+                if time_format[i] in format:
+                    if i > 0:
+                        name_time_format_1 = "time_" + str(
+                            time_format[i - 1]
+                        )
+                        # print(time_format[i])
+                        # print(time_string)
+                        index = time_string.index(
+                            time_format[i]
+                        )  # split the string at the delimiter
+                        # tg = time_string.split(time_format[i])
+                        tg = time_string
+                        time_string = time_string[index + 1 :]
+                        if str(time_format[i - 1]) == "***":
+                            continue
+
+                        time_result[f"{name_time_format_1}"] = (
+                            f"{tg[:index]}".replace(" ", "")
+                            .replace("\n", "")
+                            .replace("\t", "")
+                        )
+                    elif i < (len_time_format - 1):
+                        tg = time_string.split(time_format[i])
+                        time_string = my_concat(tg[1:])
+                    else:
+                        pass
+            result = ""
+            try:
+                if (
+                    time_result["time_yyyy"] != "None"
+                    and time_result["time_yyyy"] != ""
+                ):
+                    result += time_result["time_yyyy"]
+            finally:
+                result += "-"
+            try:
+                if (
+                    time_result["time_mm"] != "None"
+                    and time_result["time_mm"] != ""
+                ):
+                    result += time_result["time_mm"]
+            finally:
+                result += "-"
+            try:
+                if (
+                    time_result["time_dd"] != "None"
+                    and time_result["time_dd"] != ""
+                ):
+                    result += time_result["time_dd"]
+            except:
+                pass
+            finally:
+                try:
+                    result = datetime.strptime(
+                        str(result), "%Y-%m-%d"
+                    )  # .date()
+                except:
+                    result = get_time_now_string_y_m_now()
+        except:
+            result = get_time_now_string_y_m_now()
+        return result
+
+    def get_content(self, page, content_expr, by):
+        result = ""
+        if content_expr != "None" and content_expr != "":
+            elems = self.driver.select(page, by, content_expr)
+        
+            if len(elems) > 0:
+                if len(elems) == 1:
+                    result = self.driver.get_content(elems[0])
+                elif len(elems) > 1:
+                    result = ""
+                    for i in range(len(elems)):
+                        result += self.driver.get_content(elems[i])+"\n"   
+        return result
+
+    def get_html_content(self, page, content_expr, by):
+        elems = self.driver.select(page, by, content_expr)
+        result = ""
+        if len(elems) == 1:
+            result = self.driver.get_html(elems[0])
+            tmp_video = self.driver.select(from_elem=page, by="css", expr="figure")
+            for i in tmp_video:
+                result = result.replace(self.driver.get_html(i), "")
+
+        elif len(elems) > 1:
+            result = ""
+            for i in range(len(elems)):
+                result += self.driver.get_html(elems[i])
+        return result
+
+    def send_event_to_queue(self, _id, news_info):
+        try:
+            message = {
+                "title": str(news_info["data:title"]),
+                "content": str(news_info["data:content"]),
+                "pubdate": str(news_info["pub_date"]),
+                "id_new": str(_id),
+            }
+            KafkaProducer_class().write("events", message)
+        except:
+            print("kafka write message error")
+    
+    def insert_mongo(self, collection_name, news_info):
+        try:
+            _id = MongoRepository().insert_one(
+                collection_name=collection_name, doc=news_info
+            )
+            print("insert_mongo_succes")
+            self.send_event_to_queue(_id, news_info)
+        except:
+            print(
+                "An error occurred while pushing data to the database!"
+            )
+
+    def insert_elastic(self, news_info):
+        try:
+            doc_es = self.create_es_doc(news_info.copy(), news_info)
+            try:
+                my_es.insert_document(
+                    index_name="vosint",
+                    id=doc_es["id"],
+                    document=doc_es,
+                )
+            except:
+                print("insert elastic search false")
+        except:
+            print(
+                "An error occurred while pushing data to the database!"
+            )
+
+    def check_exists(self, collection_name, url):
+        check_url_exist = "0"
+        a, b = MongoRepository().get_many(
+            collection_name=collection_name, filter_spec={"data:url": url}
+        )
+        del a
+        if str(b) != "0":
+            print("url already exist")
+            check_url_exist = "1"
+            # raise Exception("exist url")
+        return check_url_exist
+
+    def process_news_data(self, data_feed, kwargs, title_expr, author_expr, time_expr, content_expr, time_format, by):
+        try:
+            # print(str(data_feed))
+            url = data_feed["link"]
+            collection_name = "News"
+            check_url_exist = "0"
+            #check existed
+            if kwargs["mode_test"] != True:
+                check_url_exist = self.check_exists(collection_name, url)
+            # news_info = {}
+            news_info = {}
+            news_info["source_favicon"] = kwargs["source_favicon"]
+            news_info["source_name"] = kwargs["source_name"]
+            news_info["source_host_name"] = kwargs["source_host_name"]
+            news_info["source_language"] = kwargs["source_language"]
+            news_info["source_publishing_country"] = kwargs["source_publishing_country"]
+            news_info["source_source_type"] = kwargs["source_source_type"]
+            news_info["data:class_chude"] = []
+            news_info["data:class_linhvuc"] = []
+            news_info["data:title"] = ""
+            news_info["data:content"] = ""
+            news_info["pub_date"] = get_time_now_string_y_m_now()
+            #go to link
+            page = self.driver.goto(url=data_feed["link"])
+            check_content = False
+            # get title
+            news_info["data:title"] = self.get_title(page, data_feed["title"], title_expr, by)
+            #translate title
+            if kwargs["mode_test"] != True:
+                news_info["data:title_translate"] = self.translate(kwargs["source_language"], news_info["data:title"])
+            #get author
+            news_info["data:author"] = self.get_author(page, data_feed["author"], author_expr, by)
+            #get_time
+            news_info["data:time"] = self.get_time(page, data_feed["pubDate"], time_expr,by)
+            #get_publish_date
+            if kwargs["mode_test"] != True:
+                news_info["pub_date"] = self.get_publish_date(time_format)
+            #get_content -------------------------------------------------------
+            news_info["data:content"] = self.get_content(page, content_expr, by)
+            if news_info["data:content"] != "":
+                check_content = True
+                news_info["data:content_translate"] = ""
+                if kwargs["mode_test"] != True:
+                    news_info["keywords"] = self.get_keywords(news_info["data:content"])
+                    #----------------------------------------------------------------------------        
+                    news_info["data:class_chude"] = self.get_chude(news_info["data:content"])
+                    #----------------------------------------------------------------------------
+                    news_info["data:class_linhvuc"] = self.get_linhvuc(news_info["data:content"])
+                    #--------------------------------------------------------------------------------    
+                    news_info["data:class_sacthai"] = self.get_sentiment(news_info["data:content"], news_info["data:title"])
+                    #-----------------------------------------------------------------------------
+            if news_info["data:content"] == "":
+                raise Exception("empty content")
+            #-----------------------------------------------------------------------
+            #get_url
+            news_info["data:url"] = url
+            #get_html_content
+            if content_expr != "None" and content_expr != "":
+                news_info["data:html"] = self.get_html_content(page, content_expr, by)
+            if kwargs["mode_test"] != True:
+                if check_content and check_url_exist == "0":
+                    #insert to mongo
+                    self.insert_mongo(collection_name, news_info)
+                    # elastícearch
+                    self.insert_elastic(news_info)
+            return news_info
+        except Exception as e:
+            print(e)
+        
     def exec_func(self, input_val=None, **kwargs):
         print("exec_ feeeeeeeeeeeeeeedddddddddd")
         if not input_val:
@@ -356,247 +640,12 @@ class FeedAction(BaseAction):
         time_expr = self.params["time"]["time_expr"]
         time_format = self.params["time"]["time_format"]
         content_expr = self.params["content_expr"]
-        is_send_queue = self.params["send_queue"]
+        # is_send_queue = self.params["send_queue"]
         data_feeds = feed(url=url)
-        print(data_feeds)
         for data_feed in data_feeds:
-            try:
-                # print(str(data_feed))
-                url = data_feed["link"]
-                collection_name = "News"
-                check_url_exist = "0"
-                if kwargs["mode_test"] != True:
-                    check_url_exist = "0"
-                    a, b = MongoRepository().get_many(
-                        collection_name=collection_name, filter_spec={"data:url": url}
-                    )
-                    del a
-                    if str(b) != "0":
-                        print("url already exist")
-                        check_url_exist = "1"
-                        # raise Exception("exist url")
-
-                # news_info = {}
-                news_info = {}
-                news_info["source_favicon"] = kwargs["source_favicon"]
-                news_info["source_name"] = kwargs["source_name"]
-                news_info["source_host_name"] = kwargs["source_host_name"]
-                news_info["source_language"] = kwargs["source_language"]
-                news_info["source_publishing_country"] = kwargs[
-                    "source_publishing_country"
-                ]
-                news_info["source_source_type"] = kwargs["source_source_type"]
-                news_info["data:class_chude"] = []
-                news_info["data:class_linhvuc"] = []
-                news_info["data:title"] = ""
-                news_info["data:content"] = ""
-                news_info["pub_date"] = get_time_now_string_y_m_now()
-                page = self.driver.goto(url=data_feed["link"])
-
-                check_content = False
-                if (
-                    title_expr != "None"
-                    and title_expr != ""
-                    and data_feed["title"] == ""
-                ):
-                    elems = self.driver.select(page, by, title_expr)
-                    if len(elems) > 0:
-                        news_info["data:title"] = self.driver.get_content(elems[0])
-                else:
-                    news_info["data:title"] = data_feed["title"]
-
-                try:
-                    if kwargs["mode_test"] != True:
-                        lang_dict = {
-                            'cn': 'chinese',
-                            'ru': 'russia',
-                            'en': 'english'
-                        }
-                        lang_code = lang_dict.get(kwargs["source_language"])
-                        req = requests.post(settings.TRANSLATE_API, data=json.dumps(
-                            {
-                                "language": lang_code,
-                                "text": news_info["data:title"]
-                            }
-                        ))
-                        news_info["data:title_translate"] = req.json().get("translate_text")
-                        if not req.ok:
-                            raise Exception()
-                except:
-                    pass
-
-                if (
-                    author_expr != "None"
-                    and author_expr != ""
-                    and data_feed["author"] == ""
-                ):
-                    elems = self.driver.select(page, by, author_expr)
-                    if len(elems) > 0:
-                        news_info["data:author"] = self.driver.get_content(elems[0])
-                else:
-                    news_info["data:author"] = data_feed["author"]
-
-                if (
-                    time_expr != "None"
-                    and time_expr != ""
-                    and data_feed["pubDate"] == ""
-                ):
-                    elems = self.driver.select(page, by, time_expr)
-                    if len(elems) > 0:
-                        news_info["data:time"] = self.driver.get_content(elems[0])
-                else:
-                    news_info["data:time"] = data_feed["pubDate"]
-                if kwargs["mode_test"] != True:
-                    try:
-                        format = [",", ".", "/", "_", "-", " "]
-                        my_concat = lambda arr: "".join(arr)
-                        len_time_format = len(time_format)
-                        time_result = {}
-                        for i in range(len_time_format):
-                            if time_format[i] in format:
-                                if i > 0:
-                                    name_time_format_1 = "time_" + str(
-                                        time_format[i - 1]
-                                    )
-                                    # print(time_format[i])
-                                    # print(time_string)
-                                    index = time_string.index(
-                                        time_format[i]
-                                    )  # split the string at the delimiter
-                                    # tg = time_string.split(time_format[i])
-                                    tg = time_string
-                                    time_string = time_string[index + 1 :]
-                                    if str(time_format[i - 1]) == "***":
-                                        continue
-
-                                    time_result[f"{name_time_format_1}"] = (
-                                        f"{tg[:index]}".replace(" ", "")
-                                        .replace("\n", "")
-                                        .replace("\t", "")
-                                    )
-                                elif i < (len_time_format - 1):
-                                    tg = time_string.split(time_format[i])
-                                    time_string = my_concat(tg[1:])
-                                else:
-                                    pass
-                        news_info["pub_date"] = ""
-                        try:
-                            if (
-                                time_result["time_yyyy"] != "None"
-                                and time_result["time_yyyy"] != ""
-                            ):
-                                news_info["pub_date"] += time_result["time_yyyy"]
-                        finally:
-                            news_info["pub_date"] += "-"
-                        try:
-                            if (
-                                time_result["time_mm"] != "None"
-                                and time_result["time_mm"] != ""
-                            ):
-                                news_info["pub_date"] += time_result["time_mm"]
-                        finally:
-                            news_info["pub_date"] += "-"
-                        try:
-                            if (
-                                time_result["time_dd"] != "None"
-                                and time_result["time_dd"] != ""
-                            ):
-                                news_info["pub_date"] += time_result["time_dd"]
-                        except:
-                            pass
-                        finally:
-                            try:
-                                news_info["pub_date"] = datetime.strptime(
-                                    str(news_info["pub_date"]), "%Y-%m-%d"
-                                )  # .date()
-                            except:
-                                news_info["pub_date"] = get_time_now_string_y_m_now()
-                    except:
-                        news_info["pub_date"] = get_time_now_string_y_m_now()
-
-                if content_expr != "None" and content_expr != "":
-                    elems = self.driver.select(page, by, content_expr)
-                if len(elems) > 0:
-                    if len(elems) == 1:
-                        news_info["data:content"] = self.driver.get_content(elems[0])
-                    elif len(elems) > 1:
-                        news_info["data:content"] = ""
-                        for i in range(len(elems)):
-                            news_info["data:content"] += self.driver.get_content(elems[i])+"\n"
-                    check_content = True
-
-                    news_info["data:content_translate"] = ""
-
-                    if kwargs["mode_test"] != True:
-                        
-                        news_info["keywords"] = self.get_keywords(news_info["data:content"])
-                        #----------------------------------------------------------------------------        
-                        news_info["data:class_chude"] = self.get_chude(news_info["data:content"])
-                        #----------------------------------------------------------------------------
-                        news_info["data:class_linhvuc"] = self.get_linhvuc(news_info["data:content"])
-                        #--------------------------------------------------------------------------------    
-                        news_info["data:class_sacthai"] = self.get_sentiment(news_info["data:content"], news_info["data:title"])
-                        #-----------------------------------------------------------------------------
-                if news_info["data:content"] == "":
-                    raise Exception("empty content")
-                news_info["data:url"] = url
-                if content_expr != "None" and content_expr != "":
-                    elems = self.driver.select(page, by, content_expr)
-                    if len(elems) == 1:
-                        news_info["data:html"] = self.driver.get_html(elems[0])
-
-                        tmp_video = self.driver.select(
-                            from_elem=page, by="css", expr="figure"
-                        )
-                        for i in tmp_video:
-                            news_info["data:html"] = news_info["data:html"].replace(
-                                self.driver.get_html(i), ""
-                            )
-                    elif len(elems) > 1:
-                        news_info["data:html"] = ""
-                        for i in range(len(elems)):
-                            news_info["data:html"] += self.driver.get_html(elems[i])
-               
-                if kwargs["mode_test"] != True:
-                    if check_content and check_url_exist == "0":
-                        try:
-                            _id = MongoRepository().insert_one(
-                                collection_name=collection_name, doc=news_info
-                            )
-                            print("insert_mongo_succes")
-                            # print(type(_id))
-                            try:
-                                message = {
-                                    "title": str(news_info["data:title"]),
-                                    "content": str(news_info["data:content"]),
-                                    "pubdate": str(news_info["pub_date"]),
-                                    "id_new": str(_id),
-                                }
-                                KafkaProducer_class().write("events", message)
-                            except:
-                                print("kafka write message error")
-                        except:
-                            print(
-                                "An error occurred while pushing data to the database!"
-                            )
-
-                        # elastícearch
-                        try:
-                            doc_es = self.create_es_doc(news_info.copy(), news_info)
-                            try:
-                                my_es.insert_document(
-                                    index_name="vosint",
-                                    id=doc_es["id"],
-                                    document=doc_es,
-                                )
-                            except:
-                                print("insert elastic search false")
-                        except:
-                            print(
-                                "An error occurred while pushing data to the database!"
-                            )
-            except:
-                pass
+            news_info = self.process_news_data(data_feed, kwargs, title_expr, 
+                                   author_expr, time_expr, content_expr, 
+                                   time_format, by)
             if kwargs["mode_test"] != True:
                 del news_info
             else:
