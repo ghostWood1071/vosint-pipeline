@@ -38,7 +38,7 @@ class KafkaConsumer_class:
                         result = self.excute(message)
                         
                         
-                    except:
+                    except Exception as e:
                         pass
                         #self.preducer.write(topic='crawling',message=message)
                     finally:
