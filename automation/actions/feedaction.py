@@ -21,7 +21,7 @@ import time
 from models.kafka_producer import KafkaProducer_class
 from core.config import settings
 import feedparser
-
+from typing import *
 my_es = My_ElasticSearch(
     host=[settings.ELASTIC_CONNECT], user="USER", password="PASS", verify_certs=False
 )
@@ -145,6 +145,18 @@ class FeedAction(BaseAction):
                     default_val="False",
                     validators=["required_"],
                 ),
+                ParamInfo(
+                    name="is_root",
+                    display_name="Is root",
+                    val_type="bool",
+                    default_val="True",
+                ),
+                ParamInfo(
+                    name="data_feed",
+                    display_name="Data Feed",
+                    val_type="any",
+                    default_val="True",
+                )
             ],
             z_index=4,
         )
@@ -517,7 +529,7 @@ class FeedAction(BaseAction):
             KafkaProducer_class().write("events", message)
         except:
             print("kafka write message error")
-    
+
     def insert_mongo(self, collection_name, news_info):
         try:
             _id = MongoRepository().insert_one(
@@ -626,9 +638,19 @@ class FeedAction(BaseAction):
             return news_info
         except Exception as e:
             print(e)
-        
+
+    def get_feed_action(self, pipeline_id:str):
+        pipeline = MongoRepository().get_one("pipelines", {"_id": pipeline_id})
+        if pipeline == None:
+           raise Exception("Pipe line not found")
+        return pipeline.get("schema")[1]
+
+    def process_news_distributed(self):
+        pass
+
     def exec_func(self, input_val=None, **kwargs):
         print("exec_ feeeeeeeeeeeeeeedddddddddd")
+        print(kwargs)
         if not input_val:
             raise InternalError(
                 ERROR_REQUIRED, params={"code": ["URL"], "msg": ["URL"]}
@@ -640,16 +662,39 @@ class FeedAction(BaseAction):
         time_expr = self.params["time"]["time_expr"]
         time_format = self.params["time"]["time_format"]
         content_expr = self.params["content_expr"]
-        # is_send_queue = self.params["send_queue"]
-        data_feeds = feed(url=url)
-        for data_feed in data_feeds:
-            news_info = self.process_news_data(data_feed, kwargs, title_expr, 
-                                   author_expr, time_expr, content_expr, 
-                                   time_format, by)
-            if kwargs["mode_test"] != True:
-                del news_info
-            else:
-                break
+        is_send_queue = self.params["send_queue"]
+        is_root = True if self.params.get("is_root") == None or self.params.get("is_root") =="True" else False
+        
+        if is_root:
+            data_feeds = feed(url=url)
+            if len(data_feeds) == 0:
+                raise Exception("There is no news in this source")
+        
+        if is_send_queue != "True" and is_root: #process news list
+            for data_feed in data_feeds:
+                try:
+                    news_info = self.process_news_data(data_feed, kwargs, title_expr, 
+                                        author_expr, time_expr, content_expr, 
+                                        time_format, by)
+                    if kwargs["mode_test"] != True:
+                        del news_info
+                    else:
+                        break
+                except Exception as e:
+                    print(e)
+        elif is_send_queue == "True" and is_root: #send news to queue
+            feed_action = self.get_feed_action(kwargs["pipeline_id"])
+            kwargs_leaf = kwargs.copy()
+            feed_action["params"]["is_root"] = "False"
+            for data_feed in data_feeds:
+                feed_action["url"] = data_feed["link"]
+                feed_action["params"]["data_feed"] = data_feed
+                message = {"actions": [feed_action], "input_val": "null", "kwargs": kwargs_leaf}
+                KafkaProducer_class().write("crawling_", message)
+
+        elif is_send_queue == "True" and not is_root: #process_news
+           news_info = self.process_news_data(self.params.get("data_feed"), kwargs, title_expr, author_expr, time_expr, content_expr, time_expr, by)
+        
         if kwargs["mode_test"] == True:
             tmp = news_info.copy()
             news_info = []
