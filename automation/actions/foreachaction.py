@@ -115,20 +115,21 @@ class ForeachAction(BaseAction):
                     if str(b) != "0":
                         # print("url already exist")
                         continue
-
+                # print("DSAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
                 message = {"actions": actions, "input_val": val, "kwargs": kwargs}
                 # message1 = {'name': 'John', 'age': 30, 'city': 'New hkahsdjk'}
                 if str(self.params["send_queue"]) == "True":
                     # print('write to kafka ...')
-                    # print(message)
+                    print(message)
                     KafkaProducer_class().write("crawling_", message)
-                    # print('write to kafka ...')
+                    print('write to kafka ...')
                     if (
                         kwargs["mode_test"] == True
                     ):  # self.params['test_pipeline'] == 'True':
                         # print(val)
                         break
                 else:
+                    print("asdasdadsas")
                     if flatten == False:
                         res.append(self.__run_actions(actions, val, **kwargs))
                     else:
