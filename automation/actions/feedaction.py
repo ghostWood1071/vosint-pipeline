@@ -155,7 +155,7 @@ class FeedAction(BaseAction):
                     name="data_feed",
                     display_name="Data Feed",
                     val_type="any",
-                    default_val="True",
+                    default_val="True"
                 )
             ],
             z_index=4,
@@ -645,11 +645,8 @@ class FeedAction(BaseAction):
            raise Exception("Pipe line not found")
         return pipeline.get("schema")[1]
 
-    def process_news_distributed(self):
-        pass
 
     def exec_func(self, input_val=None, **kwargs):
-        print("exec_ feeeeeeeeeeeeeeedddddddddd")
         print(kwargs)
         if not input_val:
             raise InternalError(
@@ -662,7 +659,7 @@ class FeedAction(BaseAction):
         time_expr = self.params["time"]["time_expr"]
         time_format = self.params["time"]["time_format"]
         content_expr = self.params["content_expr"]
-        is_send_queue = self.params["send_queue"]
+        is_send_queue = "False" if self.params.get("send_queue") == None or self.params.get("send_queue") == "False" else "True"  
         is_root = True if self.params.get("is_root") == None or self.params.get("is_root") =="True" else False
         
         if is_root:
