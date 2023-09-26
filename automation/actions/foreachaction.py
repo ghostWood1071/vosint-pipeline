@@ -110,10 +110,10 @@ class ForeachAction(BaseAction):
                     a, b = MongoRepository().get_many(
                         collection_name="News", filter_spec={"data:url": str(str_val)}
                     )
-                    # print('bbbb',b)
+                    print('bbbb',b)
                     del a
                     if str(b) != "0":
-                        # print("url already exist")
+                        print("url already exist")
                         continue
                 # print("DSAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
                 message = {"actions": actions, "input_val": val, "kwargs": kwargs}

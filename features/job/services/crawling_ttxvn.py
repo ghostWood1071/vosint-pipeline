@@ -22,6 +22,8 @@ def crawl_ttxvn(username,password,id_news):
 
         page.goto('https://news.vnanet.vn/FrontEnd/PostDetail.aspx?id='+ str(id_news))
         content = select(page,".post-content")[0].inner_text()
+        page.close()
+        playwright.stop()
     except:
         page.close()
         playwright.stop()
