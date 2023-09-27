@@ -5,6 +5,7 @@ def select(from_element, expr, by = "css="):
         element = from_element.locator(f"{by}{expr}")
         element = [element.nth(i) for i in range(element.count())]
         return element
+
 def crawl_ttxvn(username,password,id_news):
     playwright = sync_playwright().start()
     browser = playwright.chromium.launch(channel="chrome")

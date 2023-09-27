@@ -160,7 +160,6 @@ class JobService:
             data["content"] = str(data["content"]).replace(data["Title"], "", 1)
             MongoRepository().update_one(collection_name="ttxvn", doc=data)
             # print(data)
-
             doc_es["content"] = str(data["content"])
             try:
                 doc_es["id"] = str(doc_es["_id"])
@@ -184,7 +183,10 @@ class JobService:
                 print("insert to elastic vosint_ttxvn")
             except:
                 print("insert to elasstic vosint_ttxvn error")
+            
+            
             return {"succes": "True"}
+        
         except Exception as e:
             return {"succes": "False"}
 
@@ -352,7 +354,7 @@ class JobService:
 
                 ###########3 kiểm tra trùng 
                 try:
-                    a,b = MongoRepository().get_many(collection_name='ttxvn_test',filter_spec={"ArticleID":i["ArticleID"]})
+                    a,b = MongoRepository().get_many(collection_name='ttxvn',filter_spec={"ArticleID":i["ArticleID"]})
                     del a
                     if str(b) != '0':
                         print('url already exist')
@@ -361,7 +363,7 @@ class JobService:
                 except:
                     pass
                 if check_url_exist == '0':
-                    MongoRepository().insert_one(collection_name='ttxvn_test',doc=i)
+                    MongoRepository().insert_one(collection_name='ttxvn',doc=i)
         else:
             # API call failed
             print("Error:", response.status_code)
