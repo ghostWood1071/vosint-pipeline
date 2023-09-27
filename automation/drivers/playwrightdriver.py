@@ -34,8 +34,12 @@ class PlaywrightDriver(BaseDriver):
         return self.page
 
     def destroy(self):
-        self.driver.close()
+        self.page.close()
+        for context in self.driver.contexts:
+            for page in context.pages:
+                page.close()
         self.playwright.stop()
+        print("closed driver")
 
     def goto(self, url: str):
         self.page.goto(url)

@@ -59,7 +59,7 @@ class KafkaConsumer_class:
         #a = message['id_proxy']
         #self.driver = DriverFactory(name='playwright',id_proxy=a)
         try:
-            proxy_id = message.get("kwagrs").get("list_proxy")[0]
+            proxy_id = message.get("kwargs").get("list_proxy")[0]
             self.driver = DriverFactory(name='playwright',id_proxy=proxy_id)
         except:
             self.driver = DriverFactory('playwright')
