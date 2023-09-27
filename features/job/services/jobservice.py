@@ -352,7 +352,7 @@ class JobService:
 
                 ###########3 kiểm tra trùng 
                 try:
-                    a,b = MongoRepository().get_many(collection_name='ttxvn_test',filter_spec={"ArticleID":i["ArticleID"]})
+                    a,b = MongoRepository().get_many(collection_name='ttxvn',filter_spec={"ArticleID":i["ArticleID"]})
                     del a
                     if str(b) != '0':
                         print('url already exist')
@@ -361,7 +361,7 @@ class JobService:
                 except:
                     pass
                 if check_url_exist == '0':
-                    MongoRepository().insert_one(collection_name='ttxvn_test',doc=i)
+                    MongoRepository().insert_one(collection_name='ttxvn',doc=i)
         else:
             # API call failed
             print("Error:", response.status_code)
