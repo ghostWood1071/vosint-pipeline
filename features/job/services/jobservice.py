@@ -143,8 +143,6 @@ class JobService:
     def stop_job(self, id: str):
         Scheduler.instance().remove_job(id)
 
-    def get_report_keyword(self):
-        MongoRepository().get_many("report")
     def crawling_ttxvn(self, job_id):
         try:
             data = MongoRepository().get_one(
@@ -162,7 +160,6 @@ class JobService:
             data["content"] = str(data["content"]).replace(data["Title"], "", 1)
             MongoRepository().update_one(collection_name="ttxvn", doc=data)
             # print(data)
-            
             doc_es["content"] = str(data["content"])
             try:
                 doc_es["id"] = str(doc_es["_id"])
