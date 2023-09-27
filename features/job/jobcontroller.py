@@ -236,3 +236,8 @@ class JobController:
         )
 
         return {"success": True, "total_record": result[1], "result": result[0]}
+
+    def crawl_ttxvn_news(self):
+        job_thread = Thread(target=self.__job_service.crawl_ttxvn_news)
+        job_thread.start()
+        return {"success": True}

@@ -3,4 +3,5 @@ class ActionStatus:
     INITIALIZED = "initialized"
     RUNNING = "running"
     COMPLETED = "completed"
-    ERROR = "error"
+    ERROR = "error",
+    INQUEUE = "inqueue",

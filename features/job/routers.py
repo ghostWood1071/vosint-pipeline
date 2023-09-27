@@ -47,9 +47,9 @@ def run_only_job(pipeline_id: str, mode_test=True):
     return JSONResponse(job_controller.run_only(pipeline_id, mode_test))
 
 
-# @router.post("/api/crawling_ttxvn")
-# def crawling_ttxvn(id: str = None):
-#     try:
-#         return JSONResponse(job_controller.crawling_ttxvn(id))
-#     except:
-#         return JSONResponse({"succes: false"})
+@router.post("/api/crawling_ttxvn_news")
+def crawling_ttxvn_news():
+    try:
+        return JSONResponse(job_controller.crawl_ttxvn_news())
+    except:
+        return JSONResponse({"succes: false"})

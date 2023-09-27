@@ -23,8 +23,9 @@ class PipelineService:
             pipeline = self.__mongo_repo.get_one(self.__collection_name, {"_id": id})
         print("oke2")
         # Map to dto
-        jobs = Scheduler.instance().get_jobs()
-        pipeline["actived"] = str(pipeline["_id"]) in jobs
+        # jobs = Scheduler.instance().get_jobs()
+        job = MongoRepository().get_one("jobstore", {"_id": id}, use_object_id=False)
+        pipeline["actived"] = job is not None  #str(pipeline["_id"]) in jobs
         pipeline_dto = PipelineForDetailsDto(pipeline) if pipeline else None
 
         return pipeline_dto
@@ -49,7 +50,7 @@ class PipelineService:
             filter_spec["enabled"] = enabled
 
         # Filter actived pipelines
-        jobs = Scheduler.instance().get_jobs()
+        jobs,_ = MongoRepository().get_many("jobstore", {}) #Scheduler.instance().get_jobs()
         if isinstance(actived, bool):
             pipeline_ids = list(map(lambda p_id: ObjectId(p_id), jobs))
             filter_spec["_id"] = (
@@ -62,7 +63,7 @@ class PipelineService:
 
         # Map to dtos
         # Map actived from jobs to pipelines
-        jobs = Scheduler.instance().get_jobs()
+        jobs,_ = MongoRepository().get_many("jobstore", {})
 
         def _map_active(pipeline, job_ids):
             return PipelineForListDto(
@@ -87,7 +88,7 @@ class PipelineService:
 
         # Map to dtos
         # Map actived from jobs to pipelines
-        jobs = Scheduler.instance().get_jobs()
+        jobs,_ = MongoRepository().get_many("jobstore", {})#Scheduler.instance().get_jobs()
 
         def _map_active(pipeline, job_ids):
             return PipelineForDetailsDto(

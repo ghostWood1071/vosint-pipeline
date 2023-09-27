@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 import json
 
 from automation import Session
@@ -8,6 +8,8 @@ from logger import Logger
 from models import MongoRepository
 from scheduler import Scheduler
 from utils import get_time_now_string
+from automation.actions import TtxvnAction
+import requests
 
 # from models import MongoRepository
 from db.elastic_main import My_ElasticSearch
@@ -310,5 +312,58 @@ class JobService:
                 Scheduler.instance().remove_job(pipeline_dto._id)
             except InternalError as error:
                 Logger.instance().error(str(error))
+    
+    def format_date(self, date, date_formats):
+        result = None
+        for date_format in date_formats:
+            try:
+               result = datetime.strptime(date,date_format)
+            except:
+                continue 
+        if result == None:
+            result = datetime.strptime(datetime.now().strftime("%Y-%m-%dT%H:%M:%S"), "%Y-%m-%dT%H:%M:%S")
+        return result
 
+    def crawl_ttxvn_news(self):
+        limit = 1000
+        url = "https://news.vnanet.vn/API/ApiAdvanceSearch.ashx"
+        date_formats = ["%Y-%m-%dT%H:%M:%S.%f", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%S"]
+        params = {
+            "func": "searchannonimous",
+            "index": "0",
+            "limit": str(limit),
+            "data": '[{"ContentType":"date","Key":"Created","LogicCon":"geq","Value":"7 day","ValueType":"1"},{"ContentType":"combobox","Key":"ServiceCateID","LogicCon":"eq","Value":"3","ValueType":"1"},{"ContentType":"number","Key":"SCode","LogicCon":"eq","Value":"1","ValueType":"1"},{"ContentType":"combobox","Key":"QCode","LogicCon":"eq","Value":17,"ValueType":"1"}]',
+            "total": "514",
+            "lid": "1066",
+            "psid": "undefined"
+        }
+
+        response = requests.get(url, params=params)
+
+        if response.status_code == 200:
+            # API call successful
+            data = response.json()
+            # Process the response data here
+            for i in data['data']['data']:
+                check_url_exist = '0'
+                
+                i['PublishDate']= self.format_date(i['PublishDate'], date_formats) 
+                i['Created']= self.format_date(i['Created'], date_formats) 
+
+                ###########3 kiểm tra trùng 
+                try:
+                    a,b = MongoRepository().get_many(collection_name='ttxvn_test',filter_spec={"ArticleID":i["ArticleID"]})
+                    del a
+                    if str(b) != '0':
+                        print('url already exist')
+                        check_url_exist = '1'
+                        break
+                except:
+                    pass
+                if check_url_exist == '0':
+                    MongoRepository().insert_one(collection_name='ttxvn_test',doc=i)
+        else:
+            # API call failed
+            print("Error:", response.status_code)
+        return "Succes: True"
     
