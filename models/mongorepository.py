@@ -38,7 +38,7 @@ class MongoRepository:
             self.__db = None
 
     def get_one(
-        self, collection_name: str, filter_spec: dict = {}, filter_other: dict = {}
+        self, collection_name: str, filter_spec: dict = {}, filter_other: dict = {}, use_object_id:bool = True
     ):
         if not collection_name:
             raise InternalError(
@@ -53,7 +53,7 @@ class MongoRepository:
             )
 
         # Normalize _id field
-        if "_id" in filter_spec and filter_spec["_id"]:
+        if "_id" in filter_spec and filter_spec["_id"] and use_object_id:
             filter_spec["_id"] = ObjectId(filter_spec["_id"])
         doc = None
         try:
