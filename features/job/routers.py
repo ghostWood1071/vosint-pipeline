@@ -7,6 +7,9 @@ from db.elastic_main import (
 from pydantic import BaseModel
 import asyncio
 from typing import *
+import re
+from models import MongoRepository
+from bson.objectid import ObjectId
 
 class Translate(BaseModel):
     lang: str
@@ -53,3 +56,28 @@ def crawling_ttxvn_news():
         return JSONResponse(job_controller.crawl_ttxvn_news())
     except:
         return JSONResponse({"succes: false"})
+
+def get_keyword_regex(keyword_dict):
+    pattern = ""
+    for key in list(keyword_dict.keys()):
+        pattern = pattern + keyword_dict.get(key) +","
+    keyword_arr = [keyword.strip() for keyword in pattern.split(",")]
+    pattern = "|".join(list(filter(lambda x: x!="", keyword_arr)))
+    return pattern
+
+@router.post("/api/test-add-object")
+def add_news_to_object(news_id:str):
+    news = MongoRepository().get_one("News", {"_id": news_id})
+    objects,_ = MongoRepository().get_many("object", {"_id": ObjectId("64accb391ce13f45f6862bfa")})
+    object_ids = []
+    for object in objects:
+        pattern = get_keyword_regex(object.get("keywords")).lower()
+        if pattern == "":
+            continue
+        match1 = re.search(pattern, news['data:content'].lower())
+        match2 = re.search(pattern, news['data:title'].lower())
+        match3 = re.search(pattern, news['data:title_translate'].lower() if news['data:title_translate'] != None else "")
+        if match1 or match2 or match3:
+            object_ids.append(object.get('_id'))
+    if(len(object_ids)>0):
+        MongoRepository().update_many('object', {"_id": {"$in": object_ids}}, {"$push": {"news_list": news_id}})
