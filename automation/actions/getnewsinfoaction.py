@@ -176,9 +176,9 @@ class GetNewsInfoAction(BaseAction):
             pattern = self.get_keyword_regex(object.get("keywords")).lower()
             if pattern == "":
                 continue
-            if re.match(pattern, news['data:content'].lower()) or \
-               re.match(pattern, news['data:title'].lower()) or \
-               re.match(pattern, news['data:title_translate'].lower() if news['data:title_translate'] != None else ""):
+            if re.search(pattern, news['data:content'].lower()) or \
+               re.search(pattern, news['data:title'].lower()) or \
+               re.search(pattern, news['data:title_translate'].lower() if news['data:title_translate'] != None else ""):
                 object_ids.append(object.get('_id'))
         if(len(object_ids)>0):
             MongoRepository().update_many('object', {"_id": {"$in": object_ids}}, {"$push": {"news_list": news_id}})
