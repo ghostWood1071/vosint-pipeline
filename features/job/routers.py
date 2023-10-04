@@ -68,7 +68,7 @@ def get_keyword_regex(keyword_dict):
 @router.post("/api/test-add-object")
 def add_news_to_object(news_id:str):
     news = MongoRepository().get_one("News", {"_id": news_id})
-    objects,_ = MongoRepository().get_many("object", {"_id": ObjectId("64accb391ce13f45f6862bfa")})
+    objects,_ = MongoRepository().get_many("object", {"_id": ObjectId("651d3821fad69d3f13e62055")})
     object_ids = []
     for object in objects:
         pattern = get_keyword_regex(object.get("keywords")).lower()
