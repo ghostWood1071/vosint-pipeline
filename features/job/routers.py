@@ -62,7 +62,8 @@ def get_keyword_regex(keyword_dict):
     for key in list(keyword_dict.keys()):
         pattern = pattern + keyword_dict.get(key) +","
     keyword_arr = [keyword.strip() for keyword in pattern.split(",")]
-    pattern = "|".join(list(filter(lambda x: x!="", keyword_arr)))
+    keyword_arr = [rf"\b{keyword.strip()}\b" for keyword in list(filter(lambda x: x!="", keyword_arr))]
+    pattern = "|".join(keyword_arr)
     return pattern
 
 @router.post("/api/test-add-object")
@@ -71,12 +72,12 @@ def add_news_to_object(news_id:str):
     objects,_ = MongoRepository().get_many("object", {"_id": ObjectId("651d3821fad69d3f13e62055")})
     object_ids = []
     for object in objects:
-        pattern = get_keyword_regex(object.get("keywords")).lower()
+        pattern = get_keyword_regex(object.get("keywords"))
         if pattern == "":
             continue
-        match1 = re.search(pattern, news['data:content'].lower())
-        match2 = re.search(pattern, news['data:title'].lower())
-        match3 = re.search(pattern, news['data:title_translate'].lower() if news['data:title_translate'] != None else "")
+        match1 = re.search(pattern, news['data:content'])
+        match2 = re.search(pattern, news['data:title'])
+        match3 = re.search(pattern, news['data:title_translate'] if news['data:title_translate'] != None else "")
         if match1 or match2 or match3:
             object_ids.append(object.get('_id'))
     if(len(object_ids)>0):
