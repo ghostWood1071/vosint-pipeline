@@ -100,7 +100,7 @@ class GetNewsInfoAction(BaseAction):
         pattern = ""
         for key in list(keyword_dict.keys()):
             pattern = pattern + keyword_dict.get(key) +","
-        keyword_arr = [keyword.strip() for keyword in pattern.split(",")]
+        keyword_arr = [rf"\b{keyword.strip()}\b" for keyword in pattern.split(",")]
         pattern = "|".join(list(filter(lambda x: x!="", keyword_arr)))
         return pattern
         
@@ -173,12 +173,12 @@ class GetNewsInfoAction(BaseAction):
         objects,_ = MongoRepository().get_many("object", {})
         object_ids = []
         for object in objects:
-            pattern = self.get_keyword_regex(object.get("keywords")).lower()
+            pattern = self.get_keyword_regex(object.get("keywords"))
             if pattern == "":
                 continue
-            if re.search(pattern, news['data:content'].lower()) or \
-               re.search(pattern, news['data:title'].lower()) or \
-               re.search(pattern, news['data:title_translate'].lower() if news['data:title_translate'] != None else ""):
+            if re.search(pattern, news['data:content']) or \
+               re.search(pattern, news['data:title']) or \
+               re.search(pattern, news['data:title_translate'] if news['data:title_translate'] != None else ""):
                 object_ids.append(object.get('_id'))
         if(len(object_ids)>0):
             MongoRepository().update_many('object', {"_id": {"$in": object_ids}}, {"$push": {"news_list": news_id}})
