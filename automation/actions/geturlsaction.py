@@ -65,7 +65,7 @@ class GetUrlsAction(BaseAction):
         # Map from elements to urls
         urls = list(map(self.__map_to_url, elems))
         # Ignore None items
-        urls = list(filter(lambda url: url is not None, urls))
+        urls = list(filter(lambda url: url is not None and  url !="", urls))
         # Distinct value
         urls = list(set(urls))
         #print(urls)

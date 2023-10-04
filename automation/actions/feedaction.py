@@ -25,6 +25,7 @@ from typing import *
 my_es = My_ElasticSearch(
     host=[settings.ELASTIC_CONNECT], user="USER", password="PASS", verify_certs=False
 )
+import re
 
 rss_version_2_0 = {
     "author": "author",
@@ -535,6 +536,7 @@ class FeedAction(BaseAction):
             _id = MongoRepository().insert_one(
                 collection_name=collection_name, doc=news_info
             )
+            self.add_news_to_object(news_info, _id)
             print("insert_mongo_succes")
             self.send_event_to_queue(_id, news_info)
         except:
@@ -645,6 +647,19 @@ class FeedAction(BaseAction):
            raise Exception("Pipe line not found")
         return pipeline.get("schema")[1]
 
+    def add_news_to_object(self, news, news_id):
+        objects,_ = MongoRepository().get_many("object", {})
+        object_ids = []
+        for object in objects:
+            pattern = self.get_keyword_regex(object.get("keywords")).lower()
+            if pattern == "":
+                continue
+            if re.match(pattern, news['data:content'].lower()) or \
+               re.match(pattern, news['data:title'].lower()) or \
+               re.match(pattern, news['data:title_translate'].lower() if news['data:title_translate'] != None else ""):
+                object_ids.append(object.get('_id'))
+        if(len(object_ids)>0):
+            MongoRepository().update_many('object', {"_id": {"$in": object_ids}}, {"$push": {"news_list": news_id}})
 
     def exec_func(self, input_val=None, **kwargs):
         print(kwargs)
@@ -691,9 +706,10 @@ class FeedAction(BaseAction):
 
         elif is_send_queue == "True" and not is_root: #process_news
            news_info = self.process_news_data(self.params.get("data_feed"), kwargs, title_expr, author_expr, time_expr, content_expr, time_expr, by)
-        
+
         if kwargs["mode_test"] == True:
-            tmp = news_info.copy()
-            news_info = []
-            news_info.append(tmp)
-        return news_info
+            if news_info:
+                tmp = news_info.copy()
+                news_info = []
+                news_info.append(tmp)
+        return news_info if news_info else "" 

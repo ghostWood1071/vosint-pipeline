@@ -12,7 +12,7 @@ from automation.actions import TtxvnAction
 import requests
 from bson.objectid import ObjectId
 from elasticsearch import helpers
-
+import time
 # from models import MongoRepository
 from db.elastic_main import My_ElasticSearch
 
@@ -25,6 +25,7 @@ from db.elastic_main import (
 my_es = My_ElasticSearch()
 from .crawling_ttxvn import crawl_ttxvn
 from typing import *
+from threading import Lock
 
 
 def start_job(actions: list[dict], pipeline_id=None, source_favicon=None):
@@ -44,6 +45,7 @@ class JobService:
         self.__pipeline_service = PipelineService()
         self.__mongo_repo = MongoRepository()
         self.__elastic_search = My_ElasticSearch()
+        self.lock = Lock()
 
     def run_only(self, id: str, mode_test=None):
         pipeline_dto = self.__pipeline_service.get_pipeline_by_id(id)
@@ -350,6 +352,8 @@ class JobService:
         return result
 
     def crawl_ttxvn_news(self):
+        self.lock.acquire()
+        time.sleep(5)
         limit = 1000
         url = "https://news.vnanet.vn/API/ApiAdvanceSearch.ashx"
         date_formats = ["%Y-%m-%dT%H:%M:%S.%f", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%S"]
@@ -357,7 +361,7 @@ class JobService:
             "func": "searchannonimous",
             "index": "0",
             "limit": str(limit),
-            "data": '[{"ContentType":"date","Key":"Created","LogicCon":"geq","Value":"7 day","ValueType":"1"},{"ContentType":"combobox","Key":"ServiceCateID","LogicCon":"eq","Value":"3","ValueType":"1"},{"ContentType":"number","Key":"SCode","LogicCon":"eq","Value":"1","ValueType":"1"},{"ContentType":"combobox","Key":"QCode","LogicCon":"eq","Value":17,"ValueType":"1"}]',
+            "data": '[{"ContentType":"date","Key":"Created","LogicCon":"geq","Value":"2 day","ValueType":"1"},{"ContentType":"combobox","Key":"ServiceCateID","LogicCon":"eq","Value":"1097","ValueType":"1"},{"ContentType":"number","Key":"SCode","LogicCon":"eq","Value":"1","ValueType":"1"},{"ContentType":"combobox","Key":"QCode","LogicCon":"eq","Value":17,"ValueType":"1"}]',
             "total": "514",
             "lid": "1066",
             "psid": "undefined"
@@ -390,5 +394,6 @@ class JobService:
         else:
             # API call failed
             print("Error:", response.status_code)
+        self.lock.release()
         return "Succes: True"
     
