@@ -1,6 +1,7 @@
 from .services import JobService
 from threading import Thread, Timer
 from scheduler import Scheduler
+from typing import *
 
 def get_depth(mylist):
     if isinstance(mylist, list):
@@ -108,8 +109,8 @@ class JobController:
             ],
         }
 
-    def crawling_ttxvn(self, job_id):
-        return self.__job_service.crawling_ttxvn(job_id)
+    def crawling_ttxvn(self, job_ids: List[str]):
+        return self.__job_service.crawling_ttxvn(job_ids)
 
     def run_only(self, pipeline_id: str, mode_test):
         result = self.__job_service.run_only(pipeline_id, mode_test)
@@ -239,5 +240,6 @@ class JobController:
 
     def crawl_ttxvn_news(self):
         job_thread = Thread(target=self.__job_service.crawl_ttxvn_news)
+        
         job_thread.start()
         return {"success": True}

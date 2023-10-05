@@ -6,7 +6,7 @@ from db.elastic_main import (
 )
 from pydantic import BaseModel
 import asyncio
-
+from typing import *
 
 class Translate(BaseModel):
     lang: str
@@ -22,8 +22,8 @@ router = APIRouter()
 
 
 @router.post("/api/crawling_ttxvn")
-def crawling_ttxvn(job_id: str):
-    response = job_controller.crawling_ttxvn(job_id)
+def crawling_ttxvn(job_ids: List[str]):
+    response = job_controller.crawling_ttxvn(job_ids)
     return JSONResponse(response)
 
 

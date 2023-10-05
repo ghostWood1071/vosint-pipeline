@@ -10,7 +10,9 @@ from scheduler import Scheduler
 from utils import get_time_now_string
 from automation.actions import TtxvnAction
 import requests
-
+from bson.objectid import ObjectId
+from elasticsearch import helpers
+import time
 # from models import MongoRepository
 from db.elastic_main import My_ElasticSearch
 
@@ -22,6 +24,8 @@ from db.elastic_main import (
 
 my_es = My_ElasticSearch()
 from .crawling_ttxvn import crawl_ttxvn
+from typing import *
+from threading import Lock
 
 
 def start_job(actions: list[dict], pipeline_id=None, source_favicon=None):
@@ -41,6 +45,7 @@ class JobService:
         self.__pipeline_service = PipelineService()
         self.__mongo_repo = MongoRepository()
         self.__elastic_search = My_ElasticSearch()
+        self.lock = Lock()
 
     def run_only(self, id: str, mode_test=None):
         pipeline_dto = self.__pipeline_service.get_pipeline_by_id(id)
@@ -143,48 +148,68 @@ class JobService:
     def stop_job(self, id: str):
         Scheduler.instance().remove_job(id)
 
-    def crawling_ttxvn(self, job_id):
+    def create_es_doc(self, doc_es):
         try:
-            data = MongoRepository().get_one(
-                collection_name="ttxvn", filter_spec={"_id": job_id}
+            doc_es["id"] = str(doc_es["_id"])
+            doc_es.pop("_id", None)
+        except:
+            pass
+        try:
+            doc_es["PublishDate"] = (
+                str(doc_es["PublishDate"]).split(" ")[0] + "T00:00:00Z"
             )
-            doc_es = data.copy()
+        except:
+            pass
+        try:
+            doc_es["Created"] = str(doc_es["Created"]).split(" ")[0] + "T00:00:00Z"
+        except:
+            pass
+        return doc_es
+    
+    def insert_multiple_doc_es(self, data):
+        actions = []
+        for row in data:
+            doc_es = row.copy() 
+            doc_es = self.create_es_doc(doc_es)
+            actions.append({
+                "_op_type": "index",  # Specify the operation type (index, update, delete, etc.)
+                "_index": 'vosint_ttxvn',  # Specify the target index
+                "_source": doc_es,
+                "_id": str(row["_id"])
+            })
+        
+        try:
+            helpers.bulk(my_es.es, actions)
+            # my_es.insert_document(
+            #     index_name="vosint_ttxvn", id=doc_es["id"], document=doc_es
+            # )
+            print("insert to elastic vosint_ttxvn")
+        except Exception as e:
+            print("insert to elasstic vosint_ttxvn error")
+
+    def crawling_ttxvn(self, job_ids: List[str]):
+        job_filter = [ObjectId(job_id) for job_id in job_ids]
+        try:
+            data, _ = MongoRepository().get_many(
+                collection_name="ttxvn", filter_spec={"_id": {"$in": job_filter}}
+            )
+           
             # print(data)
             config_ttxvn = MongoRepository().get_one(
                 collection_name="config_ttxvn", filter_spec={"tag": "using"}
             )
-            id_news = str(data["ID"])
+            # id_news = str(data["ID"])
             username = str(config_ttxvn["user"])
             password = str(config_ttxvn["password"])
-            data["content"] = crawl_ttxvn(username, password, id_news)
-            data["content"] = str(data["content"]).replace(data["Title"], "", 1)
-            MongoRepository().update_one(collection_name="ttxvn", doc=data)
-            # print(data)
-            doc_es["content"] = str(data["content"])
-            try:
-                doc_es["id"] = str(doc_es["_id"])
-                doc_es.pop("_id", None)
-            except:
-                pass
-            try:
-                doc_es["PublishDate"] = (
-                    str(doc_es["PublishDate"]).split(" ")[0] + "T00:00:00Z"
-                )
-            except:
-                pass
-            try:
-                doc_es["Created"] = str(doc_es["Created"]).split(" ")[0] + "T00:00:00Z"
-            except:
-                pass
-            try:
-                my_es.insert_document(
-                    index_name="vosint_ttxvn", id=doc_es["id"], document=doc_es
-                )
-                print("insert to elastic vosint_ttxvn")
-            except:
-                print("insert to elasstic vosint_ttxvn error")
-            
-            
+            cookies = config_ttxvn.get("cookies")
+            crawl_ttxvn(data, username, password, cookies)
+            for row in data:
+                doc_update = row.copy()
+                MongoRepository().update_one(collection_name="ttxvn", doc=doc_update)
+                del doc_update
+            # doc_es["content"] = str(data["content"])
+            # doc_es = self.create_es_doc(doc_es)
+            self.insert_multiple_doc_es(data)
             return {"succes": "True"}
         
         except Exception as e:
@@ -327,6 +352,8 @@ class JobService:
         return result
 
     def crawl_ttxvn_news(self):
+        self.lock.acquire()
+        time.sleep(5)
         limit = 1000
         url = "https://news.vnanet.vn/API/ApiAdvanceSearch.ashx"
         date_formats = ["%Y-%m-%dT%H:%M:%S.%f", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M:%S"]
@@ -334,7 +361,7 @@ class JobService:
             "func": "searchannonimous",
             "index": "0",
             "limit": str(limit),
-            "data": '[{"ContentType":"date","Key":"Created","LogicCon":"geq","Value":"7 day","ValueType":"1"},{"ContentType":"combobox","Key":"ServiceCateID","LogicCon":"eq","Value":"3","ValueType":"1"},{"ContentType":"number","Key":"SCode","LogicCon":"eq","Value":"1","ValueType":"1"},{"ContentType":"combobox","Key":"QCode","LogicCon":"eq","Value":17,"ValueType":"1"}]',
+            "data": '[{"ContentType":"date","Key":"Created","LogicCon":"geq","Value":"2 day","ValueType":"1"},{"ContentType":"combobox","Key":"ServiceCateID","LogicCon":"eq","Value":"1097","ValueType":"1"},{"ContentType":"number","Key":"SCode","LogicCon":"eq","Value":"1","ValueType":"1"},{"ContentType":"combobox","Key":"QCode","LogicCon":"eq","Value":17,"ValueType":"1"}]',
             "total": "514",
             "lid": "1066",
             "psid": "undefined"
@@ -367,5 +394,6 @@ class JobService:
         else:
             # API call failed
             print("Error:", response.status_code)
+        self.lock.release()
         return "Succes: True"
     
