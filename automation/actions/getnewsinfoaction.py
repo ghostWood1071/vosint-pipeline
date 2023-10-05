@@ -100,8 +100,9 @@ class GetNewsInfoAction(BaseAction):
         pattern = ""
         for key in list(keyword_dict.keys()):
             pattern = pattern + keyword_dict.get(key) +","
-        keyword_arr = [rf"\b{keyword.strip()}\b" for keyword in pattern.split(",")]
-        pattern = "|".join(list(filter(lambda x: x!="", keyword_arr)))
+        keyword_arr = [keyword.strip() for keyword in pattern.split(",")]
+        keyword_arr = [rf"\b{keyword.strip()}\b" for keyword in list(filter(lambda x: x!="", keyword_arr))]
+        pattern = "|".join(keyword_arr)
         return pattern
         
     def get_sentiment(self, title:str, content:str):
