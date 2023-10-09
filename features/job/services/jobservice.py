@@ -196,13 +196,16 @@ class JobService:
            
             # print(data)
             config_ttxvn = MongoRepository().get_one(
-                collection_name="config_ttxvn", filter_spec={"tag": "using"}
+                collection_name="user_config", filter_spec={"tag": "using"}
             )
+            
+            proxies_filter = [ ObjectId(proxy) for proxy in config_ttxvn.get("list_proxy")]
+            proxies, _ = MongoRepository().get_many("proxy", filter_spec={"_id": {"$in": proxies_filter}})
             # id_news = str(data["ID"])
-            username = str(config_ttxvn["user"])
+            username = str(config_ttxvn["username"])
             password = str(config_ttxvn["password"])
             cookies = config_ttxvn.get("cookies")
-            crawl_ttxvn(data, username, password, cookies)
+            crawl_ttxvn(data, username, password, cookies, proxies)
             for row in data:
                 doc_update = row.copy()
                 MongoRepository().update_one(collection_name="ttxvn", doc=doc_update)
