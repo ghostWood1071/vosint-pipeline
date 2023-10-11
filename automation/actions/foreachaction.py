@@ -19,6 +19,7 @@ from .twitter import TwitterAction
 from .feedaction import FeedAction
 from .ttxvn import TtxvnAction
 from models import MongoRepository
+from datetime import datetime
 
 
 def get_action_class(name: str):
@@ -130,6 +131,7 @@ class ForeachAction(BaseAction):
                         break
                 else:
                     print("asdasdadsas")
+                    start = datetime.now()
                     if flatten == False:
                         res.append(self.__run_actions(actions, val, **kwargs))
                     else:
@@ -139,6 +141,8 @@ class ForeachAction(BaseAction):
                     ):  # self.params['test_pipeline'] == 'True':
                         # print(val)
                         break
+                    end = datetime.now()
+                    print(end-start)
         return res
 
     def __run_actions(self, actions: list[dict], input_val, **kwargs):
