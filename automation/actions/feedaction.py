@@ -685,7 +685,7 @@ class FeedAction(BaseAction):
         content_expr = self.params["content_expr"]
         is_send_queue = "False" if self.params.get("send_queue") == None or self.params.get("send_queue") == "False" else "True"  
         is_root = True if self.params.get("is_root") == None or self.params.get("is_root") =="True" else False
-        
+        result_test = None
         if is_root:
             data_feeds = feed(url=url)
             if len(data_feeds) == 0:
@@ -697,6 +697,7 @@ class FeedAction(BaseAction):
                     news_info = self.process_news_data(data_feed, kwargs, title_expr, 
                                         author_expr, time_expr, content_expr, 
                                         time_format, by)
+                    result_test = news_info.copy()
                     if kwargs["mode_test"] != True:
                         del news_info
                     else:
@@ -715,10 +716,10 @@ class FeedAction(BaseAction):
 
         elif is_send_queue == "True" and not is_root: #process_news
            news_info = self.process_news_data(self.params.get("data_feed"), kwargs, title_expr, author_expr, time_expr, content_expr, time_expr, by)
-
+           result_test = news_info.copy()
         if kwargs["mode_test"] == True:
-            if news_info:
+            if result_test:
                 tmp = news_info.copy()
                 news_info = []
                 news_info.append(tmp)
-        return news_info if news_info else "" 
+        return result_test
