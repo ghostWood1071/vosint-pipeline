@@ -63,6 +63,10 @@ class Settings(BaseSettings):
 
 settings = Settings()
 setting_dict = settings.dict()
-for env_name in list(setting_dict.keys()):
-   env_val = os.environ.get(env_name, setting_dict.get(env_name))
-   settings.__setattr__(env_name, env_val) 
+for env_name in list(settings.__annotations__.keys()):
+    type_obj = settings.__annotations__[env_name]
+    if type_obj != List[str]:
+        env_val = type_obj(os.environ.get(env_name, setting_dict.get(env_name)))
+    else:
+        env_val = os.environ.get(env_name, str(setting_dict.get(env_name)))
+    settings.__setattr__(env_name, env_val)
