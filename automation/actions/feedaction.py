@@ -26,6 +26,7 @@ my_es = My_ElasticSearch(
     host=[settings.ELASTIC_CONNECT], user="USER", password="PASS", verify_certs=False
 )
 import re
+from urllib.request import ProxyHandler, HTTPPasswordMgrWithDefaultRealm, ProxyBasicAuthHandler
 
 rss_version_2_0 = {
     "author": "author",
@@ -47,6 +48,7 @@ def feed(
     title_key: str = rss_version_1_0["titile"],
     pubDate_key: str = rss_version_1_0["pubDate"],
     author_key: str = rss_version_1_0["author"],
+    proxy:Dict[str, Any] = None
 ):
     # print('fedddddddddddddddddddddddddđ')
     if not url:
@@ -54,7 +56,17 @@ def feed(
             ERROR_REQUIRED, params={"code": ["FROM_ELEM"], "msg": ["From element"]}
         )
     # Parse the feed
-    feed = feedparser.parse(url)
+    handlers = []
+    if proxy:
+        proxy_url = f'{proxy.get("ip_address")}:{proxy.get("port")}' if proxy.get("port") else proxy.get("ip_address")
+        proxy_handler = ProxyHandler({'http': proxy_url, 'https': proxy_url})
+        handlers = [proxy_handler]
+        if proxy.get('username'):
+            pass_mgr = HTTPPasswordMgrWithDefaultRealm()
+            pass_mgr.add_password(None, proxy_url, proxy.get('username'), proxy.get('password'))
+            auth_handler = ProxyBasicAuthHandler(pass_mgr)
+            handlers.append(auth_handler)
+    feed = feedparser.parse(url, handlers=handlers)
     # Loop through the entries and print the link and title of each news article
     data_feeds = []
     for entry in feed.entries:
@@ -687,7 +699,11 @@ class FeedAction(BaseAction):
         is_root = True if self.params.get("is_root") == None or self.params.get("is_root") =="True" else False
         result_test = None
         if is_root:
-            data_feeds = feed(url=url)
+            proxy = None 
+            if kwargs.get("list_proxy"):
+                proxy_id = kwargs.get("list_proxy")[0]
+                proxy = MongoRepository().get_one("proxy", {'_id': proxy_id})
+            data_feeds = feed(url=url, proxy=proxy)
             if len(data_feeds) == 0:
                 raise Exception("There is no news in this source")
         
