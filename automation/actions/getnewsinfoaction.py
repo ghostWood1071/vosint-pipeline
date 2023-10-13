@@ -20,28 +20,6 @@ my_es = My_ElasticSearch(
 )
 
 
-def call_tran(content="", lang="en"):
-    result = ""
-    if lang == "en":
-        url = settings.TRANS_CONNECT_EN
-    elif lang == "cn":
-        url = settings.TRANS_CONNECT_CN
-    elif lang == "ru":
-        url = settings.TRANS_CONNECT_RU
-    headers = {
-        "Content-Type": "application/json"
-    }  # Set the content type of the request body
-
-    # Make the POST request with the request body
-    response = requests.post(url, headers=headers, data=content)
-    try:
-        result = response.text
-    except:
-        pass
-
-    return result
-
-
 class GetNewsInfoAction(BaseAction):
     @classmethod
     def get_action_info(cls) -> ActionInfo:
