@@ -4,6 +4,7 @@ from pydantic import AnyHttpUrl, BaseSettings
 
 import sys
 import os
+from decouple import Config
 script_path = os.path.abspath(sys.argv[0])
 script_directory = os.path.dirname(script_path)
 
@@ -68,8 +69,24 @@ class Settings:
     def __dict__(self):
         data = {k: self.__getattribute__(k) for k in self.__annotations__.keys()}
         return data.items()
+    
+    def load_env(self):
+       config = Config(script_directory+"/.env")
+       for env_name in list(self.__annotations__.keys()):
+            type_obj = self.__annotations__[env_name]
+            value = config.get(env_name, None)
+            if not value:
+                continue
+            if type_obj != List[str]:
+                env_val = type_obj(value)
+            else:
+                env_val = str(value)
+            self.__setattr__(env_name, env_val)
+       
 
     def __init__(self):
+        # loaded = dotenv.load_dotenv()
+        self.load_env()
         setting_dict = self.dict()
         for env_name in list(self.__annotations__.keys()):
             type_obj = self.__annotations__[env_name]
@@ -81,12 +98,4 @@ class Settings:
 
 
 settings = Settings()
-# print(settings.dict())
-# setting_dict = settings.dict()
-# for env_name in list(settings.__annotations__.keys()):
-#     type_obj = settings.__annotations__[env_name]
-#     if type_obj != List[str]:
-#         env_val = type_obj(os.environ.get(env_name, setting_dict.get(env_name)))
-#     else:
-#         env_val = os.environ.get(env_name, str(setting_dict.get(env_name)))
-#     settings.__setattr__(env_name, env_val)
+
