@@ -64,15 +64,29 @@ class Settings:
     def dict(self):
         data = {k:self.__getattribute__(k) for k in self.__annotations__.keys()}
         return data
+    
+    def __dict__(self):
+        data = {k: self.__getattribute__(k) for k in self.__annotations__.keys()}
+        return data.items()
+
+    def __init__(self):
+        setting_dict = self.dict()
+        for env_name in list(self.__annotations__.keys()):
+            type_obj = self.__annotations__[env_name]
+            if type_obj != List[str]:
+                env_val = type_obj(os.environ.get(env_name, setting_dict.get(env_name)))
+            else:
+                env_val = os.environ.get(env_name, str(setting_dict.get(env_name)))
+            self.__setattr__(env_name, env_val)
 
 
 settings = Settings()
-print(settings.dict())
-setting_dict = settings.dict()
-for env_name in list(settings.__annotations__.keys()):
-    type_obj = settings.__annotations__[env_name]
-    if type_obj != List[str]:
-        env_val = type_obj(os.environ.get(env_name, setting_dict.get(env_name)))
-    else:
-        env_val = os.environ.get(env_name, str(setting_dict.get(env_name)))
-    settings.__setattr__(env_name, env_val)
+# print(settings.dict())
+# setting_dict = settings.dict()
+# for env_name in list(settings.__annotations__.keys()):
+#     type_obj = settings.__annotations__[env_name]
+#     if type_obj != List[str]:
+#         env_val = type_obj(os.environ.get(env_name, setting_dict.get(env_name)))
+#     else:
+#         env_val = os.environ.get(env_name, str(setting_dict.get(env_name)))
+#     settings.__setattr__(env_name, env_val)
