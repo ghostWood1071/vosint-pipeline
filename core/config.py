@@ -7,13 +7,14 @@ import os
 script_path = os.path.abspath(sys.argv[0])
 script_directory = os.path.dirname(script_path)
 
-class Settings(BaseSettings):
+# class Settings(BaseSettings):
+class Settings:
     # APP_TITLE: str = "V-OSINT API"
-    class Config:
-        env_file = script_directory+"/.env"
-        env_file_encoding = "utf-8"
-        secrets_dir = script_directory+"/secrets"
-        case_sensitive = False
+    # class Config:
+    #     env_file = script_directory+"/.env"
+    #     env_file_encoding = "utf-8"
+    #     secrets_dir = script_directory+"/secrets"
+    #     case_sensitive = False
 
     APP_ORIGINS = [
         "http://localhost:5173",
@@ -25,43 +26,48 @@ class Settings(BaseSettings):
     APP_TITLE: str = "V-OSINT INGESTION"
     # APP_ORIGINS: List[AnyHttpUrl] =["*"]
 
-    APP_HOST: str
-    APP_PORT: int
+    APP_HOST: str =""
+    APP_PORT: int = 6200
     APP_STATIC_DIR: str = script_directory+"/static"
 
-    PRIVATE_KEY: str
-    PUBLIC_KEY: str
+    PRIVATE_KEY: str = ""
+    PUBLIC_KEY: str = ""
 
-    MONGO_DETAILS: str 
-    DATABASE_NAME: str 
+    MONGO_DETAILS: str = ""
+    DATABASE_NAME: str = ""
 
     #Mongo
-    MONGO_DETAILS: str
-    DATABASE_NAME: str
+    MONGO_DETAILS: str = ""
+    DATABASE_NAME: str = ""
     
-    mong_host:str
-    mongo_port: int
-    mongo_username: str
-    mongo_passwd: str
-    mongo_db_name: str
+    mong_host:str = ""
+    mongo_port: int = 6100
+    mongo_username: str = ""
+    mongo_passwd: str = ""
+    mongo_db_name: str = ""
 
-    ROOT_PATH: str
+    ROOT_PATH: str = ""
 
     #
-    API_PIPELINE: str
+    API_PIPELINE: str = ""
     #kafka
-    KAFKA_CONNECT: str
+    KAFKA_CONNECT: str = ""
     #elastic
-    ELASTIC_CONNECT: str
+    ELASTIC_CONNECT: str = ""
   
-    EXTRACT_KEYWORD_API: str
-    DOCUMENT_CLUSTERING_API: str
-    KEYWORD_CLUSTERING_API: str
-    SENTIMENT_API: str
-    TRANSLATE_API: str
+    EXTRACT_KEYWORD_API: str = ""
+    DOCUMENT_CLUSTERING_API: str = ""
+    KEYWORD_CLUSTERING_API: str = ""
+    SENTIMENT_API: str = ""
+    TRANSLATE_API: str = ""
+
+    def dict(self):
+        data = {k:self.__getattribute__(k) for k in self.__annotations__.keys()}
+        return data
 
 
 settings = Settings()
+print(settings.dict())
 setting_dict = settings.dict()
 for env_name in list(settings.__annotations__.keys()):
     type_obj = settings.__annotations__[env_name]
