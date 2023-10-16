@@ -32,25 +32,22 @@ class KafkaConsumer_class:
             for message in messages:
                 # Xử lý message
                 message = message.value
-                
+                # try:
                 try:
-                    try:
-                        result = self.excute(message)
-                        
-                        
-                    except Exception as e:
-                        pass
-                        #self.preducer.write(topic='crawling',message=message)
-                    finally:
-                        consumer.commit({
-                            tp: {
-                                'offset': message.offset + 1
-                            }
-                        })
-                        consumer.commit_async()
-                except:
-                    # Nếu xử lý lỗi, không commit offset
+                    result = self.excute(message)
+                except Exception as e:
                     pass
+                    #self.preducer.write(topic='crawling',message=message)
+                finally:
+                    consumer.commit({
+                        tp: {
+                            'offset': message.offset + 1
+                        }
+                    })
+                    consumer.commit_async()
+                # except:
+                #     # Nếu xử lý lỗi, không commit offset
+                #     pass
         consumer.commit_async()
         consumer.close()
         return result
