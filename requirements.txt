@@ -46,6 +46,7 @@ pymongo==4.3.3
 pytest==7.2.1
 pytest-asyncio==0.20.3
 python-dateutil==2.8.2
+python-decouple==3.8
 python-dotenv==0.21.1
 python-multipart==0.0.5
 pytz==2022.6
