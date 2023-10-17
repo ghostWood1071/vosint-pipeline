@@ -4,7 +4,7 @@ from pydantic import AnyHttpUrl, BaseSettings
 
 import sys
 import os
-from decouple import Config
+from decouple import Config, RepositoryEnv
 script_path = os.path.abspath(sys.argv[0])
 script_directory = os.path.dirname(script_path)
 
@@ -71,7 +71,7 @@ class Settings:
         return data.items()
     
     def load_env(self):
-       config = Config(script_directory+"/.env")
+       config = Config(RepositoryEnv(f"{script_directory}/.env"))
        for env_name in list(self.__annotations__.keys()):
             type_obj = self.__annotations__[env_name]
             value = config.get(env_name, None)
@@ -81,6 +81,7 @@ class Settings:
                 env_val = type_obj(value)
             else:
                 env_val = str(value)
+            print(env_name, env_val)
             self.__setattr__(env_name, env_val)
        
 
@@ -88,6 +89,8 @@ class Settings:
         # loaded = dotenv.load_dotenv()
         self.load_env()
         setting_dict = self.dict()
+        
+        print(setting_dict)
         for env_name in list(self.__annotations__.keys()):
             type_obj = self.__annotations__[env_name]
             if type_obj != List[str]:
