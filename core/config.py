@@ -81,7 +81,6 @@ class Settings:
                 env_val = type_obj(value)
             else:
                 env_val = str(value)
-            print(env_name, env_val)
             self.__setattr__(env_name, env_val)
        
 
@@ -89,8 +88,6 @@ class Settings:
         # loaded = dotenv.load_dotenv()
         self.load_env()
         setting_dict = self.dict()
-        
-        print(setting_dict)
         for env_name in list(self.__annotations__.keys()):
             type_obj = self.__annotations__[env_name]
             if type_obj != List[str]:
