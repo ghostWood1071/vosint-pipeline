@@ -152,7 +152,10 @@ class BaseAction:
     @abstractmethod
     def exec_func(self, input_val=None, **kwargs):
         raise NotImplementedError()
-
+    @abstractmethod
+    def get_current_url(self):
+        raise NotImplementedError()
+    
     def get_status(self) -> str:
         return self.__status
 

@@ -1,6 +1,7 @@
 from common.internalerror import *
 
 from .playwrightdriver import PlaywrightDriver
+from .seleniumdriver import SeleniumWebDriver
 from models import MongoRepository
 
 class DriverFactory:
@@ -11,7 +12,7 @@ class DriverFactory:
             print(a['ip_address'])
             driver_cls = PlaywrightDriver(ip_proxy=a['ip_address'],port=a['port'],username=a['username'],password=a['password']) if name == "playwright" else None
         else:
-            driver_cls = PlaywrightDriver() if name == "playwright" else None
+            driver_cls = SeleniumWebDriver() #if name == "playwright" else None
         # driver_cls = PlaywrightDriver if name == "playwright" else None
         if driver_cls is None:
             raise InternalError(

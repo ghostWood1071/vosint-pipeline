@@ -147,6 +147,7 @@ class ForeachAction(BaseAction):
 
     def __run_actions(self, actions: list[dict], input_val, **kwargs):
         tmp_val = input_val
+        
         for act in actions:
             params = act["params"] if "params" in act else {}
             try:

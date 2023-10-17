@@ -1,6 +1,6 @@
 import time
 
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright, Locator
 
 from ..common import SelectorBy
 from .basedriver import BaseDriver
@@ -25,6 +25,7 @@ class PlaywrightDriver(BaseDriver):
 
             self.playwright = sync_playwright().start()
             self.driver = self.playwright.chromium.launch(channel="chrome")
+            self.page.keyboard.press()
             self.page = self.driver.new_page()
         
     def get_driver(self):
@@ -42,6 +43,7 @@ class PlaywrightDriver(BaseDriver):
         print("closed driver")
 
     def goto(self, url: str):
+        self.page.context.clear_cookies()
         self.page.goto(url)
         return self.page
 
@@ -68,14 +70,13 @@ class PlaywrightDriver(BaseDriver):
         return self.page
 
     # TODO DoanCT: Bo sung scroll, sendkey
-    def scroll(self, from_elem, value: int = 1, time_sleep: float=0.3):
+    def scroll(self, from_elem:Locator, value: int = 1, time_sleep: float=0.3):
         for i in range(value):  # make the range as long as needed
             from_elem.keyboard.press('End')
             from_elem.wait_for_selector('body')
             time.sleep(time_sleep)
-        
+    
         return from_elem
-
     # TODO DoanCT: Bo sung scroll, sendkey
     def scroll_page(self, value: int = 1, time_sleep: float=0.3):
         for i in range(value):  # make the range as long as needed
@@ -96,3 +97,6 @@ class PlaywrightDriver(BaseDriver):
     
     def hover(self, from_elem):
         return from_elem[0].hover()
+    
+    def get_current_url(self):
+        return self.page.url

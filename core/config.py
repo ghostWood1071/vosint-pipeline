@@ -83,7 +83,6 @@ class Settings:
                 env_val = str(value)
             self.__setattr__(env_name, env_val)
        
-
     def __init__(self):
         # loaded = dotenv.load_dotenv()
         self.load_env()
@@ -95,7 +94,6 @@ class Settings:
             else:
                 env_val = os.environ.get(env_name, str(setting_dict.get(env_name)))
             self.__setattr__(env_name, env_val)
-
 
 settings = Settings()
 

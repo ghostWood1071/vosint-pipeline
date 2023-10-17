@@ -74,7 +74,7 @@ class GetUrlsAction(BaseAction):
     def __map_to_url(self, elem):
         origin = self.params["origin"] if "origin" in self.params else None
         href = self.driver.get_attr(elem, "href")
-
+        
         if href is None:
             return None
         if 'http://' in href or 'www.' in href or 'https://' in href:
