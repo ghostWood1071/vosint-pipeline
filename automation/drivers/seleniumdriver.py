@@ -60,6 +60,8 @@ KEY_MAP = {
 
 class SeleniumWebDriver(BaseDriver):
     def __init__(self,ip_proxy = None, port = None, username = None, password = None):
+        chrome_option = Options()
+        #chrome_option.add_argument("--headless")
         if ip_proxy != None and port != None and username != None and password != None:
             proxy_server ={    
                 'proxy': {
@@ -67,10 +69,11 @@ class SeleniumWebDriver(BaseDriver):
                     'verify_ssl': False,
                 }
             }
-            self.driver = ProxyChrome(seleniumwire_options=proxy_server)
+            self.driver = ProxyChrome(seleniumwire_options = proxy_server, options = chrome_option)
             print("selenium using proxy!")
         else:
-            self.driver = Chrome()
+            self.driver = Chrome(options = chrome_option)
+        
         
     def get_driver(self):
         return self.driver

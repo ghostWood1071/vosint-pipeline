@@ -9,7 +9,10 @@ class DriverFactory:
         if id_proxy != None:
             print(id_proxy)
             a = MongoRepository().get_one(collection_name="proxy",filter_spec={"_id":id_proxy})
-            driver_cls = PlaywrightDriver(ip_proxy=a['ip_address'],port=a['port'],username=a['username'],password=a['password']) if name == "playwright" else None
+            if name == "playwright":
+                driver_cls = PlaywrightDriver(ip_proxy=a['ip_address'],port=a['port'],username=a['username'],password=a['password']) 
+            else:
+                driver_cls = SeleniumWebDriver(ip_proxy=a['ip_address'],port=a['port'],username=a['username'],password=a['password']) 
         else:
             driver_cls = PlaywrightDriver() if name == "playwright" else SeleniumWebDriver()
         if driver_cls is None:
