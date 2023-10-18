@@ -25,7 +25,6 @@ class PlaywrightDriver(BaseDriver):
 
             self.playwright = sync_playwright().start()
             self.driver = self.playwright.chromium.launch(channel="chrome")
-            self.page.keyboard.press()
             self.page = self.driver.new_page()
         
     def get_driver(self):

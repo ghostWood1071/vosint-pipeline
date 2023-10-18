@@ -7,8 +7,11 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from seleniumwire.webdriver import Chrome as ProxyChrome
 from .basedriver import BaseDriver
 import time
+from core.config import settings
 
 
 KEY_MAP = {
@@ -64,13 +67,8 @@ class SeleniumWebDriver(BaseDriver):
                     'verify_ssl': False,
                 }
             }
-            self.driver = Chrome()
-            self.page = self.driver.new_page(proxy={
-                'server': ip_proxy+":"+port,
-                'username': username,
-                'password': password
-            }) #self.driver.new_page()
-            print("using proxy ...")
+            self.driver = ProxyChrome(seleniumwire_options=proxy_server)
+            print("selenium using proxy!")
         else:
             self.driver = Chrome()
         
@@ -87,7 +85,16 @@ class SeleniumWebDriver(BaseDriver):
 
     def goto(self, url: str):
         self.driver.delete_all_cookies()
-        self.driver.get(url)
+        self.driver.set_page_load_timeout(15)
+        try:
+            self.driver.get(url)
+        except TimeoutException as e:
+            if self.driver.find_element(By.TAG_NAME, 'body').get_attribute("innerHTML"):
+                pass
+            else:
+                raise e
+        except NoSuchElementException as ne:
+            raise e
         return self.driver
 
     def select(self, from_elem, by: str, expr: str):

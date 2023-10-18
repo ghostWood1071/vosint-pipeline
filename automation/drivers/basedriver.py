@@ -44,4 +44,8 @@ class BaseDriver:
     @abstractmethod
     def hover(self, from_elem):
         raise NotImplementedError()
+    
+    @abstractmethod
+    def get_current_url(self):
+        raise NotImplementedError()
 

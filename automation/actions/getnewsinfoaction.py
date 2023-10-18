@@ -171,7 +171,7 @@ class GetNewsInfoAction(BaseAction):
 
         url = ''
         try:
-            url = input_val.get_current_url()
+            url = self.driver.get_current_url()
         except:
             pass
         check_url_exist = "0"

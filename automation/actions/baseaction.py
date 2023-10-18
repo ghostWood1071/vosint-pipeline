@@ -100,9 +100,9 @@ class BaseAction:
                 his_log["log"] = history
                 # his_log["link"] = "" if type(input_val) != str else input_val
                 try:
-                    url = str(input_val)
+                    url = None
                     try:
-                        url = url.replace("<Page url='", "").replace("'>", "")
+                        url = input_val.get_current_url()
                     except:
                         pass
                     his_log["link"] = url
@@ -121,9 +121,9 @@ class BaseAction:
             his_log["actione"] = f"{self.__class__.__name__}"
             his_log["log"] = history
             try:
-                url = str(input_val)
+                url = None
                 try:
-                    url = url.replace("<Page url='", "").replace("'>", "")
+                    url = input_val.get_current_url()
                 except:
                     pass
                 his_log["link"] = url
@@ -152,9 +152,6 @@ class BaseAction:
     @abstractmethod
     def exec_func(self, input_val=None, **kwargs):
         raise NotImplementedError()
-    @abstractmethod
-    def get_current_url(self):
-        raise NotImplementedError()
     
     def get_status(self) -> str:
         return self.__status
@@ -166,4 +163,5 @@ class BaseAction:
 
     def return_str_status(self, status: str):
         return status
+    
     
