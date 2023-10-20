@@ -20,7 +20,7 @@ from .feedaction import FeedAction
 from .ttxvn import TtxvnAction
 from models import MongoRepository
 from datetime import datetime
-
+from ..common import ActionInfo, ActionStatus
 
 def get_action_class(name: str):
     action_cls = (
@@ -124,6 +124,7 @@ class ForeachAction(BaseAction):
                     print(message)
                     KafkaProducer_class().write("crawling_", message)
                     print('write to kafka ...')
+                    self.create_log(ActionStatus.INQUEUE, 'news transported to queue', kwargs["pipeline_id"])
                     if (
                         kwargs["mode_test"] == True
                     ):  # self.params['test_pipeline'] == 'True':

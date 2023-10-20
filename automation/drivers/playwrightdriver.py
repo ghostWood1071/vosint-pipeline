@@ -1,12 +1,13 @@
 import time
 
-from playwright.sync_api import sync_playwright, Locator
+from playwright.sync_api import sync_playwright, Locator, TimeoutError
 
 from ..common import SelectorBy
 from .basedriver import BaseDriver
 
 class PlaywrightDriver(BaseDriver):
     def __init__(self,ip_proxy = None, port = None, username = None, password = None):
+        self.user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36'
         if ip_proxy != None and port != None and username != None and password != None:
             proxy_server = {
                 'server': ip_proxy+":"+port,
@@ -19,12 +20,13 @@ class PlaywrightDriver(BaseDriver):
                 'server': ip_proxy+":"+port,
                 'username': username,
                 'password': password
-            }) #self.driver.new_page()
+            }, user_agent=self.user_agent) #self.driver.new_page()
+            
             print("using proxy ...")
         else:
 
             self.playwright = sync_playwright().start()
-            self.driver = self.playwright.chromium.launch(channel="chrome")
+            self.driver = self.playwright.chromium.launch(channel="chrome", headless=False)
             self.page = self.driver.new_page()
         
     def get_driver(self):
@@ -43,7 +45,12 @@ class PlaywrightDriver(BaseDriver):
 
     def goto(self, url: str):
         self.page.context.clear_cookies()
-        self.page.goto(url)
+        try:
+            self.page.goto(url)
+        except TimeoutError as e:
+            locator = self.page.locator('body')
+            if locator.inner_html() == '':
+                raise e
         return self.page
 
     def select(self, from_elem, by: str, expr: str):

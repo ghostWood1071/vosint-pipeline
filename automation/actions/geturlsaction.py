@@ -68,6 +68,7 @@ class GetUrlsAction(BaseAction):
         urls = list(filter(lambda url: url is not None and  url !="", urls))
         # Distinct value
         urls = list(set(urls))
+        
         #print(urls)
         return urls
 

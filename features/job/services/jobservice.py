@@ -30,7 +30,7 @@ from threading import Lock
 
 def start_job(actions: list[dict], pipeline_id=None, source_favicon=None):
     session = Session(
-        driver_name="selenium",
+        driver_name="playwright",
         storage_name="hbase",
         actions=actions,
         pipeline_id=pipeline_id,
