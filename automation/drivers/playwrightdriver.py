@@ -4,31 +4,44 @@ from playwright.sync_api import sync_playwright, Locator, TimeoutError
 
 from ..common import SelectorBy
 from .basedriver import BaseDriver
+from core.config import settings
 
 class PlaywrightDriver(BaseDriver):
     def __init__(self,ip_proxy = None, port = None, username = None, password = None):
-        self.user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36'
         if ip_proxy != None and port != None and username != None and password != None:
-            proxy_server = {
+            self.create_proxy_browser(ip_proxy, port, username, password)
+        else:
+            self.create_browser(headless=False)
+    
+    def create_browser(self, headless=True):
+        self.playwright = sync_playwright().start()
+        self.driver = self.playwright.chromium.launch(channel="chrome", headless=headless, args=[
+            f"--disable-extensions-except={settings.EXTENSIONS_PATH}/shadow-root",
+            f"--load-extension={settings.EXTENSIONS_PATH}/shadow-root",
+        ])
+        self.page = self.driver.new_page(user_agent=settings.USER_AGENT)
+
+    def create_proxy_browser(self, ip_proxy, port ,username, password):
+        proxy_server = {
                 'server': ip_proxy+":"+port,
                 'username': username,
                 'password': password
             }
-            self.playwright = sync_playwright().start()
-            self.driver = self.playwright.chromium.launch(channel="chrome",proxy=proxy_server)
-            self.page = self.driver.new_page(proxy={
-                'server': ip_proxy+":"+port,
-                'username': username,
-                'password': password
-            }, user_agent=self.user_agent) #self.driver.new_page()
-            
-            print("using proxy ...")
-        else:
-
-            self.playwright = sync_playwright().start()
-            self.driver = self.playwright.chromium.launch(channel="chrome", headless=False)
-            self.page = self.driver.new_page()
+        self.playwright = sync_playwright().start()
+        self.driver = self.playwright.chromium.launch(channel="chrome",proxy=proxy_server, args=[
+            f"--disable-extensions-except={settings.EXTENSIONS_PATH}/shadow-root",
+            f"--load-extension={settings.EXTENSIONS_PATH}/shadow-root",
+        ])
+        self.page = self.driver.new_page(proxy={
+            'server': ip_proxy+":"+port,
+            'username': username,
+            'password': password
+        }, user_agent=settings.USER_AGENT) #self.driver.new_page()
         
+        print("using proxy ...")
+
+    
+
     def get_driver(self):
         return self.driver
     
@@ -68,7 +81,6 @@ class PlaywrightDriver(BaseDriver):
     
     def get_html(self, from_elem) -> str:
         return from_elem.inner_html()    
-
 
     def click(self, from_elem, time_sleep = 0.3):
         from_elem.click()

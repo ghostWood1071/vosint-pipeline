@@ -61,6 +61,8 @@ class Settings:
     KEYWORD_CLUSTERING_API: str = ""
     SENTIMENT_API: str = ""
     TRANSLATE_API: str = ""
+    USER_AGENT = ""
+    EXTENSIONS_PATH = ""
 
     def dict(self):
         data = {k:self.__getattribute__(k) for k in self.__annotations__.keys()}
@@ -96,4 +98,4 @@ class Settings:
             self.__setattr__(env_name, env_val)
 
 settings = Settings()
-
+settings.EXTENSIONS_PATH = f"{script_directory}/automation/drivers/extensions"
