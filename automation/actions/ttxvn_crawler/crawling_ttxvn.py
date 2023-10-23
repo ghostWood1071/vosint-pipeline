@@ -49,8 +49,6 @@ def login_ttxvn(page:Page, username, password):
     except TimeoutError as e:
         raise e
 
-
-
 def crawl_ttxvn(data, username,password, cookies, proxies):
     try:
         playwright = sync_playwright().start()

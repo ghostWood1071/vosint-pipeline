@@ -40,8 +40,6 @@ class PlaywrightDriver(BaseDriver):
         
         print("using proxy ...")
 
-    
-
     def get_driver(self):
         return self.driver
     
@@ -56,7 +54,17 @@ class PlaywrightDriver(BaseDriver):
         self.playwright.stop()
         print("closed driver")
 
-    def goto(self, url: str):
+    def goto(self, url: str, proxy=None):
+        if proxy:
+            self.page.close()
+            self.driver.close()
+            proxy_dict = {
+                'ip_proxy': proxy.get('ip_address'),
+                'port': proxy.get('port'),
+                'username': proxy.get('username'),
+                'password': proxy.get('password')
+            }
+            self.create_proxy_browser(**proxy_dict)
         self.page.context.clear_cookies()
         try:
             self.page.goto(url)
@@ -118,3 +126,16 @@ class PlaywrightDriver(BaseDriver):
     
     def get_current_url(self):
         return self.page.url
+
+    def add_cookies(self, cookies):
+        self.page.context.add_cookies(cookies)
+
+    def init_proxy(self, proxy):
+        proxy_dict = {
+                'ip_proxy': proxy.get('ip_address'),
+                'port': proxy.get('port'),
+                'username': proxy.get('username'),
+                'password': proxy.get('password')
+            }
+        self.create_proxy_browser(**proxy_dict)
+        

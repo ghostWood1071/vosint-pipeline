@@ -6,7 +6,7 @@ class BaseDriver:
         raise NotImplementedError()
 
     @abstractmethod
-    def goto(self, url: str):
+    def goto(self, url: str, proxy=None):
         raise NotImplementedError()
 
     @abstractmethod
@@ -48,4 +48,15 @@ class BaseDriver:
     @abstractmethod
     def get_current_url(self):
         raise NotImplementedError()
+    
+    @abstractmethod
+    def get_page(self):
+        raise NotImplementedError()
 
+    @abstractmethod
+    def add_cookies(self, cookies):
+        raise NotImplementedError()
+    
+    @abstractmethod
+    def init_proxy(self, proxy):
+        raise NotImplementedError()

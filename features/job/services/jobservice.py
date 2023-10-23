@@ -23,7 +23,8 @@ from db.elastic_main import (
 )
 
 my_es = My_ElasticSearch()
-from .crawling_ttxvn import crawl_ttxvn
+# from .crawling_ttxvn import crawl_ttxvn
+from automation.actions.ttxvn_crawler.crawling_ttxvn import crawl_ttxvn
 from typing import *
 from threading import Lock
 
