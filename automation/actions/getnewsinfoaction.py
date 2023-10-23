@@ -169,9 +169,9 @@ class GetNewsInfoAction(BaseAction):
                 ERROR_REQUIRED, params={"code": ["URL"], "msg": ["URL"]}
             )
 
-        url = str(input_val)
+        url = ''
         try:
-            url = url.replace("<Page url='", "").replace("'>", "")
+            url = self.driver.get_current_url()
         except:
             pass
         check_url_exist = "0"

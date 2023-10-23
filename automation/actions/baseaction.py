@@ -100,9 +100,9 @@ class BaseAction:
                 his_log["log"] = history
                 # his_log["link"] = "" if type(input_val) != str else input_val
                 try:
-                    url = str(input_val)
+                    url = None
                     try:
-                        url = url.replace("<Page url='", "").replace("'>", "")
+                        url = self.driver.get_current_url()
                     except:
                         pass
                     his_log["link"] = url
@@ -121,9 +121,9 @@ class BaseAction:
             his_log["actione"] = f"{self.__class__.__name__}"
             his_log["log"] = history
             try:
-                url = str(input_val)
+                url = None
                 try:
-                    url = url.replace("<Page url='", "").replace("'>", "")
+                    url = input_val.get_current_url()
                 except:
                     pass
                 his_log["link"] = url
@@ -152,7 +152,7 @@ class BaseAction:
     @abstractmethod
     def exec_func(self, input_val=None, **kwargs):
         raise NotImplementedError()
-
+    
     def get_status(self) -> str:
         return self.__status
 
@@ -164,3 +164,25 @@ class BaseAction:
     def return_str_status(self, status: str):
         return status
     
+    def create_log(self, action_status, content, pipeline_id):
+        history = self.return_str_status(action_status)
+        his_log = {}
+        his_log["pipeline_id"] = pipeline_id
+        his_log["actione"] = f"{self.__class__.__name__}"
+        his_log["log"] = history
+        # his_log["link"] = "" if type(input_val) != str else input_val
+        try:
+            url = None
+            try:
+                url = self.driver.get_current_url()
+            except:
+                pass
+            his_log["link"] = url
+        except:
+            pass
+        #his_log["id_schema"] = self.params['id_schema']
+        his_log['message_error'] = content
+        try:
+            MongoRepository().insert_one(collection_name="his_log", doc=his_log)
+        except:
+            pass

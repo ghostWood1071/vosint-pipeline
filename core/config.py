@@ -61,6 +61,8 @@ class Settings:
     KEYWORD_CLUSTERING_API: str = ""
     SENTIMENT_API: str = ""
     TRANSLATE_API: str = ""
+    USER_AGENT = ""
+    EXTENSIONS_PATH = ""
 
     def dict(self):
         data = {k:self.__getattribute__(k) for k in self.__annotations__.keys()}
@@ -81,16 +83,12 @@ class Settings:
                 env_val = type_obj(value)
             else:
                 env_val = str(value)
-            print(env_name, env_val)
             self.__setattr__(env_name, env_val)
        
-
     def __init__(self):
         # loaded = dotenv.load_dotenv()
         self.load_env()
         setting_dict = self.dict()
-        
-        print(setting_dict)
         for env_name in list(self.__annotations__.keys()):
             type_obj = self.__annotations__[env_name]
             if type_obj != List[str]:
@@ -99,6 +97,5 @@ class Settings:
                 env_val = os.environ.get(env_name, str(setting_dict.get(env_name)))
             self.__setattr__(env_name, env_val)
 
-
 settings = Settings()
-
+settings.EXTENSIONS_PATH = f"{script_directory}/automation/drivers/extensions"

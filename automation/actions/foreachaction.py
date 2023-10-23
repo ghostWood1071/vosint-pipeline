@@ -20,7 +20,7 @@ from .feedaction import FeedAction
 from .ttxvn import TtxvnAction
 from models import MongoRepository
 from datetime import datetime
-
+from ..common import ActionInfo, ActionStatus
 
 def get_action_class(name: str):
     action_cls = (
@@ -101,13 +101,9 @@ class ForeachAction(BaseAction):
         res = []
         if input_val is not None:
             for val in input_val:
-                # print("val",val)
-                # print("kwargs",kwargs)
-                # print("actions",actions)
                 if kwargs["mode_test"] != True:
                     check_url_exist = "0"
                     str_val = str(val)
-                    # print(str_val)
                     a, b = MongoRepository().get_many(
                         collection_name="News", filter_spec={"data:url": str(str_val)}
                     )
@@ -116,30 +112,20 @@ class ForeachAction(BaseAction):
                     if str(b) != "0":
                         print("url already exist")
                         continue
-                # print("DSAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
                 message = {"actions": actions, "input_val": val, "kwargs": kwargs}
-                # message1 = {'name': 'John', 'age': 30, 'city': 'New hkahsdjk'}
                 if str(self.params["send_queue"]) == "True":
-                    # print('write to kafka ...')
-                    print(message)
                     KafkaProducer_class().write("crawling_", message)
                     print('write to kafka ...')
-                    if (
-                        kwargs["mode_test"] == True
-                    ):  # self.params['test_pipeline'] == 'True':
-                        # print(val)
+                    self.create_log(ActionStatus.INQUEUE, 'news transported to queue', kwargs["pipeline_id"])
+                    if kwargs["mode_test"] == True:
                         break
                 else:
-                    print("asdasdadsas")
                     start = datetime.now()
                     if flatten == False:
                         res.append(self.__run_actions(actions, val, **kwargs))
                     else:
                         res += self.__run_actions(actions, val, **kwargs)
-                    if (
-                        kwargs["mode_test"] == True
-                    ):  # self.params['test_pipeline'] == 'True':
-                        # print(val)
+                    if kwargs["mode_test"] == True:  
                         break
                     end = datetime.now()
                     print(end-start)
@@ -147,13 +133,14 @@ class ForeachAction(BaseAction):
 
     def __run_actions(self, actions: list[dict], input_val, **kwargs):
         tmp_val = input_val
+        
         for act in actions:
             params = act["params"] if "params" in act else {}
             try:
                 # print(act["id"])
-                a = act["id"]
+                id_schema = act["id"]
                 # print(a)
-                params["id_schema"] = a
+                params["id_schema"] = id_schema
             except:
                 pass
             action = get_action_class(act["name"])(self.driver, self.storage, **params)
