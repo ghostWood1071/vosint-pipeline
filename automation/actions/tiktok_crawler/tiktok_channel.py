@@ -16,7 +16,7 @@ from .utils import *
 
 def tiktok_channel(browser: Browser, cookies,url):
     page:Page = browser.new_page()
-    url = 'https://www.tiktok.com/@cnn'
+    url = 'https://www.tiktok.com/@nytimes'
     try:
         page.context.add_cookies(cookies)
     except Exception as e:
