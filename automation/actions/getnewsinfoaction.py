@@ -14,6 +14,7 @@ from db.elastic_main import My_ElasticSearch
 import time
 from models.kafka_producer import KafkaProducer_class
 from core.config import settings
+from datetime import datetime
 
 my_es = My_ElasticSearch(
     host=[settings.ELASTIC_CONNECT], user="USER", password="PASS", verify_certs=False
@@ -122,16 +123,24 @@ class GetNewsInfoAction(BaseAction):
             chude = []
         return chude
 
-    def get_keywords(self, content:str):
+    def extract_keyword(self, content, lang):
         keywords = []
         try:
             extkey_request = requests.post(settings.EXTRACT_KEYWORD_API, data=json.dumps({
+                    "lang": lang,
                     "number_keyword": 6,
                     "text": content
                 }))
             if not extkey_request.ok:
                 raise Exception()
             keywords = extkey_request.json().get("translate_text")
+        except Exception as e:
+            keywords = []
+        return keywords
+    
+    def get_keywords(self, content:str, lang:str):
+        try:
+            keywords = self.extract_keyword(content, lang)
         except Exception as e:
             keywords = []
         return keywords
@@ -147,6 +156,24 @@ class GetNewsInfoAction(BaseAction):
         except Exception as e:
             linhvuc
         return linhvuc
+
+    def translate(self, content, lang):
+        lang_dict = {
+            'cn': 'chinese',
+            'ru': 'russia',
+            'en': 'english'
+        }
+        lang_code = lang_dict.get(lang)
+        req = requests.post(settings.TRANSLATE_API, data=json.dumps(
+            {
+                "language": lang_code,
+                "text": content
+            }
+        ))
+        if not req.ok:
+            raise Exception()
+        result = req.json().get("translate_text")
+        return result
 
     def add_news_to_object(self, news, news_id):
         objects,_ = MongoRepository().get_many("object", {})
@@ -214,24 +241,9 @@ class GetNewsInfoAction(BaseAction):
             if len(elems) > 0:
                 news_info["data:title"] = self.driver.get_content(elems[0])
                 news_info["data:title_translate"] = ""
-                # print('aaaaaaaaaaa',kwargs["source_language"])
                 try:
                     if kwargs["mode_test"] != True:
-                        lang_dict = {
-                            'cn': 'chinese',
-                            'ru': 'russia',
-                            'en': 'english'
-                        }
-                        lang_code = lang_dict.get(kwargs["source_language"])
-                        req = requests.post(settings.TRANSLATE_API, data=json.dumps(
-                            {
-                                "language": lang_code,
-                                "text": news_info["data:title"]
-                            }
-                        ))
-                        news_info["data:title_translate"] = req.json().get("translate_text")
-                        if not req.ok:
-                            raise Exception()
+                        news_info["data:title_translate"] = self.translate(news_info["data:title"], kwargs["source_language"])
                 except Exception as e:
                     pass
 
@@ -519,5 +531,4 @@ class GetNewsInfoAction(BaseAction):
                         print("insert elastic search false")
                 except:
                     print("An error occurred while pushing data to the database!")
-
         return news_info

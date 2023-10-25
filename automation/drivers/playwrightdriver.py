@@ -1,6 +1,6 @@
 import time
 
-from playwright.sync_api import sync_playwright, Locator, TimeoutError
+from playwright.sync_api import sync_playwright, Locator, TimeoutError, Request, Error
 
 from ..common import SelectorBy
 from .basedriver import BaseDriver
@@ -8,10 +8,11 @@ from core.config import settings
 
 class PlaywrightDriver(BaseDriver):
     def __init__(self,ip_proxy = None, port = None, username = None, password = None):
+        self.proxy_server = None
         if ip_proxy != None and port != None and username != None and password != None:
-            self.create_proxy_browser(ip_proxy, port, username, password)
+            self.create_proxy_browser(ip_proxy, port, username, password, headless = False)
         else:
-            self.create_browser(headless=False)
+            self.create_browser(headless = False)
     
     def create_browser(self, headless=True):
         self.playwright = sync_playwright().start()
@@ -21,17 +22,17 @@ class PlaywrightDriver(BaseDriver):
         ])
         self.page = self.driver.new_page(user_agent=settings.USER_AGENT)
 
-    def create_proxy_browser(self, ip_proxy, port ,username, password):
-        proxy_server = {
+    def create_proxy_browser(self, ip_proxy, port ,username, password, headless = False):
+        self.proxy_server = {
                 'server': ip_proxy+":"+port,
                 'username': username,
                 'password': password
             }
         self.playwright = sync_playwright().start()
-        self.driver = self.playwright.chromium.launch(channel="chrome",proxy=proxy_server, args=[
+        self.driver = self.playwright.chromium.launch(channel="chrome",proxy=self.proxy_server, args=[
             f"--disable-extensions-except={settings.EXTENSIONS_PATH}/shadow-root",
             f"--load-extension={settings.EXTENSIONS_PATH}/shadow-root",
-        ])
+        ], headless=headless)
         self.page = self.driver.new_page(proxy={
             'server': ip_proxy+":"+port,
             'username': username,
@@ -53,8 +54,15 @@ class PlaywrightDriver(BaseDriver):
                 page.close()
         self.playwright.stop()
         print("closed driver")
+    
+    def request_failed(self, event:Request):
+        response = event.response()
+        if response and response.status == 407:  # 407 is the HTTP status code for Proxy Authentication Required
+            print("Proxy connection failed: HHHAHAHAHAHAHAHAHH")
+        else:
+            print("Request failed with an error")
 
-    def goto(self, url: str, proxy=None):
+    def goto(self, url: str, proxy=None, clear_cookies=True):
         if proxy:
             self.page.close()
             self.driver.close()
@@ -65,13 +73,23 @@ class PlaywrightDriver(BaseDriver):
                 'password': proxy.get('password')
             }
             self.create_proxy_browser(**proxy_dict)
-        self.page.context.clear_cookies()
+        if clear_cookies:
+            self.page.context.clear_cookies()
+        # self.page.on("requestfailed", self.request_failed)
         try:
             self.page.goto(url)
         except TimeoutError as e:
             locator = self.page.locator('body')
             if locator.inner_html() == '':
                 raise e
+        except Error as e:
+            if "ERR_PROXY_CONNECTION_FAILED" in e.message:
+                ip = ""
+                if self.proxy_server != None:
+                    ip = self.proxy_server.get("server")
+                if proxy:
+                    ip = f"{proxy.get('ip_address')}:{proxy.get('port')}"
+                raise Exception(f"cannot connect to proxy: {ip}")
         return self.page
 
     def select(self, from_elem, by: str, expr: str):
