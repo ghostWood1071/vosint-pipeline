@@ -14,22 +14,17 @@ from typing import *
 from .utils import *
 
 
-def tiktok_channel(browser: Browser, cookies,url):
+def tiktok_channel(browser, cookies,link_person, account, password, source_acc_id,crawl_acc_id):
     page:Page = browser.new_page()
-    url = 'https://www.tiktok.com/@nytimes'
     try:
         page.context.add_cookies(cookies)
     except Exception as e:
         print(e)
-
-    page.goto(url)
+    print(link_person)
+    page.goto(link_person)
     scroll_loop(get_videos, page=page, crawl_social_id= 1, browser= browser, cookies= cookies)
-    # get_videos(page, 0, 1)
-    # get_video_data(page)
-    # scroll_loop(get_articles, page=page, crawl_social_id=crawl_acc_id)
 
 def get_video_data(browser: Browser, url: str, cookies, data: Dict[str, Any]) -> bool:
-    print('url: ', url)
     page = browser.new_page()
     page.context.add_cookies(cookies)
     page.goto(url)
@@ -69,35 +64,31 @@ def get_video_data(browser: Browser, url: str, cookies, data: Dict[str, Any]) ->
         comment = 0
 
     try:
-        save_tag = select(page, '//*[@data-e2e="undefined-count"]')[0]
-        save= save_tag.inner_text()
-    except Exception as e:
-        traceback.print_exc()
-        save = 0
-
-    try:
         share_tag = select(page, '//*[@data-e2e="share-count"]')[0]
         share = share_tag.inner_text()
     except Exception as e:
         traceback.print_exc()
         share  = 0
 
+    sentiment = get_sentiment(header, content)
+    keywords = get_keywords(content)
+
     print('header: ', header)
     print('footer_date: ', footer_date)
     print('content: ', content)
     print('like: ', like)
     print('comment: ', comment)
-    print('save: ', save)
     print('share: ', share)
     data.update({
         "header": header,
         "footer_date": footer_date,
         "content": content,
-        "like": like,
-        "comment": comment,
-        "save": save,
-        "share": share,
-        "video_link": url
+        "like": process_like(like),
+        "comment": process_like(comment),
+        "share": process_like(share),
+        "video_link": url,
+        "sentiment": sentiment,
+        "keywords": keywords
     })
 
     page.close()
@@ -128,13 +119,9 @@ def get_videos(page: Page, got_videos: int, crawl_social_id, browser: Browser, c
             # get_video_data(browser, url=link, cookies=cookies)
         except Exception as e:
             traceback.print_exc()
+            browser.close()
+    browser.close()
 
-
-        # print('social_id: ', social_id)
-        # print('video-id: ', video_id)
-        print(link)
-
-    print(len(videos))
 
 
 

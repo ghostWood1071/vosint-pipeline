@@ -56,3 +56,25 @@ def convert_to_std_date(date_str:str):
     except Exception as e:
         print(e)
         return result
+
+def process_like(likes_string:str):
+    suffixes = {
+        'K': 1000,
+        'M': 1000000,
+        'B': 1000000000,
+        'T': 1000000000000,
+    }
+    matches = re.search(r'(\d+(\.\d+)?)', likes_string)
+    if matches:
+        number_str = matches.group(1)
+        likes_quantity = float(number_str)
+        remaining_text = likes_string.replace(number_str, '').strip()
+        if remaining_text:
+            for suffix in remaining_text.split(" "):
+                multiplier = suffixes.get(suffix)
+                if multiplier != None:
+                    likes_quantity *= multiplier
+                    break
+        return likes_quantity
+    else:
+        return 0
