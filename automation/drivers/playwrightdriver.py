@@ -22,7 +22,7 @@ class PlaywrightDriver(BaseDriver):
         ])
         self.page = self.driver.new_page(user_agent=settings.USER_AGENT)
 
-    def create_proxy_browser(self, ip_proxy, port ,username, password, headless = False):
+    def create_proxy_browser(self, ip_proxy, port ,username, password, headless = True):
         self.proxy_server = {
                 'server': ip_proxy+":"+port,
                 'username': username,
