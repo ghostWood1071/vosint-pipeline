@@ -20,10 +20,10 @@ class Session:
         else:
             proxy_list = actions[0]['params']['proxy_list']
             proxy_index = self.random_proxy(proxy_list)
-            # if proxy_index >= 0:
-            #     self.__driver = DriverFactory(name = driver_name,id_proxy = proxy_list[proxy_index])
-            # else:
-            self.__driver = DriverFactory(driver_name)
+            if proxy_index >= 0:
+                self.__driver = DriverFactory(name = driver_name,id_proxy = proxy_list[proxy_index])
+            else:
+                self.__driver = DriverFactory(driver_name)
         self.__storage = StorageFactory(storage_name)
         self.__pipeline = Pipeline(self.__driver, self.__storage, actions, pipeline_id ,mode_test,list_proxy = actions[0]['params']['proxy_list'], source_favicon=source_favicon)
         #print(actions)
