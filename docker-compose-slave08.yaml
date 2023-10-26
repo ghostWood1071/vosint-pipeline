@@ -3,9 +3,10 @@ services:
     vosint-pipeline-salve08-1:
         image: vienai/vosint-pipeline-slave:1.0.2
         ports: 
-            - 8111:6101        
+            - 9111:6101        
         environment:           
             - ENVIRONMENT=PRODUCTION
+            - mong_host=mongodb://admin:aivosint%400258@mong5.vosint.edu.vn:60005,mong6.vosint.edu.vn:60006/admin?replicaSet=replicaVosint&authSource=admin&authMechanism=SCRAM-SHA-256
             - MONGO_DETAILS=mongodb://admin:aivosint%400258@mong5.vosint.edu.vn:60005,mong6.vosint.edu.vn:60006/admin?replicaSet=replicaVosint&authSource=admin&authMechanism=SCRAM-SHA-256
             - DATABASE_NAME=vosint_db
             - KAFKA_CONNECT=kafka-1:9092,kafka-2:9092
@@ -28,9 +29,10 @@ services:
     vosint-pipeline-salve08-2:
         image: vienai/vosint-pipeline-slave:1.0.2
         ports: 
-            - 8121:6101        
+            - 9121:6101        
         environment:           
             - ENVIRONMENT=PRODUCTION
+            - mong_host=mongodb://admin:aivosint%400258@mong5.vosint.edu.vn:60005,mong6.vosint.edu.vn:60006/admin?replicaSet=replicaVosint&authSource=admin&authMechanism=SCRAM-SHA-256
             - MONGO_DETAILS=mongodb://admin:aivosint%400258@mong5.vosint.edu.vn:60005,mong6.vosint.edu.vn:60006/admin?replicaSet=replicaVosint&authSource=admin&authMechanism=SCRAM-SHA-256
             - DATABASE_NAME=vosint_db
             - KAFKA_CONNECT=kafka-1:9092,kafka-2:9092
@@ -53,9 +55,10 @@ services:
     vosint-pipeline-salve08-3:
         image: vienai/vosint-pipeline-slave:1.0.2
         ports: 
-            - 8131:6101        
+            - 9131:6101        
         environment:           
             - ENVIRONMENT=PRODUCTION
+            - mong_host=mongodb://admin:aivosint%400258@mong5.vosint.edu.vn:60005,mong6.vosint.edu.vn:60006/admin?replicaSet=replicaVosint&authSource=admin&authMechanism=SCRAM-SHA-256
             - MONGO_DETAILS=mongodb://admin:aivosint%400258@mong5.vosint.edu.vn:60005,mong6.vosint.edu.vn:60006/admin?replicaSet=replicaVosint&authSource=admin&authMechanism=SCRAM-SHA-256
             - DATABASE_NAME=vosint_db
             - KAFKA_CONNECT=kafka-1:9092,kafka-2:9092
@@ -78,9 +81,10 @@ services:
     vosint-pipeline-salve08-4:
         image: vienai/vosint-pipeline-slave:1.0.2
         ports: 
-            - 8141:6101        
+            - 9141:6101        
         environment:           
             - ENVIRONMENT=PRODUCTION
+            - mong_host=mongodb://admin:aivosint%400258@mong5.vosint.edu.vn:60005,mong6.vosint.edu.vn:60006/admin?replicaSet=replicaVosint&authSource=admin&authMechanism=SCRAM-SHA-256
             - MONGO_DETAILS=mongodb://admin:aivosint%400258@mong5.vosint.edu.vn:60005,mong6.vosint.edu.vn:60006/admin?replicaSet=replicaVosint&authSource=admin&authMechanism=SCRAM-SHA-256
             - DATABASE_NAME=vosint_db
             - KAFKA_CONNECT=kafka-1:9092,kafka-2:9092
@@ -103,9 +107,10 @@ services:
     vosint-pipeline-salve08-5:
         image: vienai/vosint-pipeline-slave:1.0.2
         ports: 
-            - 8151:6101        
+            - 9151:6101        
         environment:           
             - ENVIRONMENT=PRODUCTION
+            - mong_host=mongodb://admin:aivosint%400258@mong5.vosint.edu.vn:60005,mong6.vosint.edu.vn:60006/admin?replicaSet=replicaVosint&authSource=admin&authMechanism=SCRAM-SHA-256
             - MONGO_DETAILS=mongodb://admin:aivosint%400258@mong5.vosint.edu.vn:60005,mong6.vosint.edu.vn:60006/admin?replicaSet=replicaVosint&authSource=admin&authMechanism=SCRAM-SHA-256
             - DATABASE_NAME=vosint_db
             - KAFKA_CONNECT=kafka-1:9092,kafka-2:9092
@@ -128,9 +133,10 @@ services:
     vosint-pipeline-salve08-6:
         image: vienai/vosint-pipeline-slave:1.0.2
         ports: 
-            - 8161:6101        
+            - 9161:6101        
         environment:           
             - ENVIRONMENT=PRODUCTION
+            - mong_host=mongodb://admin:aivosint%400258@mong5.vosint.edu.vn:60005,mong6.vosint.edu.vn:60006/admin?replicaSet=replicaVosint&authSource=admin&authMechanism=SCRAM-SHA-256
             - MONGO_DETAILS=mongodb://admin:aivosint%400258@mong5.vosint.edu.vn:60005,mong6.vosint.edu.vn:60006/admin?replicaSet=replicaVosint&authSource=admin&authMechanism=SCRAM-SHA-256
             - DATABASE_NAME=vosint_db
             - KAFKA_CONNECT=kafka-1:9092,kafka-2:9092
@@ -153,9 +159,10 @@ services:
     vosint-pipeline-salve08-7:
         image: vienai/vosint-pipeline-slave:1.0.2
         ports: 
-            - 8171:6101        
+            - 9171:6101        
         environment:           
             - ENVIRONMENT=PRODUCTION
+            - mong_host=mongodb://admin:aivosint%400258@mong5.vosint.edu.vn:60005,mong6.vosint.edu.vn:60006/admin?replicaSet=replicaVosint&authSource=admin&authMechanism=SCRAM-SHA-256
             - MONGO_DETAILS=mongodb://admin:aivosint%400258@mong5.vosint.edu.vn:60005,mong6.vosint.edu.vn:60006/admin?replicaSet=replicaVosint&authSource=admin&authMechanism=SCRAM-SHA-256
             - DATABASE_NAME=vosint_db
             - KAFKA_CONNECT=kafka-1:9092,kafka-2:9092
@@ -178,9 +185,10 @@ services:
     vosint-pipeline-salve08-8:
         image: vienai/vosint-pipeline-slave:1.0.2
         ports: 
-            - 8181:6101        
+            - 9181:6101        
         environment:           
             - ENVIRONMENT=PRODUCTION
+            - mong_host=mongodb://admin:aivosint%400258@mong5.vosint.edu.vn:60005,mong6.vosint.edu.vn:60006/admin?replicaSet=replicaVosint&authSource=admin&authMechanism=SCRAM-SHA-256
             - MONGO_DETAILS=mongodb://admin:aivosint%400258@mong5.vosint.edu.vn:60005,mong6.vosint.edu.vn:60006/admin?replicaSet=replicaVosint&authSource=admin&authMechanism=SCRAM-SHA-256
             - DATABASE_NAME=vosint_db
             - KAFKA_CONNECT=kafka-1:9092,kafka-2:9092
@@ -203,9 +211,10 @@ services:
     vosint-pipeline-salve08-9:
         image: vienai/vosint-pipeline-slave:1.0.2
         ports: 
-            - 8191:6101        
+            - 9191:6101        
         environment:           
             - ENVIRONMENT=PRODUCTION
+            - mong_host=mongodb://admin:aivosint%400258@mong5.vosint.edu.vn:60005,mong6.vosint.edu.vn:60006/admin?replicaSet=replicaVosint&authSource=admin&authMechanism=SCRAM-SHA-256
             - MONGO_DETAILS=mongodb://admin:aivosint%400258@mong5.vosint.edu.vn:60005,mong6.vosint.edu.vn:60006/admin?replicaSet=replicaVosint&authSource=admin&authMechanism=SCRAM-SHA-256
             - DATABASE_NAME=vosint_db
             - KAFKA_CONNECT=kafka-1:9092,kafka-2:9092
@@ -228,9 +237,10 @@ services:
     vosint-pipeline-salve08-10:
         image: vienai/vosint-pipeline-slave:1.0.2
         ports: 
-            - 8201:6101        
+            - 9201:6101        
         environment:           
             - ENVIRONMENT=PRODUCTION
+            - mong_host=mongodb://admin:aivosint%400258@mong5.vosint.edu.vn:60005,mong6.vosint.edu.vn:60006/admin?replicaSet=replicaVosint&authSource=admin&authMechanism=SCRAM-SHA-256
             - MONGO_DETAILS=mongodb://admin:aivosint%400258@mong5.vosint.edu.vn:60005,mong6.vosint.edu.vn:60006/admin?replicaSet=replicaVosint&authSource=admin&authMechanism=SCRAM-SHA-256
             - DATABASE_NAME=vosint_db
             - KAFKA_CONNECT=kafka-1:9092,kafka-2:9092
