@@ -9,6 +9,7 @@ from automation.storages import StorageFactory
 
 from automation.pipeline import Pipeline_Kafka
 from core.config import settings
+import traceback
 class KafkaConsumer_class:
     def __init__(self):
         self.preducer = KafkaProducer_class()
@@ -31,19 +32,19 @@ class KafkaConsumer_class:
         for tp, messages in messages.items():
             for message in messages:
                 # Xử lý message
-                message = message.value
+                message_data = message.value
                 # try:
                 try:
-                    result = self.excute(message)
+                    result = self.excute(message_data)
                 except Exception as e:
                     pass
                     #self.preducer.write(topic='crawling',message=message)
                 finally:
-                    consumer.commit({
-                        tp: {
-                            'offset': message.offset + 1
-                        }
-                    })
+                    # consumer.commit({
+                    #     tp: {
+                    #         'offset': message.offset + 1
+                    #     }
+                    # })
                     consumer.commit_async()
                 # except:
                 #     # Nếu xử lý lỗi, không commit offset
@@ -58,7 +59,8 @@ class KafkaConsumer_class:
         try:
             proxy_id = message.get("kwargs").get("list_proxy")[0]
             self.driver = DriverFactory(name='playwright',id_proxy=proxy_id)
-        except:
+        except Exception as e:
+            traceback.print_exc()
             self.driver = DriverFactory('playwright')
         pipe_line = Pipeline_Kafka(driver=self.driver,storage=self.storage,actions=message['actions'],pipeline_id=message['kwargs']['pipeline_id'],mode_test=message['kwargs']['mode_test'],input_val = message['input_val'],kwargs=message['kwargs'])
         return pipe_line.run()

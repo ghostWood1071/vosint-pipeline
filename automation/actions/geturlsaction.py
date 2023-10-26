@@ -68,13 +68,14 @@ class GetUrlsAction(BaseAction):
         urls = list(filter(lambda url: url is not None and  url !="", urls))
         # Distinct value
         urls = list(set(urls))
+        
         #print(urls)
         return urls
 
     def __map_to_url(self, elem):
         origin = self.params["origin"] if "origin" in self.params else None
         href = self.driver.get_attr(elem, "href")
-
+        
         if href is None:
             return None
         if 'http://' in href or 'www.' in href or 'https://' in href:

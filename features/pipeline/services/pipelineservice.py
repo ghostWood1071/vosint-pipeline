@@ -27,7 +27,7 @@ class PipelineService:
         job = MongoRepository().get_one("jobstore", {"_id": id}, use_object_id=False)
         pipeline["actived"] = job is not None  #str(pipeline["_id"]) in jobs
         pipeline_dto = PipelineForDetailsDto(pipeline) if pipeline else None
-
+        
         return pipeline_dto
 
     def get_pipelines(

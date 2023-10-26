@@ -3,7 +3,7 @@ from common.internalerror import *
 from ..common import ActionInfo, ActionType, ParamInfo, SelectorBy
 from .baseaction import BaseAction
 from models import MongoRepository
-from datetime import datetime
+from datetime import datetime, timedelta
 from utils import get_time_now_string_y_m_now
 
 # from nlp.keyword_extraction.keywords_ext import Keywords_Ext
@@ -13,6 +13,7 @@ from utils import get_time_now_string_y_m_now
 # from nlp.hieu.vosintv3_text_clustering_main_15_3.src.inference import text_clustering
 
 import requests
+from random import randint
 
 import json
 from elasticsearch import Elasticsearch
@@ -27,6 +28,7 @@ my_es = My_ElasticSearch(
 )
 import re
 from urllib.request import ProxyHandler, HTTPPasswordMgrWithDefaultRealm, ProxyBasicAuthHandler
+from ..common import ActionInfo, ActionStatus
 
 rss_version_2_0 = {
     "author": "author",
@@ -67,6 +69,8 @@ def feed(
             auth_handler = ProxyBasicAuthHandler(pass_mgr)
             handlers.append(auth_handler)
     feed = feedparser.parse(url, handlers=handlers)
+    if feed.bozo:
+        raise feed.bozo_exception
     # Loop through the entries and print the link and title of each news article
     data_feeds = []
     for entry in feed.entries:
@@ -354,10 +358,11 @@ class FeedAction(BaseAction):
             return "0"
         return sentiment
 
-    def get_keywords(self, content:str):
+    def extract_keywords(self, content:str, lang):
         keywords = []
         try:
             extkey_request = requests.post(settings.EXTRACT_KEYWORD_API, data=json.dumps({
+                "lang": lang,
                 "number_keyword": 6,
                 "text": content
             }))
@@ -367,6 +372,15 @@ class FeedAction(BaseAction):
         except:
             return []
         return keywords
+
+    def get_keywords(self, content, lang):
+        if lang == "vi" or lang == "en":
+            keywords = self.extract_keywords(content, lang)
+        else:
+            translated = self.translate("vi", content)
+            keywords = self.extract_keywords(translated, "vi")
+        return keywords
+            
 
     def translate(self, language:str, content:str):
         result = ""
@@ -581,27 +595,17 @@ class FeedAction(BaseAction):
                 "An error occurred while pushing data to the database!"
             )
 
-    def check_exists(self, collection_name, url):
-        check_url_exist = "0"
-        a, b = MongoRepository().get_many(
-            collection_name=collection_name, filter_spec={"data:url": url}
-        )
-        del a
-        if str(b) != "0":
-            print("url already exist")
-            check_url_exist = "1"
-            # raise Exception("exist url")
-        return check_url_exist
-
     def process_news_data(self, data_feed, kwargs, title_expr, author_expr, time_expr, content_expr, time_format, by):
         try:
             # print(str(data_feed))
             url = data_feed["link"]
             collection_name = "News"
-            check_url_exist = "0"
+            check_url_exist = False
             #check existed
             if kwargs["mode_test"] != True:
-                check_url_exist = self.check_exists(collection_name, url)
+                day_range = 10
+                days = self.get_check_time(day_range)
+                check_url_exist = self.check_exists(url,days=days)
             # news_info = {}
             news_info = {}
             news_info["source_favicon"] = kwargs["source_favicon"]
@@ -636,7 +640,7 @@ class FeedAction(BaseAction):
                 check_content = True
                 news_info["data:content_translate"] = ""
                 if kwargs["mode_test"] != True:
-                    news_info["keywords"] = self.get_keywords(news_info["data:content"])
+                    news_info["keywords"] = self.get_keywords(news_info["data:content"], kwargs["source_language"])
                     #----------------------------------------------------------------------------        
                     news_info["data:class_chude"] = self.get_chude(news_info["data:content"])
                     #----------------------------------------------------------------------------
@@ -645,7 +649,7 @@ class FeedAction(BaseAction):
                     news_info["data:class_sacthai"] = self.get_sentiment(news_info["data:content"], news_info["data:title"])
                     #-----------------------------------------------------------------------------
             if news_info["data:content"] == "":
-                raise Exception("empty content")
+                self.create_log(ActionStatus.ERROR, "empty content", pipeline_id=kwargs.get("pipeline_id"))
             #-----------------------------------------------------------------------
             #get_url
             news_info["data:url"] = url
@@ -653,14 +657,14 @@ class FeedAction(BaseAction):
             if content_expr != "None" and content_expr != "":
                 news_info["data:html"] = self.get_html_content(page, content_expr, by)
             if kwargs["mode_test"] != True:
-                if check_content and check_url_exist == "0":
+                if check_content and check_url_exist == False:
                     #insert to mongo
                     self.insert_mongo(collection_name, news_info)
                     # elastícearch
                     self.insert_elastic(news_info)
             return news_info
         except Exception as e:
-            print(e)
+            raise e
 
     def get_feed_action(self, pipeline_id:str):
         pipeline = MongoRepository().get_one("pipelines", {"_id": pipeline_id})
@@ -682,6 +686,33 @@ class FeedAction(BaseAction):
         if(len(object_ids)>0):
             MongoRepository().update_many('object', {"_id": {"$in": object_ids}}, {"$push": {"news_list": news_id}})
 
+
+    def random_proxy(self, proxy_list):
+        if str(proxy_list) == '[]' or str(proxy_list) == '[None]' or str(proxy_list) == 'None':
+            return []
+        proxy_index = randint(0, len(proxy_list)-1)
+        return proxy_list[proxy_index]
+
+    def get_check_time(self, day_range):
+        date_now = datetime.now()
+        end_time = datetime(date_now.year, date_now.month, date_now.day, 0, 0, 0, 0)
+        start_time = end_time - timedelta(day_range)
+        end_str = datetime.strftime(end_time, "%y/%m/%d %H:%M:%S")
+        start_str = datetime.strftime(start_time, "%y/%m/%d %H:%M:%S")
+        return (start_str, end_str)
+
+    def check_exists(self, url, days):
+        existed_news, existed_count = MongoRepository().get_many(
+                        collection_name="News", 
+                        filter_spec={
+                            "data:url": str(url), 
+                            "created_at": {"$gte": days[0]},
+                            "created_at": {"$gte": days[1]}
+                        }
+                    )
+        del existed_news
+        return existed_count > 0
+
     def exec_func(self, input_val=None, **kwargs):
         print(kwargs)
         if not input_val:
@@ -701,9 +732,10 @@ class FeedAction(BaseAction):
         if is_root:
             proxy = None 
             if kwargs.get("list_proxy"):
-                proxy_id = kwargs.get("list_proxy")[0]
+                proxy_id =  self.random_proxy(kwargs.get("list_proxy"))
                 proxy = MongoRepository().get_one("proxy", {'_id': proxy_id})
             data_feeds = feed(url=url, proxy=proxy)
+            # data_feeds = feed(url=url)
             if len(data_feeds) == 0:
                 raise Exception("There is no news in this source")
         
@@ -719,20 +751,24 @@ class FeedAction(BaseAction):
                     else:
                         break
                 except Exception as e:
-                    print(e)
+                    raise e
+                
         elif is_send_queue == "True" and is_root: #send news to queue
             feed_action = self.get_feed_action(kwargs["pipeline_id"])
             kwargs_leaf = kwargs.copy()
+            kwargs_leaf["list_proxy"] = [self.random_proxy(kwargs.get("list_proxy"))]
             feed_action["params"]["is_root"] = "False"
             for data_feed in data_feeds:
                 feed_action["url"] = data_feed["link"]
                 feed_action["params"]["data_feed"] = data_feed
                 message = {"actions": [feed_action], "input_val": "null", "kwargs": kwargs_leaf}
                 KafkaProducer_class().write("crawling_", message)
+                self.create_log(ActionStatus.INQUEUE, f"{data_feed['link']} is transported to queue", kwargs["pipeline_id"])
 
         elif is_send_queue == "True" and not is_root: #process_news
            news_info = self.process_news_data(self.params.get("data_feed"), kwargs, title_expr, author_expr, time_expr, content_expr, time_expr, by)
            result_test = news_info.copy()
+
         if kwargs["mode_test"] == True:
             if result_test:
                 tmp = news_info.copy()

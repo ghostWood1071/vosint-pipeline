@@ -7,6 +7,7 @@ from db.elastic_main import (
 from pydantic import BaseModel
 import asyncio
 from typing import *
+from seleniumwire.webdriver import Chrome
 
 class Translate(BaseModel):
     lang: str
