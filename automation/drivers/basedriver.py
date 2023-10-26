@@ -6,7 +6,7 @@ class BaseDriver:
         raise NotImplementedError()
 
     @abstractmethod
-    def goto(self, url: str, proxy=None):
+    def goto(self, url: str, proxy=None, clear_cookies=True):
         raise NotImplementedError()
 
     @abstractmethod

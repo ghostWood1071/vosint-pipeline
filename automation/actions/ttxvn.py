@@ -9,6 +9,15 @@ import time
 from playwright.sync_api import Page
 from bson.objectid import ObjectId
 from playwright.sync_api import TimeoutError
+import sys
+import traceback
+from models.kafka_producer import KafkaProducer_class
+from ..common import ActionInfo, ActionStatus
+from typing import Any
+from random import randint
+class ElementNotFoundError(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
 
 class TtxvnAction(BaseAction):
     @classmethod
@@ -40,16 +49,26 @@ class TtxvnAction(BaseAction):
                     val_type="bool",
                     default_val='False',
                     validators=["required_"],
-                )
+                ),
+                ParamInfo(
+                    name="document",
+                    display_name="document",
+                    val_type="any",
+                    default_val='None'
+                ),
             ],
             z_index=20,
         )
     
-    def validate_input(self, value, except_values, default, data_type):
+    def validate_input(self, value, except_values, default, data_type=Any):
         if value in except_values: 
             return default
         else:
-            return data_type(value)
+            if data_type == Any:
+                return value
+            if data_type == bool:
+                return str(value).lower() == 'true'
+            return data_type(str(value).lower())
     
     def get_news(self, limit):
         try:
@@ -71,30 +90,44 @@ class TtxvnAction(BaseAction):
         except Exception as e:
             data = []
         return data
-
-    def check_exists(self, artical):
-        check_url_exist = '0'
-        artical['PublishDate']=datetime.strptime(artical['PublishDate'],"%Y-%m-%dT%H:%M:%S.%f")
-        artical['Created']=datetime.strptime(artical['Created'],"%Y-%m-%dT%H:%M:%S.%f")
+    
+    def format_time(self, time):
+        result = None
         try:
-            a,b = MongoRepository().get_many(collection_name='ttxvn',filter_spec={"ArticleID":artical["ArticleID"]})
-            del a
-            if str(b) != '0':
-                print('url already exist')
-                check_url_exist = '1'
-                return True
+            result=datetime.strptime(time,"%Y-%m-%dT%H:%M:%S.%f")
+        except Exception as e:
+            result = datetime.strptime(time,"%Y-%m-%dT%H:%M:%S")
+        finally:
+            if result == None:
+                result = datetime.now()
+        return result
+
+    def get_exists(self, articles):
+        check_url_exist = '0'
+        existed_ids = []
+        article_ids = [article["ArticleID"] for article in articles]
+        try:
+            existed_articles,_ = MongoRepository().get_many(collection_name='ttxvn',filter_spec={"ArticleID": {"$in": article_ids}})
+            del b
+            existed_ids = [article["ArticleID"] for article in existed_articles]
         except:
             pass
-        if check_url_exist == '0':    
-            return False
+        return existed_ids
 
-    def send_queue(self, message): 
-        pass
+    def send_queue(self, message, pipeline_id, url): 
+        try:
+            KafkaProducer_class().write("crawling_", message)
+            self.create_log(ActionStatus.INQUEUE, f"news: {url} transported to queue", pipeline_id)
+        except Exception as e:
+            self.create_log(ActionStatus.ERROR, "send news to queue error", pipeline_id)
 
     def select(self, from_element, expr, by = "css="):
-        element = from_element.locator(f"{by}{expr}")
-        element = [element.nth(i) for i in range(element.count())]
-        return element   
+        try:
+            element = from_element.locator(f"{by}{expr}")
+            elements = [element.nth(i) for i in range(element.count())]
+            return elements
+        except TimeoutError as e:
+            raise ElementNotFoundError()
      
     def test_proxy(url, proxy):
         try:
@@ -154,11 +187,10 @@ class TtxvnAction(BaseAction):
                 self.account.get('username'), 
                 self.account.get('password'))
         self.driver.add_cookies(self.account.get('cookies'))
-        proxy_index = 0
         for article in articles:
             try:
                 link  = 'https://news.vnanet.vn/FrontEnd/PostDetail.aspx?id='+ str(article.get("ID"))
-                self.driver.goto(link)
+                self.driver.goto(link, clear_cookies=False)
                 if "https://vnaid.vnanet.vn/core/login" in self.driver.get_current_url():
                     self.account['cookies'] = self.login_ttxvn(
                         self.driver.get_page(),
@@ -166,19 +198,33 @@ class TtxvnAction(BaseAction):
                         self.account.get('password')
                     )
                     self.driver.add_cookies(self.account.get('cookies'))
+                    self.driver.goto(link, clear_cookies=False)
                 try:
                     content = self.select(self.driver.get_page(),".post-content")[0].inner_text()
                     article["content"] = str(content).replace(article["Title"], "", 1)
-                except TimeoutError as e:
+                except ElementNotFoundError as e:
                     raise Exception("can not select element")
-            except TimeoutError as e:
-                proxy_index = self.get_active_proxy_index("https://news.vnanet.vn", self.proxies ,proxy_index)
-                if proxy_index < 0:
-                    raise Exception("There is no proxy work")
-                proxy = self.proxies[proxy_index]
-                self.driver.init_proxy(proxy)
             except Exception as e2:
                 raise e2
+    
+    def save_articles(self, articles):
+        try:
+            MongoRepository().insert_many('ttxvn',articles)
+        except Exception as e:
+            raise e
+    
+    def get_ttxvn_action(self, pipeline_id):
+        pipeline = MongoRepository().get_one("pipelines", {"_id": pipeline_id})
+        if pipeline == None:
+           raise Exception("Pipe line not found")
+        return pipeline.get("schema")[1]
+    
+    def random_proxy(self, proxy_list):
+        if str(proxy_list) == '[]' or str(proxy_list) == '[None]' or str(proxy_list) == 'None':
+            return []
+        proxy_index = randint(0, len(proxy_list)-1)
+        return proxy_list[proxy_index]
+
     def exec_func(self, input_val=None, **kwargs):
         if not input_val:
             raise InternalError(
@@ -203,6 +249,15 @@ class TtxvnAction(BaseAction):
             default=False,
             data_type=bool
         )
+
+        document = self.validate_input(
+            self.params.get("document"),
+            except_values= ["None", "", None],
+            default=False,
+            data_type=Any
+        )
+
+        
         #MongoRepository().insert_one(collection_name='ttxvn',doc=article)
         self.account = self.get_ttxvn_account()
         self.proxies = self.get_proxies()
@@ -210,18 +265,27 @@ class TtxvnAction(BaseAction):
         news_headers = []
         if is_root == True:
             news_headers = self.get_news(limit)
-        elif is_root == False and send_queue == True:
-                pass
-        else:
-                pass
-
-        for header in news_headers:
-            if self.check_exists(header):
-                continue
-                #process here
+            existed_ids = self.get_exists(news_headers)
+            tmp_news = [header for header in news_headers if header["ArticleID"] not in existed_ids]
+            news_headers = tmp_news
         
-                    
-        # else:
-        #     # API call failed
-        #     print("Error:", response.status_code)
+        if is_root == False and send_queue == True:
+            self.crawl_article_content([document])
+            self.save_articles([document])
+        elif is_root == True and send_queue == False:
+            for header in news_headers:
+                header['PublishDate']=self.format_time(header['PublishDate'])
+                header['Created']=self.format_time(header['Created'])
+            self.crawl_article_content(news_headers)
+            self.save_articles(news_headers)
+        elif is_root == True and send_queue == True:
+            ttxvn_action = self.get_ttxvn_action(kwargs.get("pipeline_id"))
+            kwargs_leaf = kwargs.copy()
+            kwargs_leaf["list_proxy"] = [self.random_proxy(kwargs.get("list_proxy"))]
+            ttxvn_action["params"]["is_root"] = str(False)
+            for header in news_headers:
+                ttxvn_action["params"]["document"] = header
+                message = {"actions": [ttxvn_action], "input_val": "null", "kwargs": kwargs_leaf}
+                self.send_queue(message, kwargs.get("pipeline_id"), header.get('Url'))
+
         return "Succes: True"

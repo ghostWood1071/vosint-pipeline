@@ -21,6 +21,8 @@ from .ttxvn import TtxvnAction
 from models import MongoRepository
 from datetime import datetime
 from ..common import ActionInfo, ActionStatus
+from random import randint
+from datetime import timedelta
 
 def get_action_class(name: str):
     action_cls = (
@@ -92,6 +94,30 @@ class ForeachAction(BaseAction):
             ],
             z_index=6,
         )
+    
+    def random_proxy(self, proxy_list):
+        if str(proxy_list) == '[]' or str(proxy_list) == '[None]' or str(proxy_list) == 'None':
+            return []
+        proxy_index = randint(0, len(proxy_list)-1)
+        return proxy_list[proxy_index]
+
+    def get_check_time(self, day_range):
+        date_now = datetime.now()
+        end_time = datetime(date_now.year, date_now.month, date_now.day, 0, 0, 0, 0)
+        start_time = end_time - timedelta(day_range)
+        end_str = datetime.strftime(end_time, "%y/%m/%d %H:%M:%S")
+        start_str = datetime.strftime(start_time, "%y/%m/%d %H:%M:%S")
+        return (start_str, end_str)
+
+    def check_exists(self, url, days):
+       
+        existed_news, existed_count = MongoRepository().get_many(
+                        collection_name="News", filter_spec={"data:url": str(url), 
+                                                             "created_at": {"$gte": days[0]},
+                                                             "created_at": {"$gte": days[1]}}
+                    )
+        del existed_news
+        return existed_count > 0
 
     def exec_func(self, input_val=None, **kwargs):
         actions = self.params["actions"]
@@ -102,36 +128,37 @@ class ForeachAction(BaseAction):
         if input_val is not None:
             for val in input_val:
                 if kwargs["mode_test"] != True:
-                    check_url_exist = "0"
                     str_val = str(val)
-                    a, b = MongoRepository().get_many(
-                        collection_name="News", filter_spec={"data:url": str(str_val)}
-                    )
-                    print('bbbb',b)
-                    del a
-                    if str(b) != "0":
+                    day_range = 10 
+                    check_time = self.get_check_time(day_range)
+                    start_check = datetime.now()
+                    is_existed = self.check_exists(str_val,check_time)
+                    end_check = datetime.now()
+                    print(f"checking time: {(end_check-start_check).microseconds/1000} miliseconds")
+                    if is_existed:
                         print("url already exist")
                         continue
-                message = {"actions": actions, "input_val": val, "kwargs": kwargs}
                 if str(self.params["send_queue"]) == "True":
+                    kwargs_leaf = kwargs.copy()
+                    kwargs_leaf["list_proxy"] = [self.random_proxy(kwargs.get("list_proxy"))]
+                    message = {"actions": actions, "input_val": val, "kwargs": kwargs_leaf}
                     KafkaProducer_class().write("crawling_", message)
                     print('write to kafka ...')
-                    self.create_log(ActionStatus.INQUEUE, 'news transported to queue', kwargs["pipeline_id"])
+                    self.create_log(ActionStatus.INQUEUE, f'news {str(val)} transported to queue', kwargs["pipeline_id"])
                     if kwargs["mode_test"] == True:
                         break
                 else:
-                    start = datetime.now()
+                    
                     if flatten == False:
                         res.append(self.__run_actions(actions, val, **kwargs))
                     else:
                         res += self.__run_actions(actions, val, **kwargs)
                     if kwargs["mode_test"] == True:  
                         break
-                    end = datetime.now()
-                    print(end-start)
         return res
 
     def __run_actions(self, actions: list[dict], input_val, **kwargs):
+        start_lol = datetime.now()
         tmp_val = input_val
         
         for act in actions:

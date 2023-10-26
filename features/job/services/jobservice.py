@@ -35,7 +35,7 @@ def start_job(actions: list[dict], pipeline_id=None, source_favicon=None):
         storage_name="hbase",
         actions=actions,
         pipeline_id=pipeline_id,
-        source_favicon = source_favicon
+        source_favicon = source_favicon,
     )
     # print('aaaaaaaaaaaa',pipeline_id)
     return session.start()
@@ -56,7 +56,8 @@ class JobService:
             actions=pipeline_dto.schema,
             pipeline_id=id,
             mode_test=mode_test,
-            source_favicon=pipeline_dto.source_favicon
+            source_favicon=pipeline_dto.source_favicon,
+            
         )
         result = session.start()
         return result
@@ -109,13 +110,14 @@ class JobService:
             storage_name="hbase",
             # flag = 0,
             actions=pipeline_dto.schema,
+            
         )
         return session.start()  # pipeline_dto.schema #
 
     def test_only(self, id: str):
         pipeline_dto = self.__pipeline_service.get_pipeline_by_id(id)
         session = Session(
-            driver_name="playwright", storage_name="hbase", actions=pipeline_dto.schema
+            driver_name="playwright", storage_name="hbase", actions=pipeline_dto.schema,
         )
         return session.start()
 
