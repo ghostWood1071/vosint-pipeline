@@ -83,13 +83,15 @@ class PlaywrightDriver(BaseDriver):
             if locator.inner_html() == '':
                 raise e
         except Error as e:
-            if "ERR_PROXY_CONNECTION_FAILED" in e.message:
+            if "ERR_PROXY_CONNECTION_FAILED" in e.message or "TIMED_OUT" in e.message:
                 ip = ""
                 if self.proxy_server != None:
                     ip = self.proxy_server.get("server")
                 if proxy:
                     ip = f"{proxy.get('ip_address')}:{proxy.get('port')}"
                 raise Exception(f"cannot connect to proxy: {ip}")
+            else:
+                raise e
         return self.page
 
     def select(self, from_elem, by: str, expr: str):

@@ -14,6 +14,7 @@ import traceback
 from models.kafka_producer import KafkaProducer_class
 from ..common import ActionInfo, ActionStatus
 from typing import Any
+from random import randint
 class ElementNotFoundError(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
@@ -95,7 +96,7 @@ class TtxvnAction(BaseAction):
         try:
             result=datetime.strptime(time,"%Y-%m-%dT%H:%M:%S.%f")
         except Exception as e:
-            result = datetime.strptime(time,"%Y-%m-%dT%H:%M:%S.%f")
+            result = datetime.strptime(time,"%Y-%m-%dT%H:%M:%S")
         finally:
             if result == None:
                 result = datetime.now()
@@ -186,7 +187,6 @@ class TtxvnAction(BaseAction):
                 self.account.get('username'), 
                 self.account.get('password'))
         self.driver.add_cookies(self.account.get('cookies'))
-        proxy_index = 0
         for article in articles:
             try:
                 link  = 'https://news.vnanet.vn/FrontEnd/PostDetail.aspx?id='+ str(article.get("ID"))
@@ -204,12 +204,6 @@ class TtxvnAction(BaseAction):
                     article["content"] = str(content).replace(article["Title"], "", 1)
                 except ElementNotFoundError as e:
                     raise Exception("can not select element")
-            except TimeoutError as e:
-                proxy_index = self.get_active_proxy_index("https://news.vnanet.vn", self.proxies ,proxy_index)
-                if proxy_index < 0:
-                    raise Exception("There is no proxy work")
-                proxy = self.proxies[proxy_index]
-                self.driver.init_proxy(proxy)
             except Exception as e2:
                 raise e2
     
@@ -225,6 +219,12 @@ class TtxvnAction(BaseAction):
            raise Exception("Pipe line not found")
         return pipeline.get("schema")[1]
     
+    def random_proxy(self, proxy_list):
+        if str(proxy_list) == '[]' or str(proxy_list) == '[None]' or str(proxy_list) == 'None':
+            return []
+        proxy_index = randint(0, len(proxy_list)-1)
+        return proxy_list[proxy_index]
+
     def exec_func(self, input_val=None, **kwargs):
         if not input_val:
             raise InternalError(
@@ -280,11 +280,12 @@ class TtxvnAction(BaseAction):
             self.save_articles(news_headers)
         elif is_root == True and send_queue == True:
             ttxvn_action = self.get_ttxvn_action(kwargs.get("pipeline_id"))
+            kwargs_leaf = kwargs.copy()
+            kwargs_leaf["list_proxy"] = [self.random_proxy(kwargs.get("list_proxy"))]
             ttxvn_action["params"]["is_root"] = str(False)
             for header in news_headers:
                 ttxvn_action["params"]["document"] = header
-                message = {"actions": [ttxvn_action], "input_val": "null", "kwargs": kwargs}
-                self.send_queue(message, kwargs.get("pipeline_id"), ttxvn_action.get("url"))
-                break
+                message = {"actions": [ttxvn_action], "input_val": "null", "kwargs": kwargs_leaf}
+                self.send_queue(message, kwargs.get("pipeline_id"), header.get('Url'))
 
         return "Succes: True"

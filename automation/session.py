@@ -5,7 +5,14 @@ from random import randint
 
 class Session:
     def __init__(
-        self, driver_name: str, storage_name: str, actions: list[dict], pipeline_id=None,mode_test =None,source_favicon=None
+        self, 
+        driver_name: str, 
+        storage_name: str, 
+        actions: list[dict], 
+        pipeline_id=None,
+        mode_test =None,
+        source_favicon=None,
+        
     ):
         #print('proxy',str(actions[0]['params']['proxy_list'][0]))
         if str(actions[0]['params']['proxy_list']) == '[]' or str(actions[0]['params']['proxy_list']) == '[None]' or str(actions[0]['params']['proxy_list']) == 'None':

@@ -101,10 +101,10 @@ class ForeachAction(BaseAction):
         proxy_index = randint(0, len(proxy_list)-1)
         return proxy_list[proxy_index]
 
-    def get_check_time(self):
+    def get_check_time(self, day_range):
         date_now = datetime.now()
         end_time = datetime(date_now.year, date_now.month, date_now.day, 0, 0, 0, 0)
-        start_time = end_time - timedelta(7)
+        start_time = end_time - timedelta(day_range)
         end_str = datetime.strftime(end_time, "%y/%m/%d %H:%M:%S")
         start_str = datetime.strftime(start_time, "%y/%m/%d %H:%M:%S")
         return (start_str, end_str)
@@ -129,7 +129,8 @@ class ForeachAction(BaseAction):
             for val in input_val:
                 if kwargs["mode_test"] != True:
                     str_val = str(val)
-                    check_time = self.get_check_time()
+                    day_range = 10 
+                    check_time = self.get_check_time(day_range)
                     start_check = datetime.now()
                     is_existed = self.check_exists(str_val,check_time)
                     end_check = datetime.now()

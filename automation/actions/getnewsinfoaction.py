@@ -15,6 +15,7 @@ import time
 from models.kafka_producer import KafkaProducer_class
 from core.config import settings
 from datetime import datetime
+from ..common.actionstatus import ActionStatus
 
 my_es = My_ElasticSearch(
     host=[settings.ELASTIC_CONNECT], user="USER", password="PASS", verify_certs=False
@@ -140,7 +141,11 @@ class GetNewsInfoAction(BaseAction):
     
     def get_keywords(self, content:str, lang:str):
         try:
-            keywords = self.extract_keyword(content, lang)
+            if lang == "vi" or lang == "en":
+                keywords = self.extract_keyword(content, lang)
+            else:
+                trans_content = self.translate(content, "vi")
+                keywords = self.extract_keyword(trans_content, "vi")
         except Exception as e:
             keywords = []
         return keywords
@@ -350,7 +355,7 @@ class GetNewsInfoAction(BaseAction):
 
                 if kwargs["mode_test"] != True:
                     
-                    news_info["keywords"] = self.get_keywords(news_info['data:content'])
+                    news_info["keywords"] = self.get_keywords(news_info['data:content'], kwargs["source_language"])
                     #--------------------------------------------------------
                     news_info["data:class_chude"] = self.get_chude(news_info["data:content"])
                     #--------------------------------------------------------
@@ -359,7 +364,8 @@ class GetNewsInfoAction(BaseAction):
                     news_info["data:class_sacthai"] = self.get_sentiment(news_info["data:title"], news_info["data:content"])
 
             if news_info["data:content"] == "":
-                raise Exception("empty content")
+                self.create_log(ActionStatus.ERROR, "empty content", pipeline_id=kwargs.get("pipeline_id"))
+                # raise Exception("empty content")
 
             news_info["data:url"] = url
         if content_expr != "None" and content_expr != "":
