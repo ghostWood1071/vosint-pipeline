@@ -144,7 +144,7 @@ class GetNewsInfoAction(BaseAction):
             if lang == "vi" or lang == "en":
                 keywords = self.extract_keyword(content, lang)
             else:
-                trans_content = self.translate(content, "vi")
+                trans_content = self.translate(content, lang)
                 keywords = self.extract_keyword(trans_content, "vi")
         except Exception as e:
             keywords = []
@@ -216,7 +216,7 @@ class GetNewsInfoAction(BaseAction):
             if str(b) != "0":
                 print("url already exist")
                 check_url_exist = "1"
-                raise Exception("exist url")
+                raise Exception(f"{url} exist url")
 
         by = self.params["by"]
         title_expr = self.params["title_expr"]

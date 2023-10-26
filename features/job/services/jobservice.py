@@ -38,6 +38,7 @@ def start_job(actions: list[dict], pipeline_id=None, source_favicon=None):
         source_favicon = source_favicon,
     )
     # print('aaaaaaaaaaaa',pipeline_id)
+    MongoRepository().insert_one("test_log_call", {"pipeline_id": pipeline_id, "time": datetime.now()})
     return session.start()
 
 

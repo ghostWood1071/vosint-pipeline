@@ -377,7 +377,7 @@ class FeedAction(BaseAction):
         if lang == "vi" or lang == "en":
             keywords = self.extract_keywords(content, lang)
         else:
-            translated = self.translate("vi", content)
+            translated = self.translate(lang, content)
             keywords = self.extract_keywords(translated, "vi")
         return keywords
             
