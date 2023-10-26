@@ -1,22 +1,27 @@
 version: '3.6'
 services:
     vosint-pipeline-master:
-        image: vienai/vosint-pipeline-master:1.0.0
+        image: vienai/vosint-pipeline-master:1.0.2
         ports: 
-            - 6101:6101        
+            - 3690:6101        
         environment:
             - ENVIRONMENT=PRODUCTION
-            - MONGO_DETAILS=mongodb://admin:aivosint%400258@mong2.vosint.edu.vn:60002,mong3.vosint.edu.vn:60003/admin?replicaSet=replicaVosint&authSource=admin&authMechanism=SCRAM-SHA-256
+            - MONGO_DETAILS=mongodb://admin:aivosint%400258@mong5.vosint.edu.vn:60005,mong6.vosint.edu.vn:60006/admin?replicaSet=replicaVosint&authSource=admin&authMechanism=SCRAM-SHA-256
             - DATABASE_NAME=vosint_db
             - KAFKA_CONNECT=kafka-1:9092,kafka-2:9092
-            - ELASTIC_CONNECT=http://master1:9200,http://master2:9200
+            - ELASTIC_CONNECT=http://master5:9200,http://master6:9200
+            - EXTRACT_KEYWORD_API=http://vosint-extraction-hpc08:1510/api/extraction
+            - DOCUMENT_CLUSTERING_API=http://vosint-templateclassify-hpc08:1510/document_clustering
+            - SENTIMENT_API=http://vosint-sentiment-hpc08:1510/topic
+            - TRANSLATE_API=http://vosint-translate-hpc08:1510/api/translate
+            - KEYWORD_CLUSTERING_API=http://vosint-keywordclassify-hpc08:1510/document_keyword
         deploy:
             restart_policy:
                 condition: on-failure
             replicas: 1  
             placement:
                 constraints:
-                  - node.hostname==ds1-C246-WU4      
+                  - node.hostname==srv1      
         networks:
             - vosint3_system_network
 
