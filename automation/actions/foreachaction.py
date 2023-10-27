@@ -97,16 +97,35 @@ class ForeachAction(BaseAction):
     
     def random_proxy(self, proxy_list):
         if str(proxy_list) == '[]' or str(proxy_list) == '[None]' or str(proxy_list) == 'None':
-            return []
+            return 
         proxy_index = randint(0, len(proxy_list)-1)
         return proxy_list[proxy_index]
+    
+    def send_queue(self, message, pipeline_id, url, source_name):
+        try:
+            KafkaProducer_class().write("crawling_", message)
+            print('write to kafka ...')
+            MongoRepository().insert_one("queue", {"url": url, "pipeline": pipeline_id, "source": source_name})
+            self.create_log(ActionStatus.INQUEUE, f'news {str(url)} transported to queue', pipeline_id)
+        except Exception as e:
+            raise e
+
+    def check_queue(self, url, day_range):
+        item = MongoRepository().get_one("queue", 
+                                {
+                                   "url": url, 
+                                   "created_at": {"$gte": day_range[0]}, 
+                                   "created_at": {"$lte": day_range[1]} 
+                                })
+        return item != None
+        
 
     def get_check_time(self, day_range):
         date_now = datetime.now()
         end_time = datetime(date_now.year, date_now.month, date_now.day, 0, 0, 0, 0)
         start_time = end_time - timedelta(day_range)
-        end_str = datetime.strftime(end_time, "%y/%m/%d %H:%M:%S")
-        start_str = datetime.strftime(start_time, "%y/%m/%d %H:%M:%S")
+        end_str = datetime.strftime(end_time, "%Y/%m/%d 23:59:00")
+        start_str = datetime.strftime(start_time, "%Y/%m/%d %H:%M:%S")
         return (start_str, end_str)
 
     def check_exists(self, url, days):
@@ -114,7 +133,7 @@ class ForeachAction(BaseAction):
         existed_news, existed_count = MongoRepository().get_many(
                         collection_name="News", filter_spec={"data:url": str(url), 
                                                              "created_at": {"$gte": days[0]},
-                                                             "created_at": {"$gte": days[1]}}
+                                                             "created_at": {"$lte": days[1]}}
                     )
         del existed_news
         return existed_count > 0
@@ -126,13 +145,13 @@ class ForeachAction(BaseAction):
         # Run foreach actions
         res = []
         if input_val is not None:
+            day_range = 10 
+            check_time = self.get_check_time(day_range)
             for val in input_val:
                 if kwargs["mode_test"] != True:
-                    str_val = str(val)
-                    day_range = 10 
-                    check_time = self.get_check_time(day_range)
+                    data_url = str(val)
                     start_check = datetime.now()
-                    is_existed = self.check_exists(str_val,check_time)
+                    is_existed = self.check_exists(data_url,check_time)
                     end_check = datetime.now()
                     print(f"checking time: {(end_check-start_check).microseconds/1000} miliseconds")
                     if is_existed:
@@ -141,10 +160,16 @@ class ForeachAction(BaseAction):
                 if str(self.params["send_queue"]) == "True":
                     kwargs_leaf = kwargs.copy()
                     kwargs_leaf["list_proxy"] = [self.random_proxy(kwargs.get("list_proxy"))]
-                    message = {"actions": actions, "input_val": val, "kwargs": kwargs_leaf}
-                    KafkaProducer_class().write("crawling_", message)
-                    print('write to kafka ...')
-                    self.create_log(ActionStatus.INQUEUE, f'news {str(val)} transported to queue', kwargs["pipeline_id"])
+                    message = {"actions": actions, "input_val": data_url, "kwargs": kwargs_leaf}
+                    try:
+                        is_existed_inqeueu = self.check_queue(data_url, check_time)
+                        if not is_existed_inqeueu:
+                            self.send_queue(message, kwargs["pipeline_id"], data_url, kwargs["source_name"])
+                        else:
+                            print("url existed in queue")
+                    except Exception as e:
+                        print("url existed in queue")
+                        pass
                     if kwargs["mode_test"] == True:
                         break
                 else:

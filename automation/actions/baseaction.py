@@ -7,6 +7,7 @@ from models import MongoRepository
 from ..common import ActionInfo, ActionStatus
 from ..drivers import BaseDriver
 from ..storages import BaseStorage
+from datetime import datetime, timedelta
 
 
 class BaseAction:
@@ -78,7 +79,9 @@ class BaseAction:
                         "msg": [p_info.display_name, f"[{options}]"],
                     },
                 )
+    
 
+    
     @classmethod
     @abstractmethod
     def get_action_info(cls) -> ActionInfo:
@@ -93,7 +96,8 @@ class BaseAction:
         try:
             res = self.exec_func(input_val, **kwargs)
             history = self.return_str_status(ActionStatus.COMPLETED)
-            if f"{self.__class__.__name__}" == "GetNewsInfoAction" or f"{self.__class__.__name__}" == "FeedAction" or f"{self.__class__.__name__}" == "FacebookAction":
+            #if f"{self.__class__.__name__}" == "GetNewsInfoAction" or f"{self.__class__.__name__}" == "FeedAction" or f"{self.__class__.__name__}" == "FacebookAction":
+            if f"{self.__class__.__name__}" in ["GetNewsInfoAction", "FeedAction", "FacebookAction", "TtxvnAction"]:
                 his_log = {}
                 his_log["pipeline_id"] = kwargs["pipeline_id"]
                 his_log["actione"] = f"{self.__class__.__name__}"
@@ -143,6 +147,7 @@ class BaseAction:
                 MongoRepository().insert_one(collection_name="his_log", doc=his_log)
             except:
                 pass
+        
         
 
         # Wait if necessary
