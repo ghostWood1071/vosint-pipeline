@@ -6,7 +6,7 @@ from models import MongoRepository
 
 class DriverFactory:
     def __new__(cls, name: str , id_proxy = None):
-        if id_proxy != None:
+        if id_proxy != None and id_proxy!=[]:
             print(id_proxy)
             a = MongoRepository().get_one(collection_name="proxy",filter_spec={"_id":id_proxy})
             if name == "playwright":

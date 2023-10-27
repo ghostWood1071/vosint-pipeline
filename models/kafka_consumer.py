@@ -10,11 +10,50 @@ from automation.storages import StorageFactory
 from automation.pipeline import Pipeline_Kafka
 from core.config import settings
 import traceback
+from .mongorepository import MongoRepository
+import socket
+
 class KafkaConsumer_class:
     def __init__(self):
         self.preducer = KafkaProducer_class()
         #self.driver = DriverFactory('playwright')
         self.storage = StorageFactory('hbase')
+
+    def create_slave_activity(self, url, source):
+        try:
+            MongoRepository().insert_one("slave_activity", {
+            "id": socket.gethostname(),
+            "url": url,
+            "source": source 
+            })
+        except Exception as e:
+            print(e)
+    
+    def delete_slave_activity(self, url):
+        try:
+            MongoRepository().delete_one("slave_activity", {"url": url,})
+        except Exception as e:
+            print(e)
+
+    def get_url(self, msg):
+        url = None
+        try:
+           url = msg.get("actions")[0].get("url")
+        except:
+            pass
+        #ttxvn
+        try:
+           if url == None: 
+            url = msg.get("actions")[0].get("params").get("document").get("Url")
+        except:
+            pass
+        #
+        try:
+            if url == None: 
+                url = msg.get("input_val")
+        except:
+            pass
+        return url
 
     def poll(self,topic,group_ids = 'group_id'):
         result = ''
@@ -35,6 +74,9 @@ class KafkaConsumer_class:
                 message_data = message.value
                 # try:
                 try:
+                    kwargs = message_data.get("kwargs")
+                    url = self.get_url(message_data)
+                    self.create_slave_activity(url, kwargs.get("source_name"))
                     result = self.excute(message_data)
                 except Exception as e:
                     pass
@@ -45,6 +87,7 @@ class KafkaConsumer_class:
                     #         'offset': message.offset + 1
                     #     }
                     # })
+                    self.delete_slave_activity(url)
                     consumer.commit_async()
                 # except:
                 #     # Nếu xử lý lỗi, không commit offset

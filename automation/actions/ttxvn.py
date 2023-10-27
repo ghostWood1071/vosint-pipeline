@@ -15,6 +15,8 @@ from models.kafka_producer import KafkaProducer_class
 from ..common import ActionInfo, ActionStatus
 from typing import Any
 from random import randint
+from datetime import timedelta
+
 class ElementNotFoundError(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
@@ -114,10 +116,29 @@ class TtxvnAction(BaseAction):
             pass
         return existed_ids
 
-    def send_queue(self, message, pipeline_id, url): 
+    def get_check_time(self, day_range):
+        date_now = datetime.now()
+        end_time = datetime(date_now.year, date_now.month, date_now.day, 0, 0, 0, 0)
+        start_time = end_time - timedelta(day_range)
+        end_str = datetime.strftime(end_time, "%y/%m/%d 23:59:00")
+        start_str = datetime.strftime(start_time, "%y/%m/%d %H:%M:%S")
+        return (start_str, end_str)
+
+    def check_queue(self, url, day_range):
+        item = MongoRepository().get_one("queue", 
+                                {
+                                   "url": url, 
+                                   "created_at": {"$gte": day_range[0]}, 
+                                   "created_at": {"$lte": day_range[1]} 
+                                })
+        return item != None
+
+    def send_queue(self, message, pipeline_id, url, daycheck): 
         try:
-            KafkaProducer_class().write("crawling_", message)
-            self.create_log(ActionStatus.INQUEUE, f"news: {url} transported to queue", pipeline_id)
+            if not self.check_queue(url, daycheck):
+                KafkaProducer_class().write("crawling_", message)
+                MongoRepository().insert_one("queue", {"url": url, "pipeline": pipeline_id, "source": "TTXVN"})
+                self.create_log(ActionStatus.INQUEUE, f"news: {url} transported to queue", pipeline_id)
         except Exception as e:
             self.create_log(ActionStatus.ERROR, "send news to queue error", pipeline_id)
 
@@ -221,7 +242,7 @@ class TtxvnAction(BaseAction):
     
     def random_proxy(self, proxy_list):
         if str(proxy_list) == '[]' or str(proxy_list) == '[None]' or str(proxy_list) == 'None':
-            return []
+            return
         proxy_index = randint(0, len(proxy_list)-1)
         return proxy_list[proxy_index]
 
@@ -257,7 +278,7 @@ class TtxvnAction(BaseAction):
             data_type=Any
         )
 
-        
+        day_check = self.get_check_time(10)
         #MongoRepository().insert_one(collection_name='ttxvn',doc=article)
         self.account = self.get_ttxvn_account()
         self.proxies = self.get_proxies()
@@ -270,14 +291,21 @@ class TtxvnAction(BaseAction):
             news_headers = tmp_news
         
         if is_root == False and send_queue == True:
-            self.crawl_article_content([document])
-            self.save_articles([document])
+            try:
+                self.crawl_article_content([document])
+                self.save_articles([document])
+            except Exception as e:
+                raise e
+            finally:
+                MongoRepository().delete_one("queue", {"url": document.get("Url"), "created_at": {"$gte": day_check[0]}, "created_at": {"$lte":day_check[1]}})
+        
         elif is_root == True and send_queue == False:
             for header in news_headers:
                 header['PublishDate']=self.format_time(header['PublishDate'])
                 header['Created']=self.format_time(header['Created'])
             self.crawl_article_content(news_headers)
             self.save_articles(news_headers)
+
         elif is_root == True and send_queue == True:
             ttxvn_action = self.get_ttxvn_action(kwargs.get("pipeline_id"))
             kwargs_leaf = kwargs.copy()
@@ -286,6 +314,6 @@ class TtxvnAction(BaseAction):
             for header in news_headers:
                 ttxvn_action["params"]["document"] = header
                 message = {"actions": [ttxvn_action], "input_val": "null", "kwargs": kwargs_leaf}
-                self.send_queue(message, kwargs.get("pipeline_id"), header.get('Url'))
+                self.send_queue(message, kwargs.get("pipeline_id"), header.get('Url'), day_check)
 
         return "Succes: True"

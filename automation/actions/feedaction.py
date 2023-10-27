@@ -689,16 +689,25 @@ class FeedAction(BaseAction):
 
     def random_proxy(self, proxy_list):
         if str(proxy_list) == '[]' or str(proxy_list) == '[None]' or str(proxy_list) == 'None':
-            return []
+            return 
         proxy_index = randint(0, len(proxy_list)-1)
         return proxy_list[proxy_index]
+
+    def check_queue(self, url, day_range):
+        item = MongoRepository().get_one("queue", 
+                                {
+                                   "url": url, 
+                                   "created_at": {"$gte": day_range[0]}, 
+                                   "created_at": {"$lte": day_range[1]} 
+                                })
+        return item != None
 
     def get_check_time(self, day_range):
         date_now = datetime.now()
         end_time = datetime(date_now.year, date_now.month, date_now.day, 0, 0, 0, 0)
         start_time = end_time - timedelta(day_range)
-        end_str = datetime.strftime(end_time, "%y/%m/%d %H:%M:%S")
-        start_str = datetime.strftime(start_time, "%y/%m/%d %H:%M:%S")
+        end_str = datetime.strftime(end_time, "%Y/%m/%d 23:59:00")
+        start_str = datetime.strftime(start_time, "%Y/%m/%d %H:%M:%S")
         return (start_str, end_str)
 
     def check_exists(self, url, days):
@@ -707,11 +716,13 @@ class FeedAction(BaseAction):
                         filter_spec={
                             "data:url": str(url), 
                             "created_at": {"$gte": days[0]},
-                            "created_at": {"$gte": days[1]}
+                            "created_at": {"$lte": days[1]}
                         }
                     )
         del existed_news
         return existed_count > 0
+
+
 
     def exec_func(self, input_val=None, **kwargs):
         print(kwargs)
@@ -758,16 +769,29 @@ class FeedAction(BaseAction):
             kwargs_leaf = kwargs.copy()
             kwargs_leaf["list_proxy"] = [self.random_proxy(kwargs.get("list_proxy"))]
             feed_action["params"]["is_root"] = "False"
+            day_check = self.get_check_time(10)
             for data_feed in data_feeds:
                 feed_action["url"] = data_feed["link"]
                 feed_action["params"]["data_feed"] = data_feed
                 message = {"actions": [feed_action], "input_val": "null", "kwargs": kwargs_leaf}
-                KafkaProducer_class().write("crawling_", message)
-                self.create_log(ActionStatus.INQUEUE, f"{data_feed['link']} is transported to queue", kwargs["pipeline_id"])
+                try:
+                    if not self.check_queue(data_feed['link'], day_check):
+                        KafkaProducer_class().write("crawling_", message)
+                        MongoRepository().insert_one("queue", {"url": data_feed['link'], "pipeline": kwargs["pipeline_id"], "source": kwargs["source_name"]})
+                        self.create_log(ActionStatus.INQUEUE, f"{data_feed['link']} is transported to queue", kwargs["pipeline_id"])
+                except Exception as e:
+                    print(e)
 
         elif is_send_queue == "True" and not is_root: #process_news
-           news_info = self.process_news_data(self.params.get("data_feed"), kwargs, title_expr, author_expr, time_expr, content_expr, time_expr, by)
-           result_test = news_info.copy()
+            try:
+                news_info = self.process_news_data(self.params.get("data_feed"), kwargs, title_expr, author_expr, time_expr, content_expr, time_expr, by)
+                result_test = news_info.copy()
+            except Exception as e:
+                raise e
+            finally:
+                data_feed = self.params.get("data_feed")
+                MongoRepository().delete_one("queue", {"url": data_feed['link'], "created_at": {"$gte": day_check[0]}, "created_at": {"$lte":day_check[1]}})
+        
 
         if kwargs["mode_test"] == True:
             if result_test:
