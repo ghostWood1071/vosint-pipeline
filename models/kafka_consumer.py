@@ -60,7 +60,6 @@ class KafkaConsumer_class:
             proxy_id = message.get("kwargs").get("list_proxy")[0]
             self.driver = DriverFactory(name='playwright',id_proxy=proxy_id)
         except Exception as e:
-            traceback.print_exc()
             self.driver = DriverFactory('playwright')
         pipe_line = Pipeline_Kafka(driver=self.driver,storage=self.storage,actions=message['actions'],pipeline_id=message['kwargs']['pipeline_id'],mode_test=message['kwargs']['mode_test'],input_val = message['input_val'],kwargs=message['kwargs'])
         return pipe_line.run()
