@@ -8,7 +8,7 @@ from ..common import ActionInfo, ActionStatus
 from ..drivers import BaseDriver
 from ..storages import BaseStorage
 from datetime import datetime, timedelta
-
+from utils import get_time_string_zone
 
 class BaseAction:
     def __init__(self, driver: BaseDriver, storage: BaseStorage, **params):
@@ -156,6 +156,15 @@ class BaseAction:
     def exec_func(self, input_val=None, **kwargs):
         raise NotImplementedError()
     
+
+    def get_check_time(self, day_range):
+        date_now = datetime.now()
+        end_time = datetime(date_now.year, date_now.month, date_now.day, 0, 0, 0, 0)
+        start_time = end_time - timedelta(day_range)
+        end_str = get_time_string_zone(end_time, fmt="%Y/%m/%d 23:59:59")
+        start_str = datetime.strftime(start_time, "%Y/%m/%d %H:%M:%S")
+        return (start_str, end_str)
+
     def get_status(self) -> str:
         return self.__status
 
