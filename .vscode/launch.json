@@ -8,7 +8,7 @@
             "name": "Pipeline Debug",
             "type": "python",
             "request": "launch",
-            "program": "consumer.py",
+            "program": "main.py",
             "console": "integratedTerminal",
             "justMyCode": true
         }
