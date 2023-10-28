@@ -12,26 +12,27 @@ from core.config import settings
 import traceback
 from .mongorepository import MongoRepository
 import socket
-
+import time
 class KafkaConsumer_class:
     def __init__(self):
         self.preducer = KafkaProducer_class()
-        #self.driver = DriverFactory('playwright')
         self.storage = StorageFactory('hbase')
 
     def create_slave_activity(self, url, source):
         try:
-            MongoRepository().insert_one("slave_activity", {
+            activity_id = MongoRepository().insert_one("slave_activity", {
             "id": socket.gethostname(),
             "url": url,
             "source": source 
             })
+            return activity_id
         except Exception as e:
             print(e)
+            return None
     
-    def delete_slave_activity(self, url):
+    def delete_slave_activity(self, activity_id):
         try:
-            MongoRepository().delete_one("slave_activity", {"url": url,})
+            MongoRepository().delete_one("slave_activity", {"_id": activity_id})
         except Exception as e:
             print(e)
 
@@ -55,50 +56,44 @@ class KafkaConsumer_class:
             pass
         return url
 
+    def get_task(self, task_id):
+        task = MongoRepository().get_one("queue", {"_id": task_id})
+        return task
+
+    def delete_task(self, task_id):
+        MongoRepository().delete_one("queue", {"_id": task_id})
+
     def poll(self,topic,group_ids = 'group_id'):
         result = ''
         consumer = KafkaConsumer(
             topic,
             bootstrap_servers=settings.KAFKA_CONNECT.split(','),
             auto_offset_reset='earliest',
-            enable_auto_commit=False,  # Tắt tự động commit offset
+            enable_auto_commit=True,  # Tắt tự động commit offset
             group_id= group_ids,
             value_deserializer=lambda m: json.loads(m.decode('utf-8'))
         )
 
-
         messages = consumer.poll(10000,1)
+        consumer.close()
         for tp, messages in messages.items():
             for message in messages:
-                # Xử lý message
                 message_data = message.value
-                # try:
                 try:
-                    kwargs = message_data.get("kwargs")
-                    url = self.get_url(message_data)
-                    self.create_slave_activity(url, kwargs.get("source_name"))
+                    task = self.get_task(message_data.get("task_id"))
+                    url = task.get("url")
+                    source = task.get("source")
+                    activity_id = self.create_slave_activity(url, source)
                     result = self.excute(message_data)
                 except Exception as e:
                     pass
-                    #self.preducer.write(topic='crawling',message=message)
                 finally:
-                    # consumer.commit({
-                    #     tp: {
-                    #         'offset': message.offset + 1
-                    #     }
-                    # })
-                    self.delete_slave_activity(url)
-                    consumer.commit_async()
-                # except:
-                #     # Nếu xử lý lỗi, không commit offset
-                #     pass
+                    self.delete_task(message_data.get("task_id"))
+                    self.delete_slave_activity(activity_id)
         consumer.commit_async()
-        consumer.close()
         return result
     
     def excute(self,message):
-        #a = message['id_proxy']
-        #self.driver = DriverFactory(name='playwright',id_proxy=a)
         try:
             proxy_id = message.get("kwargs").get("list_proxy")[0]
             self.driver = DriverFactory(name='playwright',id_proxy=proxy_id)

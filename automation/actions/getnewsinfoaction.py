@@ -214,12 +214,6 @@ class GetNewsInfoAction(BaseAction):
         start_str = datetime.strftime(start_time, "%Y/%m/%d %H:%M:%S")
         return (start_str, end_str)
 
-    def delete_inqueue(self, url, day_check):
-        try:
-            MongoRepository().delete_one("queue", {"url": url, "created_at": {"$gte": day_check[0]}, "created_at": {"$lte":day_check[1]}})
-        except Exception as e:
-            print(e)
-
     
 
     def exec_func(self, input_val=None, **kwargs):
@@ -410,7 +404,7 @@ class GetNewsInfoAction(BaseAction):
                 if check_content and check_url_exist == "0":
                     try:
                         self.check_news_exists(url, day_check)
-                        self.delete_inqueue(url, day_check)
+                        
                         _id = MongoRepository().insert_one(
                             collection_name=collection_name, doc=news_info
                         )
@@ -428,7 +422,6 @@ class GetNewsInfoAction(BaseAction):
                             print("kafka write message error")
                     except Exception as e:
                         print("An error occurred while pushing data to the database!")
-                        self.delete_inqueue(url, day_check)
                     # elastícearch
                     try:
                         # doc_es = {}
@@ -557,8 +550,6 @@ class GetNewsInfoAction(BaseAction):
                             print("insert elastic search false")
                     except:
                         print("An error occurred while pushing data to the database!")
-                        self.delete_inqueue(url, day_check)
             return news_info
         except Exception as e:
-            self.delete_inqueue(url, day_check)
             raise e

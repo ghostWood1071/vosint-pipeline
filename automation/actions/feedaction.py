@@ -29,6 +29,7 @@ my_es = My_ElasticSearch(
 import re
 from urllib.request import ProxyHandler, HTTPPasswordMgrWithDefaultRealm, ProxyBasicAuthHandler
 from ..common import ActionInfo, ActionStatus
+from bson.objectid import ObjectId
 
 rss_version_2_0 = {
     "author": "author",
@@ -103,7 +104,6 @@ def feed(
 
         data_feeds.append(data_feed)
     return data_feeds
-
 
 class FeedAction(BaseAction):
     @classmethod
@@ -381,7 +381,6 @@ class FeedAction(BaseAction):
             keywords = self.extract_keywords(translated, "vi")
         return keywords
             
-
     def translate(self, language:str, content:str):
         result = ""
         try:
@@ -686,7 +685,6 @@ class FeedAction(BaseAction):
         if(len(object_ids)>0):
             MongoRepository().update_many('object', {"_id": {"$in": object_ids}}, {"$push": {"news_list": news_id}})
 
-
     def random_proxy(self, proxy_list):
         if str(proxy_list) == '[]' or str(proxy_list) == '[None]' or str(proxy_list) == 'None':
             return 
@@ -722,10 +720,18 @@ class FeedAction(BaseAction):
         del existed_news
         return existed_count > 0
 
-
-
+    def send_queue(self, message, data_feed, kwargs):
+        try:
+            task_id = MongoRepository().insert_one("queue", {"url": data_feed['link'], "pipeline": kwargs["pipeline_id"], "source": kwargs["source_name"]})
+            message["task_id"] = str(task_id)
+            KafkaProducer_class().write("crawling_", message)
+            self.create_log(ActionStatus.INQUEUE, f"{data_feed['link']} is transported to queue", kwargs["pipeline_id"])
+        except Exception as e:
+            if task_id != None:
+                MongoRepository().delete_one("queue", {"_id": task_id})
+            print(e)
+    
     def exec_func(self, input_val=None, **kwargs):
-        print(kwargs)
         if not input_val:
             raise InternalError(
                 ERROR_REQUIRED, params={"code": ["URL"], "msg": ["URL"]}
@@ -776,9 +782,7 @@ class FeedAction(BaseAction):
                 message = {"actions": [feed_action], "input_val": "null", "kwargs": kwargs_leaf}
                 try:
                     if not self.check_queue(data_feed['link'], day_check):
-                        KafkaProducer_class().write("crawling_", message)
-                        MongoRepository().insert_one("queue", {"url": data_feed['link'], "pipeline": kwargs["pipeline_id"], "source": kwargs["source_name"]})
-                        self.create_log(ActionStatus.INQUEUE, f"{data_feed['link']} is transported to queue", kwargs["pipeline_id"])
+                        self.send_queue(message, data_feed, kwargs)
                 except Exception as e:
                     print(e)
 
@@ -788,9 +792,7 @@ class FeedAction(BaseAction):
                 result_test = news_info.copy()
             except Exception as e:
                 raise e
-            finally:
-                data_feed = self.params.get("data_feed")
-                MongoRepository().delete_one("queue", {"url": data_feed['link'], "created_at": {"$gte": day_check[0]}, "created_at": {"$lte":day_check[1]}})
+                
         
 
         if kwargs["mode_test"] == True:
