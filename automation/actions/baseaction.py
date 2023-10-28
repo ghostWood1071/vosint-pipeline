@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 class BaseAction:
     def __init__(self, driver: BaseDriver, storage: BaseStorage, **params):
         self.set_status(ActionStatus.INITIALIZING)
-
+        self.task_id = None
         # Validate input driver
         if not driver:
             raise InternalError(
@@ -79,8 +79,6 @@ class BaseAction:
                         "msg": [p_info.display_name, f"[{options}]"],
                     },
                 )
-    
-
     
     @classmethod
     @abstractmethod

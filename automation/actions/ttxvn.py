@@ -136,10 +136,13 @@ class TtxvnAction(BaseAction):
     def send_queue(self, message, pipeline_id, url, daycheck): 
         try:
             if not self.check_queue(url, daycheck):
+                task_id = MongoRepository().insert_one("queue", {"url": url, "pipeline": pipeline_id, "source": "TTXVN"})
+                message["task_id"] = task_id
                 KafkaProducer_class().write("crawling_", message)
-                MongoRepository().insert_one("queue", {"url": url, "pipeline": pipeline_id, "source": "TTXVN"})
                 self.create_log(ActionStatus.INQUEUE, f"news: {url} transported to queue", pipeline_id)
         except Exception as e:
+            if task_id != None:
+                MongoRepository().delete_one("queue", {"_id": task_id})
             self.create_log(ActionStatus.ERROR, "send news to queue error", pipeline_id)
 
     def select(self, from_element, expr, by = "css="):
@@ -296,8 +299,6 @@ class TtxvnAction(BaseAction):
                 self.save_articles([document])
             except Exception as e:
                 raise e
-            finally:
-                MongoRepository().delete_one("queue", {"url": document.get("Url"), "created_at": {"$gte": day_check[0]}, "created_at": {"$lte":day_check[1]}})
         
         elif is_root == True and send_queue == False:
             for header in news_headers:

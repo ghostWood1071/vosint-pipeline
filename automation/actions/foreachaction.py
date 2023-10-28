@@ -23,6 +23,7 @@ from datetime import datetime
 from ..common import ActionInfo, ActionStatus
 from random import randint
 from datetime import timedelta
+from bson.objectid import ObjectId
 
 def get_action_class(name: str):
     action_cls = (
@@ -103,11 +104,14 @@ class ForeachAction(BaseAction):
     
     def send_queue(self, message, pipeline_id, url, source_name):
         try:
+            task_id = MongoRepository().insert_one("queue", {"url": url, "pipeline": pipeline_id, "source": source_name})
+            message["task_id"] = str(task_id)
             KafkaProducer_class().write("crawling_", message)
             print('write to kafka ...')
-            MongoRepository().insert_one("queue", {"url": url, "pipeline": pipeline_id, "source": source_name})
             self.create_log(ActionStatus.INQUEUE, f'news {str(url)} transported to queue', pipeline_id)
         except Exception as e:
+            if task_id != None:
+                MongoRepository().delete_one("queue", {"_id": task_id})
             raise e
 
     def check_queue(self, url, day_range):
@@ -119,7 +123,6 @@ class ForeachAction(BaseAction):
                                 })
         return item != None
         
-
     def get_check_time(self, day_range):
         date_now = datetime.now()
         end_time = datetime(date_now.year, date_now.month, date_now.day, 0, 0, 0, 0)
