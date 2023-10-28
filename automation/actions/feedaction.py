@@ -373,12 +373,12 @@ class FeedAction(BaseAction):
             return []
         return keywords
 
-    def get_keywords(self, content, lang):
+    def get_keywords(self, content, lang, content_translated):
         if lang == "vi" or lang == "en":
             keywords = self.extract_keywords(content, lang)
         else:
-            translated = self.translate(lang, content)
-            keywords = self.extract_keywords(translated, "vi")
+            # translated = self.translate(lang, content)
+            keywords = self.extract_keywords(content_translated, "vi")
         return keywords
             
     def translate(self, language:str, content:str):
@@ -637,9 +637,15 @@ class FeedAction(BaseAction):
             news_info["data:content"] = self.get_content(page, content_expr, by)
             if news_info["data:content"] != "":
                 check_content = True
-                news_info["data:content_translate"] = ""
+                if news_info["data:content"] not in ["None", None, ""]:
+                    try:
+                        news_info["data:content_translate"] = self.translate(kwargs.get("source_language"), news_info["data:content"])
+                    except Exception as e:
+                        print(e)
+                        news_info["data:content_translate"] = ""
                 if kwargs["mode_test"] != True:
-                    news_info["keywords"] = self.get_keywords(news_info["data:content"], kwargs["source_language"])
+                    translated_content = news_info["data:title_translate"] + " " + news_info["data:content_translate"]
+                    news_info["keywords"] = self.get_keywords(news_info["data:content"], kwargs["source_language"], translated_content)
                     #----------------------------------------------------------------------------        
                     news_info["data:class_chude"] = self.get_chude(news_info["data:content"])
                     #----------------------------------------------------------------------------
