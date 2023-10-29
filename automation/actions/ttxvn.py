@@ -18,6 +18,7 @@ from random import randint
 from datetime import timedelta
 from elasticsearch import helpers
 from db.elastic_main import My_ElasticSearch
+from core.config import settings
 
 class ElementNotFoundError(Exception):
     def __init__(self, *args: object) -> None:
@@ -137,7 +138,11 @@ class TtxvnAction(BaseAction):
         return doc_es
     
     def insert_multiple_doc_es(self, data):
-        my_es = My_ElasticSearch()
+        my_es = My_ElasticSearch(
+            host=settings.ELASTIC_CONNECT.split(','), 
+            user="USER", 
+            password="PASS", 
+            verify_certs=False)
         actions = []
         for row in data:
             doc_es = row.copy() 
