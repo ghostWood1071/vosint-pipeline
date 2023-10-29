@@ -118,6 +118,24 @@ class TtxvnAction(BaseAction):
             pass
         return existed_ids
 
+    def create_es_doc(self, doc_es):
+        try:
+            doc_es["id"] = str(doc_es["_id"])
+            doc_es.pop("_id", None)
+        except:
+            pass
+        try:
+            doc_es["PublishDate"] = (
+                str(doc_es["PublishDate"]).split(" ")[0] + "T00:00:00Z"
+            )
+        except:
+            pass
+        try:
+            doc_es["Created"] = str(doc_es["Created"]).split(" ")[0] + "T00:00:00Z"
+        except:
+            pass
+        return doc_es
+    
     def insert_multiple_doc_es(self, data):
         my_es = My_ElasticSearch()
         actions = []
