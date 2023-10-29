@@ -373,12 +373,12 @@ class FeedAction(BaseAction):
             return []
         return keywords
 
-    def get_keywords(self, content, lang):
+    def get_keywords(self, content, lang, content_translated):
         if lang == "vi" or lang == "en":
             keywords = self.extract_keywords(content, lang)
         else:
-            translated = self.translate(lang, content)
-            keywords = self.extract_keywords(translated, "vi")
+            # translated = self.translate(lang, content)
+            keywords = self.extract_keywords(content_translated, "vi")
         return keywords
             
     def translate(self, language:str, content:str):
@@ -637,9 +637,15 @@ class FeedAction(BaseAction):
             news_info["data:content"] = self.get_content(page, content_expr, by)
             if news_info["data:content"] != "":
                 check_content = True
-                news_info["data:content_translate"] = ""
+                if news_info["data:content"] not in ["None", None, ""]:
+                    try:
+                        news_info["data:content_translate"] = self.translate(kwargs.get("source_language"), news_info["data:content"])
+                    except Exception as e:
+                        print(e)
+                        news_info["data:content_translate"] = ""
                 if kwargs["mode_test"] != True:
-                    news_info["keywords"] = self.get_keywords(news_info["data:content"], kwargs["source_language"])
+                    translated_content = news_info["data:title_translate"] + " " + news_info["data:content_translate"]
+                    news_info["keywords"] = self.get_keywords(news_info["data:content"], kwargs["source_language"], translated_content)
                     #----------------------------------------------------------------------------        
                     news_info["data:class_chude"] = self.get_chude(news_info["data:content"])
                     #----------------------------------------------------------------------------
@@ -700,13 +706,6 @@ class FeedAction(BaseAction):
                                 })
         return item != None
 
-    def get_check_time(self, day_range):
-        date_now = datetime.now()
-        end_time = datetime(date_now.year, date_now.month, date_now.day, 0, 0, 0, 0)
-        start_time = end_time - timedelta(day_range)
-        end_str = datetime.strftime(end_time, "%Y/%m/%d 23:59:00")
-        start_str = datetime.strftime(start_time, "%Y/%m/%d %H:%M:%S")
-        return (start_str, end_str)
 
     def check_exists(self, url, days):
         existed_news, existed_count = MongoRepository().get_many(

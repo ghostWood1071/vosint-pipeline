@@ -116,13 +116,6 @@ class TtxvnAction(BaseAction):
             pass
         return existed_ids
 
-    def get_check_time(self, day_range):
-        date_now = datetime.now()
-        end_time = datetime(date_now.year, date_now.month, date_now.day, 0, 0, 0, 0)
-        start_time = end_time - timedelta(day_range)
-        end_str = datetime.strftime(end_time, "%y/%m/%d 23:59:00")
-        start_str = datetime.strftime(start_time, "%y/%m/%d %H:%M:%S")
-        return (start_str, end_str)
 
     def check_queue(self, url, day_range):
         item = MongoRepository().get_one("queue", 
@@ -295,6 +288,8 @@ class TtxvnAction(BaseAction):
         
         if is_root == False and send_queue == True:
             try:
+                document['PublishDate']=self.format_time(document['PublishDate'])
+                document['Created']=self.format_time(document['Created'])
                 self.crawl_article_content([document])
                 self.save_articles([document])
             except Exception as e:

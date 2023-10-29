@@ -140,13 +140,12 @@ class GetNewsInfoAction(BaseAction):
             keywords = []
         return keywords
     
-    def get_keywords(self, content:str, lang:str):
+    def get_keywords(self, content:str, lang:str, content_translate):
         try:
             if lang == "vi" or lang == "en":
                 keywords = self.extract_keyword(content, lang)
             else:
-                trans_content = self.translate(content, lang)
-                keywords = self.extract_keyword(trans_content, "vi")
+                keywords = self.extract_keyword(content_translate, "vi")
         except Exception as e:
             keywords = []
         return keywords
@@ -205,16 +204,6 @@ class GetNewsInfoAction(BaseAction):
             print("url already exist")
             exists = True
             raise Exception(f"{url} exist url")
-
-    def get_check_time(self, day_range):
-        date_now = datetime.now()
-        end_time = datetime(date_now.year, date_now.month, date_now.day, 0, 0, 0, 0)
-        start_time = end_time - timedelta(day_range)
-        end_str = datetime.strftime(end_time, "%Y/%m/%d 23:59:00")
-        start_str = datetime.strftime(start_time, "%Y/%m/%d %H:%M:%S")
-        return (start_str, end_str)
-
-    
 
     def exec_func(self, input_val=None, **kwargs):
         try: 
@@ -368,11 +357,16 @@ class GetNewsInfoAction(BaseAction):
                             news_info["data:content"] += self.driver.get_content(elems[i]) +"\n"
                     check_content = True
 
-                    news_info["data:content_translate"] = ""
+                    if news_info["data:content"] not in ["None", None, ""]:
+                        try:
+                            news_info["data:content_translate"] = self.translate(news_info["data:content"], kwargs.get("source_language"))
+                        except Exception as e:
+                            print(e)
+                            news_info["data:content_translate"] = ""
 
                     if kwargs["mode_test"] != True:
-                        
-                        news_info["keywords"] = self.get_keywords(news_info['data:content'], kwargs["source_language"])
+                        content_translated = news_info["data:content_translate"]+" "+news_info["data:content_translate"]
+                        news_info["keywords"] = self.get_keywords(news_info['data:content'], kwargs["source_language"],content_translated)
                         #--------------------------------------------------------
                         news_info["data:class_chude"] = self.get_chude(news_info["data:content"])
                         #--------------------------------------------------------
