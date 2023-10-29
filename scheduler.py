@@ -7,6 +7,8 @@ from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.jobstores.mongodb import MongoDBJobStore
 from common.internalerror import *
 from core.config import settings
+import pytz
+from datetime import datetime
 
 class Scheduler:
     __instance = None
@@ -33,8 +35,9 @@ class Scheduler:
             "collection": "jobstore"
         }
         jobstore = {"default": MongoDBJobStore(**mongo_config)}
+        self.timezone = "Asia/Ho_Chi_Minh"
         self.__bg_scheduler = BackgroundScheduler(
-            jobstores=jobstore
+            jobstores=jobstore, 
         )
         self.__bg_scheduler.start()
 
@@ -49,8 +52,10 @@ class Scheduler:
 
     def add_job(self, id: str, func: Callable, cron_expr: str, args: list = []):
         # print('args..............',args)
+        trigger = CronTrigger().from_crontab(cron_expr)
+        trigger.timezone = self.timezone
         self.__bg_scheduler.add_job(
-            id=id, func=func, args=args, trigger=CronTrigger.from_crontab(cron_expr)
+            id=id, func=func, args=args, trigger=trigger
         )
 
     def add_job_interval(self, job_id: str, func: Callable, interval: float, args: list = []):
