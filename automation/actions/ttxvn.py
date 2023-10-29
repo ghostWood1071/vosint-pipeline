@@ -226,7 +226,6 @@ class TtxvnAction(BaseAction):
     
     def save_articles(self, articles):
         try:
-            articles["PublishDate"] = datetime.strftime(articles["PublishDate"], "%Y%m%dT%H:%M:%S")
             MongoRepository().insert_many('ttxvn',articles)
         except Exception as e:
             raise e
@@ -289,6 +288,8 @@ class TtxvnAction(BaseAction):
         
         if is_root == False and send_queue == True:
             try:
+                document['PublishDate']=self.format_time(document['PublishDate'])
+                document['Created']=self.format_time(document['Created'])
                 self.crawl_article_content([document])
                 self.save_articles([document])
             except Exception as e:
