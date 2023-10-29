@@ -153,7 +153,7 @@ class TtxvnAction(BaseAction):
                 "_source": doc_es,
                 "_id": str(row["_id"])
             })
-        
+            
         try:
             helpers.bulk(my_es.es, actions)
             print("insert to elastic vosint_ttxvn")
@@ -269,7 +269,9 @@ class TtxvnAction(BaseAction):
     
     def save_articles(self, articles):
         try:
-            MongoRepository().insert_many('ttxvn',articles)
+            ids = MongoRepository().insert_many('ttxvn',articles)
+            for row_id in ids:
+                articles["_id"] = row_id
             self.insert_multiple_doc_es(articles)
         except Exception as e:
             raise e
