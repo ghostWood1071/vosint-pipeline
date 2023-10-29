@@ -265,8 +265,9 @@ class TtxvnAction(BaseAction):
     def save_articles(self, articles):
         try:
             ids = MongoRepository().insert_many('ttxvn',articles)
-            for row_id in ids:
-                articles["_id"] = row_id
+            id_dict = {index:row_id for index, row_id in enumerate(ids)}
+            for key,article in enumerate(articles):
+                article["_id"] = str(id_dict.get(key))
             self.insert_multiple_doc_es(articles)
         except Exception as e:
             raise e
