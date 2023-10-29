@@ -182,7 +182,7 @@ class JobService:
             })
         
         try:
-            helpers.bulk(my_es.es, actions)
+            # helpers.bulk(my_es.es, actions)
             # my_es.insert_document(
             #     index_name="vosint_ttxvn", id=doc_es["id"], document=doc_es
             # )

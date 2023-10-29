@@ -16,6 +16,8 @@ from ..common import ActionInfo, ActionStatus
 from typing import Any
 from random import randint
 from datetime import timedelta
+from elasticsearch import helpers
+from db.elastic_main import My_ElasticSearch
 
 class ElementNotFoundError(Exception):
     def __init__(self, *args: object) -> None:
@@ -116,6 +118,24 @@ class TtxvnAction(BaseAction):
             pass
         return existed_ids
 
+    def insert_multiple_doc_es(self, data):
+        my_es = My_ElasticSearch()
+        actions = []
+        for row in data:
+            doc_es = row.copy() 
+            doc_es = self.create_es_doc(doc_es)
+            actions.append({
+                "_op_type": "index",  # Specify the operation type (index, update, delete, etc.)
+                "_index": 'vosint_ttxvn',  # Specify the target index
+                "_source": doc_es,
+                "_id": str(row["_id"])
+            })
+        
+        try:
+            helpers.bulk(my_es.es, actions)
+            print("insert to elastic vosint_ttxvn")
+        except Exception as e:
+            print("insert to elasstic vosint_ttxvn error")
 
     def check_queue(self, url, day_range):
         item = MongoRepository().get_one("queue", 
@@ -227,6 +247,7 @@ class TtxvnAction(BaseAction):
     def save_articles(self, articles):
         try:
             MongoRepository().insert_many('ttxvn',articles)
+            self.insert_multiple_doc_es(articles)
         except Exception as e:
             raise e
     
