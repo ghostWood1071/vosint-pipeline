@@ -121,6 +121,11 @@ class TtxvnAction(BaseAction):
 
     def create_es_doc(self, doc_es):
         try:
+            doc_es.pop("created_at", None)
+            doc_es.pop("modified_at", None)
+        except:
+            pass
+        try:
             doc_es["id"] = str(doc_es["_id"])
             doc_es.pop("_id", None)
         except:
@@ -173,6 +178,7 @@ class TtxvnAction(BaseAction):
         try:
             if not self.check_queue(url, daycheck):
                 task_id = MongoRepository().insert_one("queue", {"url": url, "pipeline": pipeline_id, "source": "TTXVN"})
+                print(task_id)
                 message["task_id"] = task_id
                 KafkaProducer_class().write("crawling_", message)
                 self.create_log(ActionStatus.INQUEUE, f"news: {url} transported to queue", pipeline_id)
