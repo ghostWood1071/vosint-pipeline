@@ -9,6 +9,9 @@ from ..drivers import BaseDriver
 from ..storages import BaseStorage
 from datetime import datetime, timedelta
 from utils import get_time_string_zone
+import requests
+from core.config import settings
+import json
 
 class BaseAction:
     def __init__(self, driver: BaseDriver, storage: BaseStorage, **params):
@@ -160,6 +163,32 @@ class BaseAction:
     def exec_func(self, input_val=None, **kwargs):
         raise NotImplementedError()
     
+    def summarize(self, lang: str = "", title: str = "", paras: str = "", k: float = 0.4):
+        try:
+            request = requests.post(
+                settings.SUMMARIZE_API,
+                data=json.dumps(
+                    {
+                        "lang": lang,
+                        "title": title,
+                        "paras": paras,
+                        "k": k,
+                        "description": "",
+                    }
+                ),
+            )
+            if request.status_code != 200:
+                raise Exception("Summarize failed")
+            data = request.json()
+            return data
+        except:
+            return ""
+
+    def summarize_all_level(self, lang:str = "", title:str = "", paras:str= "", ks:list[float]=[0.2,0.4,0.6,0.8]):
+        result = {}
+        for k in ks:
+            result[str(k)] = self.summarize(lang, title, paras, k)
+        return result
 
     def get_check_time(self, day_range):
         date_now = datetime.now()
