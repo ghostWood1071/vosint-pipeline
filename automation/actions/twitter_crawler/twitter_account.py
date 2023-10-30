@@ -20,7 +20,7 @@ def get_article_data(article_raw:Locator, crawl_social_id):
         post_id = post_link.split('/')[3]
         user_id = post_link.split('/')[1]
         header = select(header_tag, 'div')[0].text_content()
-        content = select(article_raw, '//*[@data-testid="tweetText"]')[0].text_content()
+        content = select(article_raw, '//*[@data-testid="tweetText"]')[0].text_content().replace('Show more', '')
         footer_date = convert_utc_to_utcp7(select(article_raw, 'time')[0].get_attribute('datetime'))
         try:
             like = select(article_raw, '//*[@data-testid="like"]')[0].text_content()
@@ -43,17 +43,6 @@ def get_article_data(article_raw:Locator, crawl_social_id):
         sentiment = get_sentiment(header, content)
         keywords = get_keywords(content)
 
-        print('post_link: ', post_link)
-        print('header: ', header)
-        print('content: ', content)
-        print('time: ', footer_date)
-        print('footer_date: ', footer_date)
-        print('like: ', like)
-        print('comment: ', comment)
-        print('share: ', share)
-        print('post_id: ', post_id)
-        print('user_id: ', user_id)
-        print('keywords: ', keywords)
         data = {
             "post_link": post_link,
             "header": header,
