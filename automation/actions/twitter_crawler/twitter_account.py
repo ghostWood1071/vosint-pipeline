@@ -1,3 +1,4 @@
+import datetime
 import json
 import time
 import random
@@ -14,6 +15,18 @@ from dateutil import parser
 
 def get_article_data(article_raw:Locator, crawl_social_id):
     try:
+        # check pinned
+        social_context_tag = select(article_raw,'//*[@data-testid="socialContext"]')
+        if len(social_context_tag) != 0: is_pinned = social_context_tag[0].inner_text()== "Pinned"
+        else: is_pinned = False
+        # kiem tra tin co phai trong ngay khong
+        footer_date = convert_utc_to_utcp7(select(article_raw, 'time')[0].get_attribute('datetime'))
+        post_date = parser.parse(footer_date)
+        current_date = datetime.today().date()
+        if post_date.date() < current_date and not is_pinned:
+            return None
+
+
         header_tag = select(article_raw, '//*[@data-testid="User-Name"]/div[1]')[0]
 
         post_link = select(article_raw, '//a[time]')[0].get_attribute('href')
@@ -21,7 +34,8 @@ def get_article_data(article_raw:Locator, crawl_social_id):
         user_id = post_link.split('/')[1]
         header = select(header_tag, 'div')[0].text_content()
         content = select(article_raw, '//*[@data-testid="tweetText"]')[0].text_content().replace('Show more', '')
-        footer_date = convert_utc_to_utcp7(select(article_raw, 'time')[0].get_attribute('datetime'))
+
+
         try:
             like = select(article_raw, '//*[@data-testid="like"]')[0].text_content()
             like = process_like(like)
@@ -55,7 +69,8 @@ def get_article_data(article_raw:Locator, crawl_social_id):
             "user_id": user_id,
             "sentiment": sentiment,
             "keywords": keywords,
-            "id_social": crawl_social_id
+            "id_social": crawl_social_id,
+            "is_pinned": is_pinned
         }
         return data
 
@@ -70,11 +85,16 @@ def get_articles(page:Page, got_article:int, crawl_social_id)->bool:
     for article in subset_articles:
         try:
             data = get_article_data(article, crawl_social_id)
+            if data is None:
+                print("is old news")
+                return 0
             success = check_and_insert_to_db(data)
-            if not success:
+            if not success and not data["is_pinned"]:
                 print("is_existed")
                 return 0
-        except:
+            else:
+                return len(articles) + 1
+        except Exception as e:
             continue
     return len(articles)
 
