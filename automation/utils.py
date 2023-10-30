@@ -6,10 +6,12 @@ def get_time_now_string_y_m_d(
     tz: str = "Asia/Ho_Chi_Minh", fmt: str = "%Y/%m/%d"
 ) -> str:
     return datetime.now(pytz.timezone(tz)).strftime(fmt)
+
 def get_time_now_string_y_m_now(
     tz: str = "Asia/Ho_Chi_Minh", fmt: str = "%Y/%m/%d"
 ) -> str:
     return datetime.strptime(str(get_time_now_string_y_m_d()), "%Y/%m/%d")
+
 
 def get_action_infos() -> list[dict]:
     action_classes = BaseAction.__subclasses__()

@@ -7,12 +7,13 @@ from models import MongoRepository
 from ..common import ActionInfo, ActionStatus
 from ..drivers import BaseDriver
 from ..storages import BaseStorage
-
+from datetime import datetime, timedelta
+from utils import get_time_string_zone
 
 class BaseAction:
     def __init__(self, driver: BaseDriver, storage: BaseStorage, **params):
         self.set_status(ActionStatus.INITIALIZING)
-
+        self.task_id = None
         # Validate input driver
         if not driver:
             raise InternalError(
@@ -78,7 +79,7 @@ class BaseAction:
                         "msg": [p_info.display_name, f"[{options}]"],
                     },
                 )
-
+    
     @classmethod
     @abstractmethod
     def get_action_info(cls) -> ActionInfo:
@@ -93,16 +94,17 @@ class BaseAction:
         try:
             res = self.exec_func(input_val, **kwargs)
             history = self.return_str_status(ActionStatus.COMPLETED)
-            if f"{self.__class__.__name__}" == "GetNewsInfoAction" or f"{self.__class__.__name__}" == "FeedAction" or f"{self.__class__.__name__}" == "FacebookAction":
+            #if f"{self.__class__.__name__}" == "GetNewsInfoAction" or f"{self.__class__.__name__}" == "FeedAction" or f"{self.__class__.__name__}" == "FacebookAction":
+            if f"{self.__class__.__name__}" in ["GetNewsInfoAction", "FeedAction", "FacebookAction", "TtxvnAction"]:
                 his_log = {}
                 his_log["pipeline_id"] = kwargs["pipeline_id"]
                 his_log["actione"] = f"{self.__class__.__name__}"
                 his_log["log"] = history
                 # his_log["link"] = "" if type(input_val) != str else input_val
                 try:
-                    url = str(input_val)
+                    url = None
                     try:
-                        url = url.replace("<Page url='", "").replace("'>", "")
+                        url = self.driver.get_current_url()
                     except:
                         pass
                     his_log["link"] = url
@@ -121,9 +123,9 @@ class BaseAction:
             his_log["actione"] = f"{self.__class__.__name__}"
             his_log["log"] = history
             try:
-                url = str(input_val)
+                url = None
                 try:
-                    url = url.replace("<Page url='", "").replace("'>", "")
+                    url = input_val.get_current_url()
                 except:
                     pass
                 his_log["link"] = url
@@ -140,6 +142,7 @@ class BaseAction:
             except:
                 pass
         
+        
 
         # Wait if necessary
         if "wait" in self.params and self.params["wait"]:
@@ -152,6 +155,15 @@ class BaseAction:
     @abstractmethod
     def exec_func(self, input_val=None, **kwargs):
         raise NotImplementedError()
+    
+
+    def get_check_time(self, day_range):
+        date_now = datetime.now()
+        end_time = datetime(date_now.year, date_now.month, date_now.day, 0, 0, 0, 0)
+        start_time = end_time - timedelta(day_range)
+        end_str = get_time_string_zone(end_time, fmt="%Y/%m/%d 23:59:59")
+        start_str = datetime.strftime(start_time, "%Y/%m/%d %H:%M:%S")
+        return (start_str, end_str)
 
     def get_status(self) -> str:
         return self.__status
@@ -164,3 +176,25 @@ class BaseAction:
     def return_str_status(self, status: str):
         return status
     
+    def create_log(self, action_status, content, pipeline_id):
+        history = self.return_str_status(action_status)
+        his_log = {}
+        his_log["pipeline_id"] = pipeline_id
+        his_log["actione"] = f"{self.__class__.__name__}"
+        his_log["log"] = history
+        # his_log["link"] = "" if type(input_val) != str else input_val
+        try:
+            url = None
+            try:
+                url = self.driver.get_current_url()
+            except:
+                pass
+            his_log["link"] = url
+        except:
+            pass
+        #his_log["id_schema"] = self.params['id_schema']
+        his_log['message_error'] = content
+        try:
+            MongoRepository().insert_one(collection_name="his_log", doc=his_log)
+        except:
+            pass

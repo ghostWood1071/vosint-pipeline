@@ -27,3 +27,9 @@ def norm_text(text: str) -> str:
     text_lower = text.lower()
     text_removed_accent = unidecode.unidecode(text_lower)
     return text_removed_accent
+
+def get_time_string_zone(
+    date: datetime, tz: str = "Asia/Ho_Chi_Minh", fmt: str = "%Y/%m/%d"
+):
+    zone = pytz.timezone(tz)
+    return zone.localize(date).strftime(fmt)
