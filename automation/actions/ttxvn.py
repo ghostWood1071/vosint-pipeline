@@ -164,8 +164,10 @@ class TtxvnAction(BaseAction):
         item = MongoRepository().get_one("queue", 
                                 {
                                    "url": url, 
-                                   "created_at": {"$gte": day_range[0]}, 
-                                   "created_at": {"$lte": day_range[1]} 
+                                   "$and": [
+                                       {"created_at": {"$gte": day_range[0]}}, 
+                                       {"created_at": {"$lte": day_range[1]}},
+                                   ]
                                 })
         return item != None
 

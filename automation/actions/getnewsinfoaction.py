@@ -197,7 +197,12 @@ class GetNewsInfoAction(BaseAction):
     def check_news_exists(self, url, day_check):
         exists = False
         a, b = MongoRepository().get_many(
-            collection_name="News", filter_spec={"data:url": url, "created_at": {"$gte": day_check[0]}, "created_at": {"$lte": day_check[1]}}
+            collection_name="News", filter_spec={"data:url": url, 
+                                                 "$and": [
+                                                        {"created_at": {"$gte": day_check[0]}}, 
+                                                        {"created_at": {"$lte": day_check[1]}}
+                                                    ]
+                                                 }
         )
         del a
         if str(b) != "0":

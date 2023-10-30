@@ -118,8 +118,10 @@ class ForeachAction(BaseAction):
         item = MongoRepository().get_one("queue", 
                                 {
                                    "url": url, 
-                                   "created_at": {"$gte": day_range[0]}, 
-                                   "created_at": {"$lte": day_range[1]} 
+                                   "$and": [
+                                    {"created_at": {"$gte": day_range[0]}}, 
+                                    {"created_at": {"$lte": day_range[1]}}
+                                   ]
                                 })
         return item != None
         
@@ -128,9 +130,11 @@ class ForeachAction(BaseAction):
     def check_exists(self, url, days):
        
         existed_news, existed_count = MongoRepository().get_many(
-                        collection_name="News", filter_spec={"data:url": str(url), 
-                                                             "created_at": {"$gte": days[0]},
-                                                             "created_at": {"$lte": days[1]}}
+                        collection_name="News", filter_spec={"data:url": str(url),
+                                                             "$and": [ 
+                                                                {"created_at": {"$gte": days[0]}},
+                                                                {"created_at": {"$lte": days[1]}}
+                                                             ]}
                     )
         del existed_news
         return existed_count > 0
