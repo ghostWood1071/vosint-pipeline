@@ -24,6 +24,6 @@ COPY . .
 
 EXPOSE 6101
 #master
-CMD [ "python","main.py"]
+#CMD [ "python","main.py"]
 #slave
-# CMD [ "python","consumer.py"]
+CMD [ "python","consumer.py"]
