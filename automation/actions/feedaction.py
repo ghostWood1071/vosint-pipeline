@@ -701,8 +701,10 @@ class FeedAction(BaseAction):
         item = MongoRepository().get_one("queue", 
                                 {
                                    "url": url, 
-                                   "created_at": {"$gte": day_range[0]}, 
-                                   "created_at": {"$lte": day_range[1]} 
+                                   "$and": [
+                                        {"created_at": {"$gte": day_range[0]}}, 
+                                        {"created_at": {"$lte": day_range[1]}}
+                                   ]
                                 })
         return item != None
 
@@ -712,8 +714,10 @@ class FeedAction(BaseAction):
                         collection_name="News", 
                         filter_spec={
                             "data:url": str(url), 
-                            "created_at": {"$gte": days[0]},
-                            "created_at": {"$lte": days[1]}
+                            "$and": [
+                                {"created_at": {"$gte": days[0]}},
+                                {"created_at": {"$lte": days[1]}}
+                            ]
                         }
                     )
         del existed_news
