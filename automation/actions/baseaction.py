@@ -175,7 +175,7 @@ class BaseAction:
             )
             if request.status_code != 200:
                 raise Exception("Summarize failed")
-            data = request.json()
+            data = str(request.json().get("Extractive summarization"))
             return data
         except:
             return ""
