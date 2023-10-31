@@ -18,7 +18,7 @@ class MongoRepository:
 
     def __connect(self):
         self.__client = pymongo.MongoClient(
-            host=self.__host#,
+            host=self.__host,
             #port=self.__port,
             #username=self.__username,
             #password=self.__passwd,
