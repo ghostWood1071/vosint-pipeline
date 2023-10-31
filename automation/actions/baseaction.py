@@ -183,7 +183,7 @@ class BaseAction:
     def summarize_all_level(self, lang:str = "", title:str = "", paras:str= "", ks:list[float]=[0.2,0.4,0.6,0.8]):
         result = {}
         for k in ks:
-            result[str(k)] = self.summarize(lang, title, paras, k)
+            result[f"s{k*100}"] = self.summarize(lang, title, paras, k)
         return result
 
     def get_check_time(self, day_range):
