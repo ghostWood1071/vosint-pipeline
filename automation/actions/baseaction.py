@@ -179,7 +179,7 @@ class BaseAction:
             )
             if request.status_code != 200:
                 raise Exception("Summarize failed")
-            data = request.json()
+            data = str(request.json().get("Extractive summarization"))
             return data
         except:
             return ""
@@ -187,7 +187,7 @@ class BaseAction:
     def summarize_all_level(self, lang:str = "", title:str = "", paras:str= "", ks:list[float]=[0.2,0.4,0.6,0.8]):
         result = {}
         for k in ks:
-            result[f"s{k*100}"] = self.summarize(lang, title, paras, k)
+            result[f"s{int(k*100)}"] = self.summarize(lang, title, paras, k)
         return result
 
     def get_check_time(self, day_range):
