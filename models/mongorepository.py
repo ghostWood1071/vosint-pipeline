@@ -24,7 +24,7 @@ class MongoRepository:
             username=self.__username,
             password=self.__passwd,
         )
-        self.__db = self.__client[self.__db_name]
+        self.__db = self.__client[self.__db_name] 
 
     def __close(self):
         if self.__client is not None and self.__db is not None:
