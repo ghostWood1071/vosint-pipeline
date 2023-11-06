@@ -644,7 +644,7 @@ class FeedAction(BaseAction):
             news_info["pub_date"] = get_time_now_string_y_m_now()
             #go to link
             page = self.driver.goto(url=data_feed["link"])
-            check_content = False
+            # check_content = False
             # get title
             news_info["data:title"] = self.get_title(page, data_feed["title"], title_expr, by)
             #translate title
@@ -660,7 +660,7 @@ class FeedAction(BaseAction):
             #get_content -------------------------------------------------------
             news_info["data:content"] = self.get_content(page, content_expr, by)
             if news_info["data:content"] != "":
-                check_content = True
+                # check_content = True
                 if news_info["data:content"] not in ["None", None, ""]:
                     try:
                         news_info["data:content_translate"] = self.translate(kwargs.get("source_language"), news_info["data:content"])
@@ -688,7 +688,7 @@ class FeedAction(BaseAction):
             if content_expr != "None" and content_expr != "":
                 news_info["data:html"] = self.get_html_content(page, content_expr, by)
             if kwargs["mode_test"] != True:
-                if check_content and check_url_exist == False:
+                if check_url_exist == False:
                     #insert to mongo
                     self.insert_mongo(collection_name, news_info)
                     # elastícearch
