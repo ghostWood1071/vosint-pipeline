@@ -195,7 +195,7 @@ services:
             - 7181:6101        
         environment:           
             - ENVIRONMENT=PRODUCTION
-            - mong_host=mongodb://admin:aivosint%400258@mong7.vosint.edu.vn:60007?/adminauthSource=admin&authMechanism=SCRAM-SHA-256
+            - mong_host=mongodb://admin:aivosint%400258@mong7.vosint.edu.vn:60007/admin?authSource=admin&authMechanism=SCRAM-SHA-256
             - MONGO_DETAILS=mongodb://admin:aivosint%400258@mong7.vosint.edu.vn:60007/admin?authSource=admin&authMechanism=SCRAM-SHA-256
             - DATABASE_NAME=vosint_db
             - KAFKA_CONNECT=kafka-1:9092,kafka-2:9092
