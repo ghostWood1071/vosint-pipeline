@@ -251,7 +251,7 @@ class GetNewsInfoAction(BaseAction):
             news_info["pub_date"] = get_time_now_string_y_m_now()
 
             page = input_val
-            check_content = False
+            # check_content = False
             if title_expr != "None" and title_expr != "":
                 elems = self.driver.select(page, by, title_expr)
                 if len(elems) > 0:
@@ -360,7 +360,7 @@ class GetNewsInfoAction(BaseAction):
                         news_info["data:content"] = ""
                         for i in range(len(elems)):
                             news_info["data:content"] += self.driver.get_content(elems[i]) +"\n"
-                    check_content = True
+                    # check_content = True
 
                     if news_info["data:content"] not in ["None", None, ""]:
                         try:
@@ -405,7 +405,7 @@ class GetNewsInfoAction(BaseAction):
                         news_info["data:html"] += self.driver.get_html(elems[i])
 
             if kwargs["mode_test"] != True:
-                if check_content and check_url_exist == "0":
+                if  check_url_exist == "0":
                     try:
                         self.check_news_exists(url, day_check)
                         

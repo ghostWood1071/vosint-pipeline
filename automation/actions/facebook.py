@@ -54,7 +54,7 @@ class FacebookAction(BaseAction):
 
     def get_facebook_data(self, account:Dict[str, Any], source_account:Dict[str, Any]):
         try:
-            cookies = json.loads(source_account.get("cookie"))
+            cookies = json.loads(source_account.get("cookie")) if source_account.get("cookie") not in [" "] else []
             username = source_account.get("username")
             password = source_account.get("password")
             source_account_id = str(source_account.get("_id"))
@@ -103,13 +103,13 @@ class FacebookAction(BaseAction):
         collection_name = "facebook"
         time.sleep(2)
         try:
-            source_account = self.get_source_account(self.params['account'])
+            source_account = self.get_source_account(self.params['fb'])
             followed_users =  self.get_user_follow(source_account.get("users_follow"))
             for account in followed_users:
                 try:
                     self.get_facebook_data(account, source_account)
                     print("______________________________________________________________")
-                    source_account = self.get_source_account(self.params['account'])
+                    source_account = self.get_source_account(self.params['fb'])
                     # data.extend(fb_data)
                 except Exception as e:
                     print(e)
