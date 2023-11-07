@@ -17,7 +17,6 @@ class MongoRepository:
         self.__db = None
 
     def __connect(self):
-      
         self.__client = pymongo.MongoClient(
             host=self.__host,
             port=self.__port,
