@@ -29,7 +29,7 @@ class TiktokAction(BaseAction):
             param_infos=[
                 ParamInfo(
                     name="link_person",
-                    display_name="Link đối tượng theo dõi",
+                    display_name="cookie",
                     val_type="str",
                     default_val="",
                     validators=["required_"],
