@@ -56,6 +56,7 @@ class Settings:
     #elastic
     ELASTIC_CONNECT: str = ""
   
+    SUMMARIZE_API:str = ""
     EXTRACT_KEYWORD_API: str = ""
     DOCUMENT_CLUSTERING_API: str = ""
     KEYWORD_CLUSTERING_API: str = ""

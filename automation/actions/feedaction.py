@@ -653,6 +653,8 @@ class FeedAction(BaseAction):
                     #--------------------------------------------------------------------------------    
                     news_info["data:class_sacthai"] = self.get_sentiment(news_info["data:content"], news_info["data:title"])
                     #-----------------------------------------------------------------------------
+                    news_info["data:summaries"] = self.summarize_all_level(kwargs.get("source_language"), news_info["data:title"], news_info["data:content"])
+                    #-----------------------------------------------------------------------------
             if news_info["data:content"] == "":
                 self.create_log(ActionStatus.ERROR, "empty content", pipeline_id=kwargs.get("pipeline_id"))
             #-----------------------------------------------------------------------
@@ -707,7 +709,6 @@ class FeedAction(BaseAction):
                                    ]
                                 })
         return item != None
-
 
     def check_exists(self, url, days):
         existed_news, existed_count = MongoRepository().get_many(
