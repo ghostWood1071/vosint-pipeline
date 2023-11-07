@@ -29,15 +29,8 @@ class TwitterAction(BaseAction):
             readme="twitter",
             param_infos=[
                 ParamInfo(
-                    name="link_person",
-                    display_name="Link đối tượng theo dõi",
-                    val_type="str",
-                    default_val="",
-                    validators=["required_"],
-                ),
-                ParamInfo(
                     name="type",
-                    display_name="Đối tượng",
+                    display_name="Tài khoản lấy tin",
                     val_type="select",
                     default_val="",
                     options = ['account'],
