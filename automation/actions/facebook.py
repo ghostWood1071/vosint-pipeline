@@ -59,7 +59,7 @@ class FacebookAction(BaseAction):
             password = source_account.get("password")
             source_account_id = str(source_account.get("_id"))
             link = account.get("account_link")
-            # link = re.sub("www\.", "m.", link)
+            link = re.sub("www\.", "m.", link)
             if str(account.get("social_type")) == "Object":
                 datas = fb_canhan(
                         browser=self.driver.get_driver(), 

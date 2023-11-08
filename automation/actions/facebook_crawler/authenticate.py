@@ -10,6 +10,7 @@ import traceback
 
 def login(page, account, password):
     print("login ....")
+    page.goto("https://m.facebook.com/login")
     page.type("input#m_login_email", account)
     page.type('input#m_login_password', password)
     page.press('input#m_login_password', "Enter")
