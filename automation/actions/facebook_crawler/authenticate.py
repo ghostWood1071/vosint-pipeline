@@ -28,6 +28,8 @@ def authenticate(browser:Browser, cookies:Any, link, account, password, source_a
     
     page.goto(link)
     try:
+        print(page.title())
+        print(page.url)
         if page.title() in ["Log in to Facebook | Facebook", "Facebook – log in or sign up"] or "login" in page.url:
             print("need to login")
             cookies = login(page, account, password)
