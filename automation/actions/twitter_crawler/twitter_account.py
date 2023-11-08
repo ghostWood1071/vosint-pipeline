@@ -23,6 +23,7 @@ def get_article_data(article_raw:Locator, crawl_social_id, post_links):
         user_id = post_link.split('/')[1]
         header = select(header_tag, 'div')[0].text_content()
         content = select(article_raw, '//*[@data-testid="tweetText"]')[0].text_content().replace('Show more', '')
+        lang = select(article_raw, '//*[@data-testid="tweetText"]')[0].get_attribute('lang')
         try:
             like = select(article_raw, '//*[@data-testid="like"]')[0].text_content()
             like = process_like(like)
@@ -41,8 +42,17 @@ def get_article_data(article_raw:Locator, crawl_social_id, post_links):
         except:
             share = 0
 
-        sentiment = get_sentiment(header, content)
-        keywords = get_keywords(content)
+        try:
+            sentiment = get_sentiment(header, content)
+        except Exception as e:
+            sentiment = "0"
+            print('Lỗi khi gọi API sentiment: ', e)
+
+        try:
+            keywords = get_keywords(content, lang)
+        except Exception as e:
+            keywords = []
+            print('Lỗi khi gọi API get keywords', e)
 
         data = {
             "post_link": post_link,
