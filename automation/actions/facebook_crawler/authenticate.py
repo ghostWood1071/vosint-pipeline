@@ -6,6 +6,7 @@ from playwright.sync_api import sync_playwright, Page, Browser
 from typing import *
 from models.mongorepository import MongoRepository
 import json
+import traceback
 
 def login(page, account, password):
     page.type("input#m_login_email", account)
@@ -30,9 +31,9 @@ def authenticate(browser:Browser, cookies:Any, link, account, password, source_a
             cookies = login(page, account, password)
             context.clear_cookies()
             context.add_cookies(cookies)
-            page = context.new_page()
+            # page = context.new_page()
             page.goto(link)
             MongoRepository().update_one('socials', {"_id": source_acc_id, "cookie":json.dumps(cookies)})
     except Exception as e:
-        pass
+        raise e
     return page
