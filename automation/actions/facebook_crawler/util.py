@@ -21,13 +21,15 @@ def scroll_loop(action: Any, max_news:int ,**kwargs:Dict[str, Any]):
             break
         else:
             if real_got >= max_news:
+                print("i'm break")
                 break
             got_quantity = real_got
 
 def check_and_insert_to_db(data):
     is_exists  = MongoRepository().get_one("facebook", {"post_id": data.get("post_id")})
     if is_exists == None:
-        MongoRepository().insert_one("facebook", data)
+        post_id = MongoRepository().insert_one("facebook", data)
+        print("inserted: ", post_id)
         return True
     return False
 

@@ -9,10 +9,11 @@ import json
 import traceback
 
 def login(page, account, password):
+    print("login ....")
     page.type("input#m_login_email", account)
     page.type('input#m_login_password', password)
     page.press('input#m_login_password', "Enter")
-    time.sleep(5)
+    time.sleep(15)
     return page.context.cookies()
 
 def authenticate(browser:Browser, cookies:Any, link, account, password, source_acc_id):
@@ -28,10 +29,11 @@ def authenticate(browser:Browser, cookies:Any, link, account, password, source_a
     page.goto(link)
     try:
         if page.title() in ["Log in to Facebook | Facebook", "Facebook – log in or sign up"] or "login" in page.url:
+            print("need to login")
             cookies = login(page, account, password)
+            print("cookies after login: ", cookies)
             context.clear_cookies()
             context.add_cookies(cookies)
-            # page = context.new_page()
             page.goto(link)
             MongoRepository().update_one('socials', {"_id": source_acc_id, "cookie":json.dumps(cookies)})
     except Exception as e:
