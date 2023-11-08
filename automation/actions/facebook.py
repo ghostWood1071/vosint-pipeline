@@ -145,7 +145,6 @@ class FacebookAction(BaseAction):
                     self.get_facebook_data(account, source_account, max_news)
                     print("______________________________________________________________")
                     source_account = self.get_source_account(self.params['fb'])
-                    # data.extend(fb_data)
                 except Exception as e:
                     print(e)
                     traceback.print_exc()

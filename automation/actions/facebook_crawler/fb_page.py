@@ -60,6 +60,7 @@ def get_articles(page:Page, got_article:int, crawl_social_id)->bool:
     for article in subset_articles:
         try: 
             data = get_article_data(article, crawl_social_id)
+            print("here is data: ", data)
             success = check_and_insert_to_db(data)
             if not success:
                 print("is_existed")
