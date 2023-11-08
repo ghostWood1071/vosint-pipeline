@@ -125,8 +125,6 @@ class ForeachAction(BaseAction):
                                 })
         return item != None
         
-    
-
     def check_exists(self, url, days):
        
         existed_news, existed_count = MongoRepository().get_many(

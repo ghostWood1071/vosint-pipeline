@@ -68,9 +68,9 @@ def get_articles(page:Page, got_article:int, crawl_social_id)->bool:
             continue
     return len(articles)
 
-def fb_canhan(browser, cookies,link_person, account, password, source_acc_id,crawl_acc_id):
+def fb_canhan(browser, cookies,link_person, account, password, source_acc_id,crawl_acc_id, max_news):
     page:Page = authenticate(browser, cookies, link_person, account, password, source_acc_id)
-    scroll_loop(get_articles, page=page, crawl_social_id=crawl_acc_id)
+    scroll_loop(get_articles, max_news , page=page, crawl_social_id=crawl_acc_id, max_news = max_news)
 
 
 # fb(link_person="https://mbasic.facebook.com/thanh.bi.73")

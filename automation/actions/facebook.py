@@ -52,7 +52,7 @@ class FacebookAction(BaseAction):
         except Exception as e:
             raise e
 
-    def get_facebook_data(self, account:Dict[str, Any], source_account:Dict[str, Any]):
+    def get_facebook_data(self, account:Dict[str, Any], source_account:Dict[str, Any], max_news:int):
         try:
             cookies = json.loads(source_account.get("cookie")) if source_account.get("cookie") not in [" "] else []
             username = source_account.get("username")
@@ -61,11 +61,38 @@ class FacebookAction(BaseAction):
             link = account.get("account_link")
             link = re.sub("www\.", "m.", link)
             if str(account.get("social_type")) == "Object":
-                datas = fb_canhan(browser=self.driver.get_driver(), link_person=link, cookies = cookies, account=username, password=password, source_acc_id=source_account_id, crawl_acc_id = account.get("_id"))
+                datas = fb_canhan(
+                        browser=self.driver.get_driver(), 
+                        link_person=link, 
+                        cookies = cookies, 
+                        account=username, 
+                        password=password, 
+                        source_acc_id=source_account_id, 
+                        crawl_acc_id = account.get("_id"),
+                        max_news = max_news
+                    )
             elif str(account.get("social_type")) == "Group":
-                datas = fb_groups(browser=self.driver.get_driver(), link_person=link, cookies = cookies, account=username, password=password, source_acc_id=source_account_id, crawl_acc_id = account.get("_id"))
+                datas = fb_groups(
+                        browser=self.driver.get_driver(), 
+                        link_person=link, 
+                        cookies = cookies, 
+                        account=username, 
+                        password=password, 
+                        source_acc_id=source_account_id, 
+                        crawl_acc_id = account.get("_id"),
+                        max_news = max_news
+                    )
             else:
-                datas = fb_page(browser=self.driver.get_driver(), link_person=link + "?v=timeline", cookies = cookies, account=username, password=password, source_acc_id=source_account_id, crawl_acc_id = account.get("_id"))
+                datas = fb_page(
+                    browser=self.driver.get_driver(), 
+                    link_person=link + "?v=timeline", 
+                    cookies = cookies, 
+                    account=username, 
+                    password=password, 
+                    source_acc_id=source_account_id, 
+                    crawl_acc_id = account.get("_id"),
+                    max_news = max_news
+                )
             return datas
         except Exception as e:
             raise e
@@ -99,15 +126,23 @@ class FacebookAction(BaseAction):
             except Exception as e:
                 raise e
     
+    def get_max_news_quantity(self, kwargs):
+        try:
+            max_news = int(kwargs.get("first_action").get("params").get("max_new"))
+        except Exception as e:
+            max_news = 10
+        return max_news
+    
     def exec_func(self, input_val=None, **kwargs):
         collection_name = "facebook"
         time.sleep(2)
         try:
             source_account = self.get_source_account(self.params['fb'])
             followed_users =  self.get_user_follow(source_account.get("users_follow"))
+            max_news = self.get_max_news_quantity(kwargs)
             for account in followed_users:
                 try:
-                    self.get_facebook_data(account, source_account)
+                    self.get_facebook_data(account, source_account, max_news)
                     print("______________________________________________________________")
                     source_account = self.get_source_account(self.params['fb'])
                     # data.extend(fb_data)
@@ -116,4 +151,5 @@ class FacebookAction(BaseAction):
                     traceback.print_exc()
             # self.insert_data(data, collection_name)
         except Exception as e:
-            pass
+            traceback.print_exc()
+            raise e

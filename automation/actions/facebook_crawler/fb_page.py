@@ -10,7 +10,7 @@ from playwright.sync_api import sync_playwright
 from playwright.sync_api import Browser, Page, Locator
 from typing import *
 from .util import *
-
+import traceback
 
         
 def get_article_data(article_raw:Locator, crawl_social_id):
@@ -64,16 +64,18 @@ def get_articles(page:Page, got_article:int, crawl_social_id)->bool:
             if not success:
                 print("is_existed")
                 return 0
-        except:
+        except Exception as e:
+            print("error in get article: ", e)
+            traceback.print_exc()
             continue
     return len(articles)
 
-def fb_page(browser:Browser, cookies,link_person, account, password, source_acc_id, crawl_acc_id):
+def fb_page(browser:Browser, cookies,link_person, account, password, source_acc_id, crawl_acc_id, max_news):
     page:Page = authenticate(browser, cookies, link_person, account, password, source_acc_id) 
     # articles = select(page, "article")
     # for article in articles:
     #      get_article_data(article) 
-    scroll_loop(get_articles, page=page, crawl_social_id=crawl_acc_id)
+    scroll_loop(get_articles, max_news ,page=page, crawl_social_id=crawl_acc_id)
     
          
 
