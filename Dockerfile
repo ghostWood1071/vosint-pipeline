@@ -23,7 +23,7 @@ RUN apt-get install -y ca-certificates fonts-liberation libappindicator3-1 libas
 COPY . .
 
 EXPOSE 6101
-#master
-# CMD [ "python","main.py"]
+# master
+CMD [ "python","main.py"]
 #slave
-CMD [ "python","consumer.py"]
+# CMD [ "python","consumer.py"]

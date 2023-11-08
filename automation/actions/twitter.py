@@ -29,10 +29,11 @@ class TwitterAction(BaseAction):
             readme="twitter",
             param_infos=[
                 ParamInfo(
-                    name="link_person",
-                    display_name="Link đối tượng theo dõi",
-                    val_type="str",
+                    name="type",
+                    display_name="Tài khoản lấy tin",
+                    val_type="select",
                     default_val="",
+                    options = ['account'],
                     validators=["required_"],
                 )
             ],
@@ -43,13 +44,13 @@ class TwitterAction(BaseAction):
         collection_name = "twitter"
         time.sleep(2)
         try:
-            source_account = self.get_source_account(self.params['account'])
+            source_account = self.get_source_account(self.params['twitter'])
             followed_users =  self.get_user_follow(source_account.get("users_follow"))
             for account in followed_users:
                 try:
                     self.get_twitter_data(account, source_account)
                     print("______________________________________________________________")
-                    source_account = self.get_source_account(self.params['account'])
+                    source_account = self.get_source_account(self.params['twitter'])
                     # data.extend(fb_data)
                 except Exception as e:
                     print(e)

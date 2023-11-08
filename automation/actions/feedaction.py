@@ -27,7 +27,7 @@ my_es = My_ElasticSearch(
     host=settings.ELASTIC_CONNECT.split(',')
 )
 import re
-from urllib.request import ProxyHandler, HTTPPasswordMgrWithDefaultRealm, ProxyBasicAuthHandler
+from urllib.request import ProxyBasicAuthHandler, build_opener, install_opener, urlopen
 from ..common import ActionInfo, ActionStatus
 from bson.objectid import ObjectId
 
@@ -44,6 +44,35 @@ rss_version_1_0 = {
     "titile": "title",
 }
 
+def urlib_proxy_request(url, proxy):
+    proxy_username = proxy.get("username")
+    proxy_password = proxy.get("password")
+    proxy_url = proxy_url = f'{proxy.get("ip_address")}:{proxy.get("port")}' if proxy.get("port") else proxy.get("ip_address")
+    proxy_auth_handler = ProxyBasicAuthHandler()
+    proxy_auth_handler.add_password(realm='realm',
+                                    uri=proxy_url,
+                                    user=proxy_username,
+                                    passwd=proxy_password)
+    opener = build_opener(proxy_auth_handler)
+    install_opener(opener)
+    try:
+        with urlopen(url) as response:
+            feed_content = response.read()
+            return feed_content
+    except Exception as e:
+        raise Exception(f"Failed to parse the feed. Error: {e}")
+
+def pure_request(url, proxy):
+    try:
+        proxies = {
+            "http": f"http://{proxy.get('username')}:{proxy.get('password')}@{proxy.get('ip_address')}:{proxy.get('port')}",
+        }
+        req = requests.get(url, proxies=proxies)
+        if req.ok:
+            return req.content
+        raise Exception(f"{req.status_code} {req.reason}")
+    except Exception as e:
+        raise Exception(f"can not parse feed data when using proxy: {proxy.get('ip_address')}")
 
 def feed(
     url: str = None,
@@ -61,15 +90,10 @@ def feed(
     # Parse the feed
     handlers = []
     if proxy:
-        proxy_url = f'{proxy.get("ip_address")}:{proxy.get("port")}' if proxy.get("port") else proxy.get("ip_address")
-        proxy_handler = ProxyHandler({'http': proxy_url, 'https': proxy_url})
-        handlers = [proxy_handler]
-        if proxy.get('username'):
-            pass_mgr = HTTPPasswordMgrWithDefaultRealm()
-            pass_mgr.add_password(None, proxy_url, proxy.get('username'), proxy.get('password'))
-            auth_handler = ProxyBasicAuthHandler(pass_mgr)
-            handlers.append(auth_handler)
-    feed = feedparser.parse(url, handlers=handlers)
+        raw_feed = pure_request(url, proxy)
+        feed = feedparser.parse(raw_feed)
+    else:
+        feed = feedparser.parse(url)
     if feed.bozo:
         raise feed.bozo_exception
     # Loop through the entries and print the link and title of each news article
@@ -620,7 +644,7 @@ class FeedAction(BaseAction):
             news_info["pub_date"] = get_time_now_string_y_m_now()
             #go to link
             page = self.driver.goto(url=data_feed["link"])
-            check_content = False
+            # check_content = False
             # get title
             news_info["data:title"] = self.get_title(page, data_feed["title"], title_expr, by)
             #translate title
@@ -636,7 +660,7 @@ class FeedAction(BaseAction):
             #get_content -------------------------------------------------------
             news_info["data:content"] = self.get_content(page, content_expr, by)
             if news_info["data:content"] != "":
-                check_content = True
+                # check_content = True
                 if news_info["data:content"] not in ["None", None, ""]:
                     try:
                         news_info["data:content_translate"] = self.translate(kwargs.get("source_language"), news_info["data:content"])
@@ -664,7 +688,7 @@ class FeedAction(BaseAction):
             if content_expr != "None" and content_expr != "":
                 news_info["data:html"] = self.get_html_content(page, content_expr, by)
             if kwargs["mode_test"] != True:
-                if check_content and check_url_exist == False:
+                if check_url_exist == False:
                     #insert to mongo
                     self.insert_mongo(collection_name, news_info)
                     # elastícearch
