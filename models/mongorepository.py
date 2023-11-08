@@ -17,19 +17,13 @@ class MongoRepository:
         self.__db = None
 
     def __connect(self):
-        print({
-            'host': self.__host,
-            'port': self.__port,
-            'username': self.__username,
-            'pass': self.__passwd
-        })
         self.__client = pymongo.MongoClient(
             host=self.__host,
             port=self.__port,
             username=self.__username,
             password=self.__passwd,
         )
-        self.__db = self.__client[self.__db_name]
+        self.__db = self.__client[self.__db_name] 
 
     def __close(self):
         if self.__client is not None and self.__db is not None:
@@ -415,6 +409,33 @@ class MongoRepository:
             self.__close()
 
         return doc_id
+
+    def insert_many(self, collection_name: str, docs: List[Dict[str, Any]])->List[str]:
+        if not collection_name:
+            raise InternalError(
+                ERROR_REQUIRED,
+                params={"code": ["COLLECTION_NAME"], "msg": ["Collection name"]},
+            )
+
+        if not docs:
+            raise InternalError(
+                ERROR_REQUIRED, params={"code": ["DOCUMENT"], "msg": ["Document"]}
+            )
+        doc_ids = []
+        try:
+            self.__connect()
+            collection = self.__db[collection_name]
+            for doc in docs:
+                doc["created_at"] = get_time_now_string()
+                doc["modified_at"] = doc["created_at"]
+            insert_res = collection.insert_many(docs)
+            doc_ids = [str(inserted) for inserted in insert_res.inserted_ids]
+        finally:
+            self.__close()
+
+        return doc_ids
+        
+
 
     def update_one(self, collection_name: str, doc: dict) -> bool:
         if not collection_name:

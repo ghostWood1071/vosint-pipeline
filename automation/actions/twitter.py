@@ -4,6 +4,14 @@ from .baseaction import BaseAction
 from models import MongoRepository
 from playwright.sync_api import Playwright, sync_playwright
 import time
+from .twitter_crawler.authenticate import authenticate
+from bson.objectid import ObjectId
+from .twitter_crawler.twitter_account import twitter_account
+from pymongo.errors import PyMongoError
+from typing import *
+import traceback
+import json
+import re
 
 def select(from_element, expr, by = "css="):
     element = from_element.locator(f"{by}{expr}")
@@ -21,10 +29,11 @@ class TwitterAction(BaseAction):
             readme="twitter",
             param_infos=[
                 ParamInfo(
-                    name="link_person",
-                    display_name="Link đối tượng theo dõi",
-                    val_type="str",
+                    name="type",
+                    display_name="Tài khoản lấy tin",
+                    val_type="select",
                     default_val="",
+                    options = ['account'],
                     validators=["required_"],
                 )
             ],
@@ -33,60 +42,52 @@ class TwitterAction(BaseAction):
 
     def exec_func(self, input_val=None, **kwargs):
         collection_name = "twitter"
-        link = self.params["link_person"]
-        #data = {}
-
-        browser = self.driver.get_driver()
-       
-        context = browser.new_context()
-        page = context.new_page()
-
-        page.goto(link)
         time.sleep(2)
+        try:
+            source_account = self.get_source_account(self.params['twitter'])
+            followed_users =  self.get_user_follow(source_account.get("users_follow"))
+            for account in followed_users:
+                try:
+                    self.get_twitter_data(account, source_account)
+                    print("______________________________________________________________")
+                    source_account = self.get_source_account(self.params['twitter'])
+                    # data.extend(fb_data)
+                except Exception as e:
+                    print(e)
+                    traceback.print_exc()
+            # self.insert_data(data, collection_name)
+        except Exception as e:
+            pass
 
-        page.keyboard.press('End')
-        page.wait_for_selector('body')
-        time.sleep(2)
 
-        twit =  select(page,'article')
-        for i in twit:
-            data = {}
-            try:
-                data["raw_data_text"] = i.inner_text()
-                data["raw_data_html"] = i.inner_html()
-                data["header"] = select(i,".css-1dbjc4n.r-k4xj1c.r-18u37iz.r-1wtj0ep")[0].inner_text()
-                data["content"] = select(i,".css-901oao.r-18jsvk2.r-37j5jr.r-a023e6.r-16dba41.r-rjixqe.r-bcqeeo.r-bnwqim.r-qvutc0")[0].inner_text()
-                tmp = select(i,".css-1dbjc4n.r-1ta3fxp.r-18u37iz.r-1wtj0ep.r-1s2bzr4.r-1mdbhws")[0]
-                a = select(tmp,".css-901oao.css-16my406.r-poiln3.r-bcqeeo.r-qvutc0")
-                data["reply"] = a[0].inner_text()
-                data["retweet"] = a[1].inner_text()
-                data["like"] = a[2].inner_text()
-                data["view"] = a[3].inner_text()
-        
-                check_url_exist = '0'
-                # a,b = MongoRepository().get_many(collection_name=collection_name,filter_spec={"id_data_ft":data['id_data_ft']})
-                # del a
-                # if str(b) != '0':
-                
-                #     print('url already exist')
-                #     check_url_exist = '1'
-                if check_url_exist == '0':
-                    try:
-                        #print(data)
-                        MongoRepository().insert_one(collection_name=collection_name, doc=data)
-                    except:
-                        print("An error occurred while pushing data to the database!")
-            except:
-                pass
-            
-            # if check_url_exist == '1':
-            #     try:
-            #         a = MongoRepository().get_one(collection_name=collection_name,filter_spec={"id_data_ft":data['id_data_ft']})
-            #         #print('abcccccccccccccccccccccccccccccccccccccccccccc',a["_id"])
-            #         news_info_tmp = data
-            #         news_info_tmp["_id"] = str(a["_id"])
-            #         MongoRepository().update_one(collection_name=collection_name, doc=news_info_tmp)
-            #         print('update new ....')
-            #     except:
-            #         print("An error occurred while pushing data to the database!")
+    def get_source_account(self, id: str):
+        try:
+            source_account = MongoRepository().get_one('socials', {"_id": ObjectId(id)})
+            if source_account == None:
+                raise PyMongoError("account not found")
+            return source_account
+        except Exception as e:
+            raise e
+
+    def get_user_follow(self, list_ids: List[Dict[str, Any]]):
+        try:
+            id_filter = [ObjectId(acc.get("follow_id")) for acc in list_ids]
+            accounts, _ = MongoRepository().get_many("social_media", {"_id": {"$in": id_filter}})
+            return accounts
+        except Exception as e:
+            raise e
+
+    def get_twitter_data(self, account:Dict[str, Any], source_account:Dict[str, Any]):
+        try:
+            cookies = json.loads(source_account.get("cookie"))
+            username = source_account.get("username")
+            password = source_account.get("password")
+            source_account_id = str(source_account.get("_id"))
+            link = account.get("account_link")
+            if str(account.get("social_type")) == "Object":
+                datas = twitter_account(browser=self.driver.get_driver(), link_person=link, cookies = cookies, account=username, password=password, source_acc_id=source_account_id, crawl_acc_id = account.get("_id"))
+            return datas
+        except Exception as e:
+            raise e
+
     

@@ -20,6 +20,9 @@ from .feedaction import FeedAction
 from .ttxvn import TtxvnAction
 from models import MongoRepository
 from datetime import datetime
+from ..common import ActionInfo, ActionStatus
+from random import randint
+
 
 
 def get_action_class(name: str):
@@ -92,6 +95,47 @@ class ForeachAction(BaseAction):
             ],
             z_index=6,
         )
+    
+    def random_proxy(self, proxy_list):
+        if str(proxy_list) == '[]' or str(proxy_list) == '[None]' or str(proxy_list) == 'None':
+            return 
+        proxy_index = randint(0, len(proxy_list)-1)
+        return proxy_list[proxy_index]
+    
+    def send_queue(self, message, pipeline_id, url, source_name):
+        try:
+            task_id = MongoRepository().insert_one("queue", {"url": url, "pipeline": pipeline_id, "source": source_name})
+            message["task_id"] = str(task_id)
+            KafkaProducer_class().write("crawling_", message)
+            print('write to kafka ...')
+            self.create_log(ActionStatus.INQUEUE, f'news {str(url)} transported to queue', pipeline_id)
+        except Exception as e:
+            if task_id != None:
+                MongoRepository().delete_one("queue", {"_id": task_id})
+            raise e
+
+    def check_queue(self, url, day_range):
+        item = MongoRepository().get_one("queue", 
+                                {
+                                   "url": url, 
+                                   "$and": [
+                                    {"created_at": {"$gte": day_range[0]}}, 
+                                    {"created_at": {"$lte": day_range[1]}}
+                                   ]
+                                })
+        return item != None
+        
+    def check_exists(self, url, days):
+       
+        existed_news, existed_count = MongoRepository().get_many(
+                        collection_name="News", filter_spec={"data:url": str(url),
+                                                             "$and": [ 
+                                                                {"created_at": {"$gte": days[0]}},
+                                                                {"created_at": {"$lte": days[1]}}
+                                                             ]}
+                    )
+        del existed_news
+        return existed_count > 0
 
     def exec_func(self, input_val=None, **kwargs):
         actions = self.params["actions"]
@@ -100,60 +144,54 @@ class ForeachAction(BaseAction):
         # Run foreach actions
         res = []
         if input_val is not None:
+            day_range = 10 
+            check_time = self.get_check_time(day_range)
             for val in input_val:
-                # print("val",val)
-                # print("kwargs",kwargs)
-                # print("actions",actions)
                 if kwargs["mode_test"] != True:
-                    check_url_exist = "0"
-                    str_val = str(val)
-                    # print(str_val)
-                    a, b = MongoRepository().get_many(
-                        collection_name="News", filter_spec={"data:url": str(str_val)}
-                    )
-                    print('bbbb',b)
-                    del a
-                    if str(b) != "0":
+                    data_url = str(val)
+                    start_check = datetime.now()
+                    is_existed = self.check_exists(data_url,check_time)
+                    end_check = datetime.now()
+                    print(f"checking time: {(end_check-start_check).microseconds/1000} miliseconds")
+                    if is_existed:
                         print("url already exist")
                         continue
-                # print("DSAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
-                message = {"actions": actions, "input_val": val, "kwargs": kwargs}
-                # message1 = {'name': 'John', 'age': 30, 'city': 'New hkahsdjk'}
                 if str(self.params["send_queue"]) == "True":
-                    # print('write to kafka ...')
-                    print(message)
-                    KafkaProducer_class().write("crawling_", message)
-                    print('write to kafka ...')
-                    if (
-                        kwargs["mode_test"] == True
-                    ):  # self.params['test_pipeline'] == 'True':
-                        # print(val)
+                    kwargs_leaf = kwargs.copy()
+                    kwargs_leaf["list_proxy"] = [self.random_proxy(kwargs.get("list_proxy"))]
+                    message = {"actions": actions, "input_val": data_url, "kwargs": kwargs_leaf}
+                    try:
+                        is_existed_inqeueu = self.check_queue(data_url, check_time)
+                        if not is_existed_inqeueu:
+                            self.send_queue(message, kwargs["pipeline_id"], data_url, kwargs["source_name"])
+                        else:
+                            print("url existed in queue")
+                    except Exception as e:
+                        print("url existed in queue")
+                        pass
+                    if kwargs["mode_test"] == True:
                         break
                 else:
-                    print("asdasdadsas")
-                    start = datetime.now()
+                    
                     if flatten == False:
                         res.append(self.__run_actions(actions, val, **kwargs))
                     else:
                         res += self.__run_actions(actions, val, **kwargs)
-                    if (
-                        kwargs["mode_test"] == True
-                    ):  # self.params['test_pipeline'] == 'True':
-                        # print(val)
+                    if kwargs["mode_test"] == True:  
                         break
-                    end = datetime.now()
-                    print(end-start)
         return res
 
     def __run_actions(self, actions: list[dict], input_val, **kwargs):
+        start_lol = datetime.now()
         tmp_val = input_val
+        
         for act in actions:
             params = act["params"] if "params" in act else {}
             try:
                 # print(act["id"])
-                a = act["id"]
+                id_schema = act["id"]
                 # print(a)
-                params["id_schema"] = a
+                params["id_schema"] = id_schema
             except:
                 pass
             action = get_action_class(act["name"])(self.driver, self.storage, **params)
