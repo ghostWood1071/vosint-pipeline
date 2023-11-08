@@ -23,8 +23,13 @@ def get_article_data(article_raw:Locator, crawl_social_id):
         footer_date = convert_utc_to_utcp7(select(article_raw, 'time')[0].get_attribute('datetime'))
         post_date = parser.parse(footer_date)
         current_date = datetime.today().date()
-        if post_date.date() < current_date and not is_pinned:
-            return None
+        # if post_date.date() < current_date and not is_pinned:
+        #     print('post_date: ', post_date)
+        #     print('current_date: ', current_date)
+        #     return None
+
+        print('post_date: ', post_date)
+        print('current_date: ', current_date)
 
 
         header_tag = select(article_raw, '//*[@data-testid="User-Name"]/div[1]')[0]
@@ -85,11 +90,13 @@ def get_articles(page:Page, got_article:int, crawl_social_id)->bool:
     for article in subset_articles:
         try:
             data = get_article_data(article, crawl_social_id)
+            print('data: ', data)
             if data is None:
                 print("is old news")
                 return 0
             success = check_and_insert_to_db(data)
             if not success and not data["is_pinned"]:
+                print("success: ", success)
                 print("is_existed")
                 return 0
             else:
