@@ -85,7 +85,7 @@ class FacebookAction(BaseAction):
             else:
                 datas = fb_page(
                     browser=self.driver.get_driver(), 
-                    link_person=link + "?v=timeline", 
+                    link_person=link, 
                     cookies = cookies, 
                     account=username, 
                     password=password, 

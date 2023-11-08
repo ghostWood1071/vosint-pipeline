@@ -13,20 +13,9 @@ from typing import *
 from .utils import *
 from dateutil import parser
 
-def get_article_data(article_raw:Locator, crawl_social_id):
+def get_article_data(article_raw:Locator, crawl_social_id, post_links):
     try:
-        # check pinned
-        social_context_tag = select(article_raw,'//*[@data-testid="socialContext"]')
-        if len(social_context_tag) != 0: is_pinned = social_context_tag[0].inner_text()== "Pinned"
-        else: is_pinned = False
-        # kiem tra tin co phai trong ngay khong
-        footer_date = convert_utc_to_utcp7(select(article_raw, 'time')[0].get_attribute('datetime'))
-        post_date = parser.parse(footer_date)
-        current_date = datetime.today().date()
-        if post_date.date() < current_date and not is_pinned:
-            return None
-
-
+        footer_date = select(article_raw, 'time')[0].get_attribute('datetime')
         header_tag = select(article_raw, '//*[@data-testid="User-Name"]/div[1]')[0]
 
         post_link = select(article_raw, '//a[time]')[0].get_attribute('href')
@@ -34,8 +23,6 @@ def get_article_data(article_raw:Locator, crawl_social_id):
         user_id = post_link.split('/')[1]
         header = select(header_tag, 'div')[0].text_content()
         content = select(article_raw, '//*[@data-testid="tweetText"]')[0].text_content().replace('Show more', '')
-
-
         try:
             like = select(article_raw, '//*[@data-testid="like"]')[0].text_content()
             like = process_like(like)
@@ -69,35 +56,47 @@ def get_article_data(article_raw:Locator, crawl_social_id):
             "user_id": user_id,
             "sentiment": sentiment,
             "keywords": keywords,
-            "id_social": crawl_social_id,
-            "is_pinned": is_pinned
+            "id_social": crawl_social_id
         }
+        if post_link not in post_links:
+            post_links.append(post_link)
         return data
 
-
-
     except Exception as e:
+        print(e)
         raise Exception("post none")
 
-def get_articles(page:Page, got_article:int, crawl_social_id)->bool:
+def get_articles(page:Page, got_article:int, crawl_social_id, max_news: int, post_links)->bool:
     articles = select(page, "article")
     subset_articles = articles[got_article:len(articles)]
     for article in subset_articles:
         try:
-            data = get_article_data(article, crawl_social_id)
-            if data is None:
-                print("is old news")
-                return 0
+            # check pinned
+            social_context_tag = select(article, '//*[@data-testid="socialContext"]')
+            is_pinned = False;
+            if len(social_context_tag) != 0:
+                is_pinned = social_context_tag[0].inner_text() == "Pinned"
+
+            data = get_article_data(article, crawl_social_id, post_links)
+            print('data: ', data)
             success = check_and_insert_to_db(data)
-            if not success and not data["is_pinned"]:
-                print("is_existed")
-                return 0
-            else:
-                return len(articles) + 1
+            print("success: ", success)
+            if len(post_links) > max_news:
+                return -1
+
+            if not success:
+                if is_pinned:
+                    continue
+                else:
+                    return 0
+
+
         except Exception as e:
+            print(e)
             continue
     return len(articles)
 
-def twitter_account(browser, cookies,link_person, account, password, source_acc_id,crawl_acc_id):
+def twitter_account(browser, cookies,link_person, account, password, source_acc_id,crawl_acc_id, max_news):
+    post_links = []
     page:Page = authenticate(browser, cookies, link_person, account, password, source_acc_id)
-    scroll_loop(get_articles, page=page, crawl_social_id=crawl_acc_id)
+    scroll_loop(get_articles, page=page, crawl_social_id=crawl_acc_id, max_news= max_news, post_links=post_links)

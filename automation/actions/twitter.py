@@ -42,13 +42,20 @@ class TwitterAction(BaseAction):
 
     def exec_func(self, input_val=None, **kwargs):
         collection_name = "twitter"
+        try:
+            first_action = kwargs['first_action']
+            max_news = int(first_action['params']['max_new'])
+        except:
+            print('max_news cannot be converted to integer')
+            max_news = 0
+
         time.sleep(2)
         try:
             source_account = self.get_source_account(self.params['twitter'])
             followed_users =  self.get_user_follow(source_account.get("users_follow"))
             for account in followed_users:
                 try:
-                    self.get_twitter_data(account, source_account)
+                    self.get_twitter_data(account, source_account, max_news)
                     print("______________________________________________________________")
                     source_account = self.get_source_account(self.params['twitter'])
                     # data.extend(fb_data)
@@ -77,7 +84,7 @@ class TwitterAction(BaseAction):
         except Exception as e:
             raise e
 
-    def get_twitter_data(self, account:Dict[str, Any], source_account:Dict[str, Any]):
+    def get_twitter_data(self, account:Dict[str, Any], source_account:Dict[str, Any], max_news: int):
         try:
             cookies = json.loads(source_account.get("cookie"))
             username = source_account.get("username")
@@ -85,7 +92,7 @@ class TwitterAction(BaseAction):
             source_account_id = str(source_account.get("_id"))
             link = account.get("account_link")
             if str(account.get("social_type")) == "Object":
-                datas = twitter_account(browser=self.driver.get_driver(), link_person=link, cookies = cookies, account=username, password=password, source_acc_id=source_account_id, crawl_acc_id = account.get("_id"))
+                datas = twitter_account(browser=self.driver.get_driver(), link_person=link, cookies = cookies, account=username, password=password, source_acc_id=source_account_id, crawl_acc_id = account.get("_id"), max_news=max_news)
             return datas
         except Exception as e:
             raise e

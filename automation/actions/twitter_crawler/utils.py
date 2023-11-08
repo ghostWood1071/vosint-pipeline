@@ -5,7 +5,7 @@ import re
 from playwright.sync_api import  Page, Locator
 from typing import *
 from datetime import datetime, timedelta
-from dateutil import parser
+import dateutil
 from models import MongoRepository
 
 def scroll_loop(action: Any ,**kwargs:Dict[str, Any]):
@@ -44,7 +44,7 @@ def convert_to_std_date(date_str:str):
             mins = int(re.findall(r"\d+", date_str)[0])
             result = result - timedelta(minutes=mins)
         else:
-            result = parser.parse(date_str, fuzzy=True)
+            result = dateutil.parser.parse(date_str, fuzzy=True)
         return result
     except Exception as e:
         print(e)
@@ -71,7 +71,3 @@ def process_like(likes_string:str):
         return likes_quantity
     else:
         return 0
-
-def convert_utc_to_utcp7(datetime_str: str):
-    datetime_object = parser.parse(datetime_str) + timedelta(hours=7)
-    return datetime_object.strftime("%Y-%m-%d %H:%M:%S")
