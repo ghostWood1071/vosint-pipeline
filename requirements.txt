@@ -32,6 +32,7 @@ itsdangerous==2.1.2
 Jinja2==3.1.2
 kafka-python==2.0.2
 kaitaistruct==0.10
+langdetect==1.0.9
 lazy-model==0.0.5
 MarkupSafe==2.1.2
 motor==3.1.1
