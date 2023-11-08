@@ -1,6 +1,7 @@
 import requests
 from core.config import settings
 import json
+from langdetect import detect
 
 def get_sentiment(title, content):
     try:
@@ -28,9 +29,20 @@ def get_sentiment(title, content):
         raise e
     
 
-def get_keywords(content):
+def get_keywords(content:str):
     try:
+        lang_dict = {
+            "vi": "vi",
+            "ru": "ru",
+            "es": "en",
+            "zh-cn": "cn"
+        }
+        sub = content[0:50]
+        lang_detected = lang_dict.get(detect(sub))
+        if lang_detected is None:
+            lang_detected = "vi"
         extkey_request = requests.post(settings.EXTRACT_KEYWORD_API, data=json.dumps({
+            "lang": lang_detected,
             "number_keyword": 6,
             "text": content
         }))
