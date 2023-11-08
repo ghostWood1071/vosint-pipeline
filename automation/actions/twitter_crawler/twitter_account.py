@@ -95,8 +95,8 @@ def get_articles(page:Page, got_article:int, crawl_social_id)->bool:
                 print("is old news")
                 return 0
             success = check_and_insert_to_db(data)
+            print("success: ", success)
             if not success and not data["is_pinned"]:
-                print("success: ", success)
                 print("is_existed")
                 return 0
             else:
