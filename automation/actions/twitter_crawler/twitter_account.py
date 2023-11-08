@@ -91,7 +91,7 @@ def get_articles(page:Page, got_article:int, crawl_social_id, max_news: int, pos
             print('data: ', data)
             success = check_and_insert_to_db(data)
             print("success: ", success)
-            if len(post_links) > max_news:
+            if len(post_links) >= max_news:
                 return -1
 
             if not success:
