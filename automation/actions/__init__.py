@@ -17,3 +17,4 @@ from .facebook import FacebookAction
 from .twitter import TwitterAction
 from .ttxvn import TtxvnAction
 from .facebook_crawler import *
+from .tiktok import TiktokAction
