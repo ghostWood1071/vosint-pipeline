@@ -46,7 +46,8 @@ def get_action_class(name: str):
         "ttxvn": TtxvnAction,
         "send_key" : SendKeyAction,
         "typing": TypingAction,
-        "url_input": URLInputAction
+        "url_input": URLInputAction,
+        "tiktok": TiktokAction
     }
     action_cls = action_dict.get(name)
     if action_cls is None:
