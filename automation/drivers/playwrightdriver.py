@@ -10,9 +10,9 @@ class PlaywrightDriver(BaseDriver):
     def __init__(self,ip_proxy = None, port = None, username = None, password = None):
         self.proxy_server = None
         if ip_proxy != None and port != None and username != None and password != None:
-            self.create_proxy_browser(ip_proxy, port, username, password)
+            self.create_proxy_browser(ip_proxy, port, username, password, headless=False)
         else:
-            self.create_browser()
+            self.create_browser(headless=False)
     
     def create_browser(self, headless=True):
         self.playwright = sync_playwright().start()
@@ -62,7 +62,7 @@ class PlaywrightDriver(BaseDriver):
         else:
             print("Request failed with an error")
 
-    def goto(self, url: str, proxy=None, clear_cookies=True):
+    def goto(self, url: str, proxy=None, clear_cookies=True, cookies=[]):
         if proxy:
             self.page.close()
             self.driver.close()
@@ -73,9 +73,10 @@ class PlaywrightDriver(BaseDriver):
                 'password': proxy.get('password')
             }
             self.create_proxy_browser(**proxy_dict)
-        if clear_cookies:
+        if clear_cookies and cookies == []:
             self.page.context.clear_cookies()
-        # self.page.on("requestfailed", self.request_failed)
+        if cookies != []:
+            self.page.context.add_cookies(cookies)
         try:
             self.page.goto(url)
         except TimeoutError as e:
@@ -158,4 +159,6 @@ class PlaywrightDriver(BaseDriver):
                 'password': proxy.get('password')
             }
         self.create_proxy_browser(**proxy_dict)
-        
+    
+    def get_cookies(self):
+        return self.page.context.cookies()

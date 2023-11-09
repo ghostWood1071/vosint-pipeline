@@ -210,6 +210,135 @@ class GetNewsInfoAction(BaseAction):
             exists = True
             raise Exception(f"{url} exist url")
 
+    def insert_elastic(self, news_info):
+        try:
+            # doc_es = {}
+            doc_es = news_info.copy()
+            # try:
+            #     doc_es['_id'] = _id
+            # except:
+            #     pass
+            try:
+                doc_es["id"] = str(doc_es["_id"])
+                doc_es.pop("_id", None)
+            except:
+                pass
+            try:
+                doc_es["data:title"] = news_info["data:title"]
+            except:
+                pass
+            try:
+                doc_es["data:author"] = news_info["data:author"]
+            except:
+                pass
+            try:
+                doc_es["data:time"] = news_info["data:time"]
+            except:
+                pass
+            try:
+                doc_es["pub_date"] = (
+                    str(news_info["pub_date"]).split(" ")[0] + "T00:00:00Z"
+                )
+            except:
+                pass
+            try:
+                doc_es["data:content"] = news_info["data:content"]
+            except:
+                pass
+            try:
+                doc_es["keywords"] = news_info["keywords"]
+            except:
+                pass
+            try:
+                doc_es["data:url"] = news_info["data:url"]
+            except:
+                pass
+            try:
+                doc_es["data:html"] = news_info["data:html"]
+            except:
+                pass
+            try:
+                doc_es["data:class_chude"] = news_info["data:class_chude"]
+            except:
+                pass
+            try:
+                doc_es["data:class_linhvuc"] = news_info["data:class_linhvuc"]
+            except:
+                pass
+            try:
+                doc_es["source_name"] = news_info["source_name"]
+            except:
+                pass
+            try:
+                doc_es["source_host_name"] = news_info["source_host_name"]
+            except:
+                pass
+            try:
+                doc_es["source_language"] = news_info["source_language"]
+            except:
+                pass
+            try:
+                doc_es["source_publishing_country"] = news_info[
+                    "source_publishing_country"
+                ]
+            except:
+                pass
+            try:
+                doc_es["source_source_type"] = news_info["source_source_type"]
+            except:
+                pass
+            try:
+                doc_es["created_at"] = (
+                    news_info["created_at"].split(" ")[0].replace("/", "-")
+                    + "T"
+                    + news_info["created_at"].split(" ")[1]
+                    + "Z"
+                )
+            except:
+                pass
+            try:
+                doc_es["modified_at"] = (
+                    news_info["modified_at"].split(" ")[0].replace("/", "-")
+                    + "T"
+                    + news_info["modified_at"].split(" ")[1]
+                    + "Z"
+                )
+            except:
+                pass
+            try:
+                doc_es["data:class_sacthai"] = news_info["data:class_sacthai"]
+            except:
+                pass
+            try:
+                doc_es["class_tinmau"] = news_info["class_tinmau"]
+            except:
+                pass
+            try:
+                doc_es["class_object"] = news_info["class_object"]
+            except:
+                pass
+            try:
+                doc_es["data:title_translate"] = news_info[
+                    "data:title_translate"
+                ]
+            except:
+                pass
+            try:
+                doc_es["data:content_translate"] = news_info[
+                    "data:content_translate"
+                ]
+            except:
+                pass
+            # print(doc_es)
+            try:
+                my_es.insert_document(
+                    index_name="vosint", id=doc_es["id"], document=doc_es
+                )
+            except:
+                print("insert elastic search false")
+        except:
+            print("An error occurred while pushing data to the database!")
+
     def exec_func(self, input_val=None, **kwargs):
         try: 
             collection_name = "News"
@@ -427,133 +556,8 @@ class GetNewsInfoAction(BaseAction):
                     except Exception as e:
                         print("An error occurred while pushing data to the database!")
                     # elastícearch
-                    try:
-                        # doc_es = {}
-                        doc_es = news_info.copy()
-                        # try:
-                        #     doc_es['_id'] = _id
-                        # except:
-                        #     pass
-                        try:
-                            doc_es["id"] = str(doc_es["_id"])
-                            doc_es.pop("_id", None)
-                        except:
-                            pass
-                        try:
-                            doc_es["data:title"] = news_info["data:title"]
-                        except:
-                            pass
-                        try:
-                            doc_es["data:author"] = news_info["data:author"]
-                        except:
-                            pass
-                        try:
-                            doc_es["data:time"] = news_info["data:time"]
-                        except:
-                            pass
-                        try:
-                            doc_es["pub_date"] = (
-                                str(news_info["pub_date"]).split(" ")[0] + "T00:00:00Z"
-                            )
-                        except:
-                            pass
-                        try:
-                            doc_es["data:content"] = news_info["data:content"]
-                        except:
-                            pass
-                        try:
-                            doc_es["keywords"] = news_info["keywords"]
-                        except:
-                            pass
-                        try:
-                            doc_es["data:url"] = news_info["data:url"]
-                        except:
-                            pass
-                        try:
-                            doc_es["data:html"] = news_info["data:html"]
-                        except:
-                            pass
-                        try:
-                            doc_es["data:class_chude"] = news_info["data:class_chude"]
-                        except:
-                            pass
-                        try:
-                            doc_es["data:class_linhvuc"] = news_info["data:class_linhvuc"]
-                        except:
-                            pass
-                        try:
-                            doc_es["source_name"] = news_info["source_name"]
-                        except:
-                            pass
-                        try:
-                            doc_es["source_host_name"] = news_info["source_host_name"]
-                        except:
-                            pass
-                        try:
-                            doc_es["source_language"] = news_info["source_language"]
-                        except:
-                            pass
-                        try:
-                            doc_es["source_publishing_country"] = news_info[
-                                "source_publishing_country"
-                            ]
-                        except:
-                            pass
-                        try:
-                            doc_es["source_source_type"] = news_info["source_source_type"]
-                        except:
-                            pass
-                        try:
-                            doc_es["created_at"] = (
-                                news_info["created_at"].split(" ")[0].replace("/", "-")
-                                + "T"
-                                + news_info["created_at"].split(" ")[1]
-                                + "Z"
-                            )
-                        except:
-                            pass
-                        try:
-                            doc_es["modified_at"] = (
-                                news_info["modified_at"].split(" ")[0].replace("/", "-")
-                                + "T"
-                                + news_info["modified_at"].split(" ")[1]
-                                + "Z"
-                            )
-                        except:
-                            pass
-                        try:
-                            doc_es["data:class_sacthai"] = news_info["data:class_sacthai"]
-                        except:
-                            pass
-                        try:
-                            doc_es["class_tinmau"] = news_info["class_tinmau"]
-                        except:
-                            pass
-                        try:
-                            doc_es["class_object"] = news_info["class_object"]
-                        except:
-                            pass
-                        try:
-                            doc_es["data:title_translate"] = news_info[
-                                "data:title_translate"
-                            ]
-                        except:
-                            pass
-                        try:
-                            doc_es["data:content_translate"] = news_info[
-                                "data:content_translate"
-                            ]
-                        except:
-                            pass
-                        # print(doc_es)
-                        try:
-                            my_es.insert_document(
-                                index_name="vosint", id=doc_es["id"], document=doc_es
-                            )
-                        except:
-                            print("insert elastic search false")
-                    except:
-                        print("An error occurred while pushing data to the database!")
+                    if _id != None:
+                        self.insert_elastic(news_info) 
             return news_info
         except Exception as e:
             raise e
