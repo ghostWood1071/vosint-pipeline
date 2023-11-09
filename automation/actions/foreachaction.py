@@ -18,6 +18,7 @@ from .facebook import FacebookAction
 from .twitter import TwitterAction
 from .feedaction import FeedAction
 from .ttxvn import TtxvnAction
+from .tiktok import TiktokAction
 from models import MongoRepository
 from datetime import datetime
 from ..common import ActionInfo, ActionStatus
@@ -57,6 +58,8 @@ def get_action_class(name: str):
         if name == "feed new"
         else TtxvnAction
         if name == "ttxvn"
+        else TiktokAction
+        if name == "tiktok"
         else None
     )
     if action_cls is None:

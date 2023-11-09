@@ -2,6 +2,7 @@ import json
 import time
 import random
 import traceback
+import langdetect
 
 time_waiting = random.randint(1,7)
 import re
@@ -9,26 +10,41 @@ from .nlp import get_sentiment, get_keywords
 from bson.objectid import ObjectId
 from playwright.sync_api import sync_playwright
 from playwright.sync_api import Browser, Page, Locator
-from .authenticate import authenticate
+from .authenticate import login
 from typing import *
 from .utils import *
 
 
-def tiktok_channel(browser, cookies,link_person, account, password, source_acc_id,crawl_acc_id):
+def tiktok_channel(browser, cookies,link_person, crawl_acc_id, max_news):
     page:Page = browser.new_page()
+    video_links = []
     try:
         page.context.add_cookies(cookies)
     except Exception as e:
         print(e)
     print(link_person)
     page.goto(link_person)
-    scroll_loop(get_videos, page=page, crawl_social_id= 1, browser= browser, cookies= cookies)
+    scroll_loop(get_videos, page=page, crawl_social_id= crawl_acc_id, browser= browser, cookies= cookies, max_news=max_news, video_links=video_links)
+    print('sleep 10s')
+    time.sleep(10)
 
 def get_video_data(browser: Browser, url: str, cookies, data: Dict[str, Any]) -> bool:
     page = browser.new_page()
     page.context.add_cookies(cookies)
     page.goto(url)
     time.sleep(10)
+    try:
+        content_tag = select(page, '//*[@data-e2e="browse-video-desc"]')[0]
+        content = content_tag.inner_text()
+    except Exception as e:
+        traceback.print_exc()
+        content = ''
+
+    if content == '':
+        print('video has no text content')
+        page.close()
+        return None
+
     try:
         header_tag = select(page, '//*[@data-e2e="browser-nickname"]/span[1]')[0]
         header = header_tag.inner_text()
@@ -42,12 +58,6 @@ def get_video_data(browser: Browser, url: str, cookies, data: Dict[str, Any]) ->
     except Exception as e:
         footer_date= ''
 
-    try:
-        content_tag = select(page, '//*[@data-e2e="browse-video-desc"]')[0]
-        content = content_tag.inner_text()
-    except Exception as e:
-        traceback.print_exc()
-        content = ''
 
     try:
         like_tag = select(page, '//*[@data-e2e="like-count"]')[0]
@@ -58,10 +68,10 @@ def get_video_data(browser: Browser, url: str, cookies, data: Dict[str, Any]) ->
 
     try:
         comment_tag = select(page, '//*[@data-e2e="comment-count"]')[0]
-        comment = comment_tag.inner_text()
+        comments = comment_tag.inner_text()
     except Exception as e:
         traceback.print_exc()
-        comment = 0
+        comments = 0
 
     try:
         share_tag = select(page, '//*[@data-e2e="share-count"]')[0]
@@ -70,31 +80,41 @@ def get_video_data(browser: Browser, url: str, cookies, data: Dict[str, Any]) ->
         traceback.print_exc()
         share  = 0
 
-    sentiment = get_sentiment(header, content)
-    keywords = get_keywords(content)
+    try:
+        sentiment = get_sentiment(header, content)
+    except Exception as e:
+        traceback.print_exc()
+        sentiment = '0'
 
-    print('header: ', header)
-    print('footer_date: ', footer_date)
-    print('content: ', content)
-    print('like: ', like)
-    print('comment: ', comment)
-    print('share: ', share)
+    try:
+        lang = langdetect.detect(content)
+        keywords = get_keywords(content, lang)
+        print('lang: ', lang)
+    except Exception as e:
+        traceback.print_exc()
+        keywords = []
+
+
     data.update({
         "header": header,
         "footer_date": footer_date,
         "content": content,
         "like": process_like(like),
-        "comment": process_like(comment),
+        "comments": process_like(comments),
         "share": process_like(share),
         "video_link": url,
         "sentiment": sentiment,
         "keywords": keywords
     })
 
+    print("data: ", data)
+    print("sleep 10s")
+    time.sleep(10)
+
     page.close()
     return data
 
-def get_videos(page: Page, got_videos: int, crawl_social_id, browser: Browser, cookies)-> bool:
+def get_videos(page: Page, got_videos: int, crawl_social_id, browser: Browser, cookies, max_news, video_links)-> bool:
     time.sleep(10)
     videos = select(page, '//*[@data-e2e="user-post-item-list"]/div')
     subset_videos = videos[got_videos:len(videos)]
@@ -102,17 +122,23 @@ def get_videos(page: Page, got_videos: int, crawl_social_id, browser: Browser, c
         try:
             link_tag = video.locator('//*[@data-e2e="user-post-item-desc"]/a[1]')
             link = link_tag.get_attribute('href')
+            if link not in video_links:
+                video_links.append(link)
+            if len(video_links) > max_news:
+                return -1
             link_arr = link.split('/')
             social_id = link_arr[3]
             video_id = link_arr[5]
             data= {
                 "social_id": social_id,
-                "video_id": video_id
+                "video_id": video_id,
+                "id_social": crawl_social_id
             }
             check = is_existed(data)
             if not check:
                 data= get_video_data(browser, url=link, cookies=cookies, data= data)
-                check_and_insert_to_db(data)
+                if data is not None:
+                    check_and_insert_to_db(data)
             else:
                 return 0
 

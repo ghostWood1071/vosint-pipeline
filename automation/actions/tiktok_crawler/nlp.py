@@ -29,9 +29,10 @@ def get_sentiment(title, content):
         raise e
 
 
-def get_keywords(content):
+def get_keywords(content, lang):
     try:
         extkey_request = requests.post(settings.EXTRACT_KEYWORD_API, data=json.dumps({
+            "lang": lang,
             "number_keyword": 6,
             "text": content
         }))
