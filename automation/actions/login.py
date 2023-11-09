@@ -2,8 +2,9 @@ from common.internalerror import *
 
 from ..common import ActionInfo, ActionType, ParamInfo, SelectorBy
 from .baseaction import BaseAction
-
-
+from models import MongoRepository
+from bson.objectid import ObjectId
+import time
 class LoginAction(BaseAction):
     @classmethod
     def get_action_info(cls) -> ActionInfo:
@@ -13,6 +14,14 @@ class LoginAction(BaseAction):
             action_type=ActionType.COMMON,
             readme="Login",
             param_infos=[
+                ParamInfo(
+                    name="cookies",
+                    display_name="save cookies",
+                    val_type="select",  # val_type='str',
+                    default_val="False",
+                    options=["True", "False"],
+                    validators=["required"],
+                ),
                 ParamInfo(
                     name="by",
                     display_name="Select by",
@@ -66,7 +75,17 @@ class LoginAction(BaseAction):
                 ERROR_REQUIRED, params={"code": ["FROM_ELEM"], "msg": ["From element"]}
             )
 
-        url = input_val
+        is_save_cookie = self.params.get("cookies")
+        cookies = self.driver.get_cookies()
+        if is_save_cookie == 'True':
+            MongoRepository().update_many(
+                "pipelines", 
+                {"_id": ObjectId(kwargs.get("pipeline_id"))}, 
+                {"$set": {"cookies": str(cookies)}}
+            )
+            return self.driver.get_page()
+        
+        # url = input_val
         by = self.params["by"]
         user_expr = self.params["user_expr"]
         user_key = self.params["user_key"]
@@ -74,11 +93,18 @@ class LoginAction(BaseAction):
         password_key = self.params["password_key"]
         login_expr = self.params["login_expr"]
 
-        page = self.driver.goto(url)
+        page = self.driver.get_page()
         elems = self.driver.select(page, by, user_expr)
         self.driver.sendkey(elems[0], user_key)
         elems = self.driver.select(page, by, password_expr)
         self.driver.sendkey(elems[0], password_key)
         elems = self.driver.select(page, by, login_expr)
 
-        return self.driver.click(elems[0])
+        result = self.driver.click(elems[0])
+        time.sleep(3)
+        MongoRepository().update_many(
+                "pipelines", 
+                {"_id": ObjectId(kwargs.get("pipeline_id"))}, 
+                {"$set": {"cookies": str(cookies)}}
+            )
+        return result

@@ -17,3 +17,5 @@ from .facebook import FacebookAction
 from .twitter import TwitterAction
 from .ttxvn import TtxvnAction
 from .facebook_crawler import *
+from .typingaction import TypingAction
+from .inputs.urlinputaction import URLInputAction

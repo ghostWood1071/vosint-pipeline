@@ -22,43 +22,32 @@ from models import MongoRepository
 from datetime import datetime
 from ..common import ActionInfo, ActionStatus
 from random import randint
-
-
+from .sendkeyaction import SendKeyAction
+from .typingaction import TypingAction
+from .inputs.urlinputaction import URLInputAction
 
 def get_action_class(name: str):
-    action_cls = (
-        GotoAction
-        if name == "goto"
-        else GetUrlsAction
-        if name == "get_urls"
-        else GetNewsInfoAction
-        if name == "get_news_info"
-        else SelectAction
-        if name == "select"
-        else GetAttrAction
-        if name == "get_attr"
-        else ForeachAction
-        if name == "foreach"
-        else ClickAction
-        if name == "click"
-        else ForAction
-        if name == "for"
-        else LoginAction
-        if name == "login"
-        else ScrollAction
-        if name == "scroll"
-        else HoverAction
-        if name == "hover"
-        else FacebookAction
-        if name == "fb"
-        else TwitterAction
-        if name == "twitter"
-        else FeedAction
-        if name == "feed new"
-        else TtxvnAction
-        if name == "ttxvn"
-        else None
-    )
+    action_dict = {
+        "goto": GotoAction,
+        "get_urls": GetUrlsAction,
+        "get_news_info": GetNewsInfoAction,
+        "select":  SelectAction,
+        "get_attr":  GetAttrAction,
+        "foreach":  ForeachAction,
+        "click": ClickAction,
+        "for": ForAction,
+        "login": LoginAction,
+        "scroll": ScrollAction,
+        "hover": HoverAction,
+        "fb": FacebookAction,
+        "twitter": TwitterAction,
+        "feed new": FeedAction,
+        "ttxvn": TtxvnAction,
+        "send_key" : SendKeyAction,
+        "typing": TypingAction,
+        "url_input": URLInputAction
+    }
+    action_cls = action_dict.get(name)
     if action_cls is None:
         raise InternalError(
             ERROR_NOT_FOUND,

@@ -2,8 +2,8 @@ from common.internalerror import *
 
 from ..common import ActionInfo, ActionType
 from .baseaction import BaseAction
-
-
+from models import MongoRepository
+import json
 class GotoAction(BaseAction):
     @classmethod
     def get_action_info(cls) -> ActionInfo:
@@ -22,7 +22,15 @@ class GotoAction(BaseAction):
             )
 
         url = input_val
-        
+        plt = MongoRepository().get_one("pielines", {"_id": kwargs.get("pipeline_id")})
         #print(input_val)
-        result = self.driver.goto(url)
+        if plt != None:
+            cookies = plt.get("cookies")
+            if cookies:
+                cookies = json.loads(cookies)
+                result = self.driver.goto(url, cookies = cookies)
+            else:
+                result = self.driver.goto(url)
+        else:
+            result = self.driver.goto(url)
         return result
