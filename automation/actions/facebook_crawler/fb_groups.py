@@ -28,7 +28,7 @@ def get_post_id(data_ft:Dict[str, Any]):
 def get_article_data(article_raw:Locator, crawl_social_id):
     try:
         data_ft = article_raw.get_attribute("data-ft")
-        content_div_tag = select(article_raw, ">:nth-child(1)")[0]
+        content_div_tag = select(article_raw, ".story_body_container")[0]
         header = select(content_div_tag, "header")[0]
         info = select(header, "a")[1].text_content()
         footer_date = select(header, 'div[data-sigil="m-feed-voice-subtitle"]')[0].text_content()
@@ -36,24 +36,25 @@ def get_article_data(article_raw:Locator, crawl_social_id):
             "header":info,
             "footer_date": convert_to_std_date(footer_date.split('·')[0].strip()).strftime("%d/%m/%Y"),
         }
-        content_div_child_tag = select(content_div_tag, ">:nth-child(2)")[0]
+        content_div_child_tag = select(content_div_tag, ">:nth-child(3)")[0]
         continue_content = select(content_div_child_tag, 'span[data-sigil="more"]')
         if len(continue_content) > 0:
             continue_a_tag = select(continue_content[0], "a")[0]
             continue_a_tag.click()
         content_div_child_tag = select(content_div_tag, ">:nth-child(2)")[0]
-        data["content"] = content_div_child_tag.text_content().replace("… Xem thêm","").replace("See Translation","")
+        data["content"] = content_div_child_tag.text_content().replace("… More","").replace("See Translation","")
         footer_tag = select(article_raw,"footer>:nth-child(1)>:nth-child(1)>:nth-child(1)>:nth-child(1)")[0]
         try:
-            data["like"] = process_like(select(footer_tag, ">:nth-child(1)")[0].text_content())
+            data["like"] = process_like(select(footer_tag, 'div[data-sigil="reactions-sentence-container"]')[0].text_content())
         except:
             data["like"] = 0
         try:
-            data["comments"] = re.findall(r'\d+',select(footer_tag,">:nth-child(2)>:nth-child(1)")[0].text_content())[0]
+            comments = select(footer_tag,'span[data-sigil="comments-token"]')[0]
+            data["comments"] = re.findall(r'\d+', comments.text_content())[0]
         except:
             data["comments"] = "0"
         try:
-            data["share"] =re.findall(r'\d+',select(footer_tag,">:nth-child(2)>:nth-child(2)")[0].text_content())[0]
+            data["share"] =re.findall(r'\d+',select(footer_tag,">:nth-child(1)>:nth-child(2)>:nth-child(2)")[0].text_content())[0]
         except Exception as e:
             data["share"] = "0"
         data["id_data_ft"] = data_ft
@@ -68,7 +69,7 @@ def get_article_data(article_raw:Locator, crawl_social_id):
         raise Exception("post none")
 #this is action
 def get_articles(page:Page, got_article:int, crawl_social_id)->bool:
-    articles = select(page, "article")
+    articles = select(page, "#m_group_stories_container> section > article")
     subset_articles = articles[got_article:len(articles)]
     for article in subset_articles:
         try: 
