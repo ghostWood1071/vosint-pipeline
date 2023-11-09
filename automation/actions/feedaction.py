@@ -597,10 +597,12 @@ class FeedAction(BaseAction):
             self.add_news_to_object(news_info, _id)
             print("insert_mongo_succes")
             self.send_event_to_queue(_id, news_info)
+            return _id
         except:
             print(
                 "An error occurred while pushing data to the database!"
             )
+            return None
 
     def insert_elastic(self, news_info):
         try:
@@ -690,9 +692,10 @@ class FeedAction(BaseAction):
             if kwargs["mode_test"] != True:
                 if check_url_exist == False:
                     #insert to mongo
-                    self.insert_mongo(collection_name, news_info)
+                    insert_ok = self.insert_mongo(collection_name, news_info)
                     # elastícearch
-                    self.insert_elastic(news_info)
+                    if insert_ok != None:
+                        self.insert_elastic(news_info)
             return news_info
         except Exception as e:
             raise e

@@ -18,3 +18,5 @@ from .twitter import TwitterAction
 from .ttxvn import TtxvnAction
 from .facebook_crawler import *
 from .tiktok import TiktokAction
+from .typingaction import TypingAction
+from .inputs.urlinputaction import URLInputAction
