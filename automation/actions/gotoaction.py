@@ -28,7 +28,7 @@ class GotoAction(BaseAction):
         if plt != None:
             cookies = plt.get("cookies")
             if cookies:
-                cookies = json.loads(cookies)
+                cookies = eval(cookies)
                 result = self.driver.goto(url, cookies = cookies)
             else:
                 result = self.driver.goto(url)

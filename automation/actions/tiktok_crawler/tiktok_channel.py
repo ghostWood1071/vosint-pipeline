@@ -13,10 +13,10 @@ from playwright.sync_api import Browser, Page, Locator
 from .authenticate import login
 from typing import *
 from .utils import *
+from .cookies_expire_exception import CookiesExpireException
 
 
-def tiktok_channel(browser, cookies,link_person, crawl_acc_id, max_news):
-    page:Page = browser.new_page()
+def tiktok_channel(page: Page, cookies,link_person, crawl_acc_id, max_news):
     video_links = []
     try:
         page.context.add_cookies(cookies)
@@ -24,13 +24,9 @@ def tiktok_channel(browser, cookies,link_person, crawl_acc_id, max_news):
         print(e)
     print(link_person)
     page.goto(link_person)
-    scroll_loop(get_videos, page=page, crawl_social_id= crawl_acc_id, browser= browser, cookies= cookies, max_news=max_news, video_links=video_links)
-    print('sleep 10s')
-    time.sleep(10)
+    scroll_loop(get_videos, page=page, crawl_social_id= crawl_acc_id, cookies= cookies, max_news=max_news, video_links=video_links)
 
-def get_video_data(browser: Browser, url: str, cookies, data: Dict[str, Any]) -> bool:
-    page = browser.new_page()
-    page.context.add_cookies(cookies)
+def get_video_data(page: Page, url: str, cookies, data: Dict[str, Any]) -> bool:
     page.goto(url)
     time.sleep(10)
     try:
@@ -108,20 +104,22 @@ def get_video_data(browser: Browser, url: str, cookies, data: Dict[str, Any]) ->
     })
 
     print("data: ", data)
-    print("sleep 10s")
-    time.sleep(10)
-
-    page.close()
     return data
 
-def get_videos(page: Page, got_videos: int, crawl_social_id, browser: Browser, cookies, max_news, video_links)-> bool:
+def get_videos(page: Page, got_videos: int, crawl_social_id, cookies, max_news, video_links)-> bool:
     time.sleep(10)
     videos = select(page, '//*[@data-e2e="user-post-item-list"]/div')
+    if len(videos) == 0:
+        raise CookiesExpireException('Cannot find any videos. Cookies may be expired.')
     subset_videos = videos[got_videos:len(videos)]
+    links = []
     for video in subset_videos:
+        link_tag = video.locator('//*[@data-e2e="user-post-item-desc"]/a[1]')
+        link = link_tag.get_attribute('href')
+        links.append(link)
+
+    for link in links:
         try:
-            link_tag = video.locator('//*[@data-e2e="user-post-item-desc"]/a[1]')
-            link = link_tag.get_attribute('href')
             if link not in video_links:
                 video_links.append(link)
             if len(video_links) > max_news:
@@ -136,17 +134,13 @@ def get_videos(page: Page, got_videos: int, crawl_social_id, browser: Browser, c
             }
             check = is_existed(data)
             if not check:
-                data= get_video_data(browser, url=link, cookies=cookies, data= data)
+                data= get_video_data(page, url=link, cookies=cookies, data= data)
                 if data is not None:
                     check_and_insert_to_db(data)
             else:
                 return 0
-
-            # get_video_data(browser, url=link, cookies=cookies)
         except Exception as e:
             traceback.print_exc()
-            browser.close()
-    browser.close()
 
 
 
