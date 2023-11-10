@@ -16,7 +16,11 @@ def scroll_loop(action: Any ,**kwargs:Dict[str, Any]):
         page.keyboard.press("End")
         page.wait_for_selector("body")
         time.sleep(10)
-        real_got = action(**kwargs)
+        try:
+            real_got = action(**kwargs)
+        except Exception as e:
+            raise e
+
         if(real_got==0):
             break
         else:
