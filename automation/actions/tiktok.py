@@ -9,7 +9,7 @@ import time
 from typing import *
 import json
 import re
-from .tiktok_crawler.tiktok_channel import tiktok_channel
+from .tiktok_crawler.tiktok_channel import tiktok_channel, tiktok_channel_test
 from .tiktok_crawler.cookies_expire_exception import CookiesExpireException
 
 
@@ -59,9 +59,11 @@ class TiktokAction(BaseAction):
         try:
             source_account = self.get_source_account(self.params['tiktok'])
             followed_users = self.get_user_follow(source_account.get("users_follow"))
-            cookies = self.params['cookies']
+            cookies = json.loads(self.params['cookies'])
             browser = self.driver.get_driver()
             page = browser.new_page()
+            tiktok_channel_test(page=page, link_persons=followed_users, cookies=cookies,
+                                max_news=max_news)
 
             for account in followed_users:
                 try:
@@ -94,14 +96,19 @@ class TiktokAction(BaseAction):
         except Exception as e:
             raise e
 
-    def get_tiktok_data(self, page,account: Dict[str, Any], source_account: Dict[str, Any], max_news: int, cookies: str):
-        try:
-            cookies = json.loads(cookies)
-            link = account.get("account_link")
-            if str(account.get("social_type")) == "Object":
-                datas = tiktok_channel(page=page, link_person=link, cookies=cookies, crawl_acc_id=account.get("_id"), max_news=max_news)
-            else:
-                print('cannot determine social_type')
-            return datas
-        except Exception as e:
-            raise e
+    # def get_tiktok_data(self, page,account: Dict[str, Any], source_account: Dict[str, Any], max_news: int, cookies: str):
+    #     try:
+    #         cookies = json.loads(cookies)
+    #         # for cookie in cookies:
+    #         #     if cookie['name'] == "msToken":
+    #         #         cookie['expires'] = 1704067200
+    #
+    #         link = account.get("account_link")
+    #         if str(account.get("social_type")) == "Object":
+    #             datas = tiktok_channel_test(page=page, link_person=link, cookies=cookies, crawl_acc_id=account.get("_id"), max_news=max_news)
+    #             # datas = tiktok_channel(page=page, link_person=link, cookies=cookies, crawl_acc_id=account.get("_id"), max_news=max_news)
+    #         else:
+    #             print('cannot determine social_type')
+    #         return datas
+    #     except Exception as e:
+    #         raise e

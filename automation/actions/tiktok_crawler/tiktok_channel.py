@@ -162,17 +162,75 @@ def get_videos(page: Page, got_videos: int, crawl_social_id, cookies, max_news, 
         except Exception as e:
             traceback.print_exc()
 
+def tiktok_channel_test(page: Page, cookies,link_persons, max_news):
+    video_links = []
+    try:
+        page.context.add_cookies(cookies)
+    except Exception as e:
+        print(e)
+    links = []
+    contents = []
+    datum = []
+    for link_person in link_persons:
+        page.goto(link_person)
+        video_info_arr = get_video_info_on_channel(page, 0, link_person.get("_id"), cookies, max_news, video_links)
+        for info in video_info_arr:
+            links.extend(info['links'])
+            contents.extend(info['contents'])
+            datum.extend(info['datum'])
+    for i in len(links):
+        link = links[i]
+        content = contents[i]
+        data = datum[i]
+        data = get_video_data(page, link, cookies, data, content)
+        check_and_insert_to_db(data)
 
-# def get_video_links_on_channel(page: Page, got_videos: int, crawl_social_id, cookies, max_news, video_links):
-#     time.sleep(5)
-#     page.wait_for_selector('body')
-#     page.wait_for_selector('//*[@data-e2e="user-post-item-list"]/div')
-#     videos = select(page, '//*[@data-e2e="user-post-item-list"]/div')
-#     if len(videos) == 0:
-#         raise CookiesExpireException('Cannot find any videos. Cookies may be expired.')
-#     subset_videos = videos[got_videos:len(videos)]
-#     links = []
-#     contents = []
+def get_video_info_on_channel(page: Page, got_videos: int, crawl_social_id, cookies, max_news, video_links):
+    time.sleep(5)
+    page.wait_for_selector('body')
+    page.wait_for_selector('//*[@data-e2e="user-post-item-list"]/div')
+    videos = select(page, '//*[@data-e2e="user-post-item-list"]/div')
+    if len(videos) == 0:
+        raise CookiesExpireException('Cannot find any videos. Cookies may be expired.')
+    subset_videos = videos[got_videos:len(videos)]
+    links = []
+    contents = []
+    datum = []
+    for i in range(len(subset_videos)):
+        video = subset_videos[i]
+        link_tag = video.locator('//*[@data-e2e="user-post-item-desc"]/a[1]')
+        link = link_tag.get_attribute('href')
+        try:
+            # content_tag = select(video, '//*[@data-e2e="user-post-item-desc"]/a')[0]
+            content = link_tag.get_attribute('title')
+        except Exception as e:
+            traceback.print_exc()
+            content = ''
+        if i >=max_news:
+            break
+
+        link_arr = link.split('/')
+        social_id = link_arr[3]
+        video_id = link_arr[5]
+        data = {
+            "social_id": social_id,
+            "video_id": video_id,
+            "id_social": crawl_social_id,
+            "content": content
+        }
+        check = is_existed(data)
+        if not check:
+            links.append(link)
+            contents.append(content)
+            datum.append(data)
+    return {
+        "links": links,
+        "contents": contents,
+        "datum": datum
+    }
+
+
+
 
 
 
