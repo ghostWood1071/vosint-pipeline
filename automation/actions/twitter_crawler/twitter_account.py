@@ -31,10 +31,10 @@ def get_article_data(article_raw:Locator, crawl_social_id, post_links):
             like = 0
 
         try:
-            comment = select(article_raw, '//*[@data-testid="reply"]')[0].text_content()
-            comment = process_like(comment)
+            comments = select(article_raw, '//*[@data-testid="reply"]')[0].text_content()
+            comments = process_like(comments)
         except:
-            comment = 0
+            comments = 0
 
         try:
             share = select(article_raw, '//*[@data-testid="reply"]')[0].text_content()
@@ -60,7 +60,7 @@ def get_article_data(article_raw:Locator, crawl_social_id, post_links):
             "content": content,
             "footer_date": footer_date,
             "like": like,
-            "comment": comment,
+            "comments": comments,
             "share": share,
             "post_id": post_id,
             "user_id": user_id,
@@ -110,3 +110,6 @@ def twitter_account(browser, cookies,link_person, account, password, source_acc_
     post_links = []
     page:Page = authenticate(browser, cookies, link_person, account, password, source_acc_id)
     scroll_loop(get_articles, page=page, crawl_social_id=crawl_acc_id, max_news= max_news, post_links=post_links)
+    print('sleep 10s')
+    time.sleep(10)
+    page.close()
