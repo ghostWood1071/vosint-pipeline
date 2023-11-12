@@ -1,3 +1,5 @@
+import traceback
+
 from common.internalerror import *
 from ..common import ActionInfo, ActionType, ParamInfo
 from .baseaction import BaseAction
@@ -59,24 +61,29 @@ class TiktokAction(BaseAction):
         try:
             source_account = self.get_source_account(self.params['tiktok'])
             followed_users = self.get_user_follow(source_account.get("users_follow"))
-            cookies = json.loads(self.params['cookies'])
+
+            if self.params['cookies'] not in ['', '[]'] and self.params['cookies'] is not None:
+                cookies_str = self.params['cookies']
+            else:
+                cookies_str = source_account.get('cookie')
+            try:
+                cookies = json.loads(cookies_str)
+            except Exception as e:
+                print(e)
+                cookies = []
+
+
             browser = self.driver.get_driver()
             page = browser.new_page()
-            tiktok_channel_test(page=page, link_persons=followed_users, cookies=cookies,
-                                max_news=max_news)
-
-            for account in followed_users:
-                try:
-                    self.get_tiktok_data(page, account, source_account, max_news, cookies)
-                    print("______________________________________________________________")
-                    source_account = self.get_source_account(self.params['tiktok'])
-                    # data.extend(fb_data)
-                except CookiesExpireException as e:
-                    raise e
-                except Exception as e:
-                    print(e)
-
+            try:
+                tiktok_channel_test(page=page, accounts=followed_users, cookies=cookies,
+                                    max_news=max_news)
+            except CookiesExpireException as e:
+                raise e
+            except Exception as e:
+                print(e)
         except Exception as e:
+            traceback.print_exc()
             raise e
 
     def get_source_account(self, id: str):
