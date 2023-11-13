@@ -679,7 +679,7 @@ class FeedAction(BaseAction):
                     #----------------------------------------------------------------------------
                     news_info["data:class_linhvuc"] = self.get_linhvuc(news_info["data:content"])
                     #--------------------------------------------------------------------------------   
-                    if kwargs.get("source_language"): 
+                    if kwargs.get("source_language") != "vi": 
                         news_info["data:class_sacthai"] = self.get_sentiment(news_info["data:content_translate"], news_info["data:title_translate"])
                     else:
                         news_info["data:class_sacthai"] = self.get_sentiment(news_info["data:content"], news_info["data:title"])
