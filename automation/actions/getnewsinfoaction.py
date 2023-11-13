@@ -169,6 +169,8 @@ class GetNewsInfoAction(BaseAction):
             'en': 'english'
         }
         lang_code = lang_dict.get(lang)
+        if lang_code is None:
+            return ""
         req = requests.post(settings.TRANSLATE_API, data=json.dumps(
             {
                 "language": lang_code,
@@ -491,12 +493,16 @@ class GetNewsInfoAction(BaseAction):
                             news_info["data:content"] += self.driver.get_content(elems[i]) +"\n"
                     # check_content = True
 
+                    #translate content 
                     if news_info["data:content"] not in ["None", None, ""]:
-                        try:
-                            news_info["data:content_translate"] = self.translate(news_info["data:content"], kwargs.get("source_language"))
-                        except Exception as e:
-                            print(e)
-                            news_info["data:content_translate"] = ""
+                        news_info["data:content_translate"] = ""
+                        if kwargs.get("source_language") != "vi":
+                            try:
+                                news_info["data:content_translate"] = self.translate(news_info["data:content"], kwargs.get("source_language"))
+                            except Exception as e:
+                                print(e)
+                                news_info["data:content_translate"] = ""
+                        
 
                     if kwargs["mode_test"] != True:
                         content_translated = news_info["data:content_translate"]+" "+news_info["data:content_translate"]
@@ -506,7 +512,10 @@ class GetNewsInfoAction(BaseAction):
                         #--------------------------------------------------------
                         news_info["data:class_linhvuc"] = self.get_linhvuc(news_info["data:content"])
                         #--------------------------------------------------------
-                        news_info["data:class_sacthai"] = self.get_sentiment(news_info["data:title_translate"], news_info["data:content_translate"])
+                        if kwargs.get("source_language") != "vi":
+                            news_info["data:class_sacthai"] = self.get_sentiment(news_info["data:title_translate"], news_info["data:content_translate"])
+                        else:
+                            news_info["data:class_sacthai"] = self.get_sentiment(news_info["data:title"], news_info["data:content"])
                         #--------------------------------------------------------
                         do_1 = datetime.now()
                         news_info["data:summaries"] = self.summarize_all_level(kwargs.get("source_language"), news_info["data:title"], news_info["data:content"])
