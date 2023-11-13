@@ -11,8 +11,9 @@ import time
 from typing import *
 import json
 import re
-from .tiktok_crawler.tiktok_channel import tiktok_channel, tiktok_channel_test
+from .tiktok_crawler.tiktok_channel import tiktok_channel
 from .tiktok_crawler.cookies_expire_exception import CookiesExpireException
+from ..common import ActionInfo, ActionStatus
 
 
 def select(from_element, expr, by="css="):
@@ -62,7 +63,7 @@ class TiktokAction(BaseAction):
             source_account = self.get_source_account(self.params['tiktok'])
             followed_users = self.get_user_follow(source_account.get("users_follow"))
 
-            if self.params['cookies'] not in ['', '[]'] and self.params['cookies'] is not None:
+            if self.params['cookies'].strip() not in ['', '[]'] and self.params['cookies'] is not None:
                 cookies_str = self.params['cookies']
             else:
                 cookies_str = source_account.get('cookie')
@@ -76,7 +77,7 @@ class TiktokAction(BaseAction):
             browser = self.driver.get_driver()
             page = browser.new_page()
             try:
-                tiktok_channel_test(page=page, accounts=followed_users, cookies=cookies,
+                tiktok_channel(page=page, accounts=followed_users, cookies=cookies,
                                     max_news=max_news)
             except CookiesExpireException as e:
                 raise e
@@ -102,20 +103,3 @@ class TiktokAction(BaseAction):
             return accounts
         except Exception as e:
             raise e
-
-    # def get_tiktok_data(self, page,account: Dict[str, Any], source_account: Dict[str, Any], max_news: int, cookies: str):
-    #     try:
-    #         cookies = json.loads(cookies)
-    #         # for cookie in cookies:
-    #         #     if cookie['name'] == "msToken":
-    #         #         cookie['expires'] = 1704067200
-    #
-    #         link = account.get("account_link")
-    #         if str(account.get("social_type")) == "Object":
-    #             datas = tiktok_channel_test(page=page, link_person=link, cookies=cookies, crawl_acc_id=account.get("_id"), max_news=max_news)
-    #             # datas = tiktok_channel(page=page, link_person=link, cookies=cookies, crawl_acc_id=account.get("_id"), max_news=max_news)
-    #         else:
-    #             print('cannot determine social_type')
-    #         return datas
-    #     except Exception as e:
-    #         raise e

@@ -16,18 +16,10 @@ from .utils import *
 from .cookies_expire_exception import CookiesExpireException
 
 
-def tiktok_channel(page: Page, cookies,link_person, crawl_acc_id, max_news):
-    video_links = []
-    try:
-        page.context.add_cookies(cookies)
-    except Exception as e:
-        print(e)
-    print(link_person)
-    page.goto(link_person)
-    get_videos(page, 0, crawl_acc_id, cookies, max_news, video_links)
-    # scroll_loop(get_videos, page=page, crawl_social_id= crawl_acc_id, cookies= cookies, max_news=max_news, video_links=video_links)
+
 
 def get_video_data(page: Page, url: str, cookies, data: Dict[str, Any], content) -> bool:
+    time.sleep(5)
     if content == '':
         print('video has no text content')
         return None
@@ -105,64 +97,8 @@ def get_video_data(page: Page, url: str, cookies, data: Dict[str, Any], content)
     print("data: ", data)
     return data
 
-def get_videos(page: Page, got_videos: int, crawl_social_id, cookies, max_news, video_links)-> bool:
-    time.sleep(5)
-    page.wait_for_selector('body')
-    page.wait_for_selector('//*[@data-e2e="user-post-item-list"]/div')
-    videos = select(page, '//*[@data-e2e="user-post-item-list"]/div')
 
-    # videos = select(page, 'div[data-e2e="user-post-item-list"] > div')
-    if len(videos) == 0:
-        raise CookiesExpireException('Cannot find any videos. Cookies may be expired.')
-    subset_videos = videos[got_videos:len(videos)]
-    links = []
-    contents = []
-    for video in subset_videos:
-        # xpath = '//*[@id="main-content-others_homepage"]/div/div[2]/div[3]/div/div[1]/div[1]/div/div/a'
-        # link_tag = video.locator(xpath)
-        # link_tag = video.locator('//div[data-e2e="user-post-item-desc"]/a[1]')
-        link_tag = video.locator('//*[@data-e2e="user-post-item-desc"]/a[1]')
-        link = link_tag.get_attribute('href')
-        links.append(link)
-
-        try:
-            # content_tag = select(video, '//*[@data-e2e="user-post-item-desc"]/a')[0]
-            content = link_tag.get_attribute('title')
-        except Exception as e:
-            traceback.print_exc()
-            content = ''
-        contents.append(content)
-
-    for i in range(len(links)):
-        try:
-            link = links[i]
-            content = contents[i]
-            if link not in video_links:
-                video_links.append(link)
-            # if len(video_links) > max_news:
-            #     return -1
-            if i >= max_news:
-                return -1
-            link_arr = link.split('/')
-            social_id = link_arr[3]
-            video_id = link_arr[5]
-            data= {
-                "social_id": social_id,
-                "video_id": video_id,
-                "id_social": crawl_social_id,
-                "content": content
-            }
-            check = is_existed(data)
-            if not check:
-                data= get_video_data(page, url=link, cookies=cookies, data= data, content=content)
-                if data is not None:
-                    check_and_insert_to_db(data)
-            else:
-                return 0
-        except Exception as e:
-            traceback.print_exc()
-
-def tiktok_channel_test(page: Page, cookies,accounts, max_news):
+def tiktok_channel(page: Page, cookies,accounts, max_news):
     try:
         page.context.add_cookies(cookies)
     except Exception as e:
@@ -172,6 +108,7 @@ def tiktok_channel_test(page: Page, cookies,accounts, max_news):
     datum = []
     for account in accounts:
         page.goto(account.get('account_link'))
+        time.sleep(10)
         info = get_video_info_on_channel(page, 0, account.get("_id"), max_news)
         links.extend(info['links'])
         contents.extend(info['contents'])
@@ -227,6 +164,8 @@ def get_video_info_on_channel(page: Page, got_videos: int, crawl_social_id, max_
             "contents": contents,
             "datum": datum
         }
+    except CookiesExpireException as e:
+        raise e
     except Exception as e:
         print(e)
         return {
