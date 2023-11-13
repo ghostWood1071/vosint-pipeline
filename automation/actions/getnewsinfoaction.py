@@ -506,7 +506,7 @@ class GetNewsInfoAction(BaseAction):
                         #--------------------------------------------------------
                         news_info["data:class_linhvuc"] = self.get_linhvuc(news_info["data:content"])
                         #--------------------------------------------------------
-                        news_info["data:class_sacthai"] = self.get_sentiment(news_info["data:title"], news_info["data:content"])
+                        news_info["data:class_sacthai"] = self.get_sentiment(news_info["data:title_translate"], news_info["data:content_translate"])
                         #--------------------------------------------------------
                         do_1 = datetime.now()
                         news_info["data:summaries"] = self.summarize_all_level(kwargs.get("source_language"), news_info["data:title"], news_info["data:content"])

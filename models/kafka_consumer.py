@@ -76,6 +76,7 @@ class KafkaConsumer_class:
 
         messages = consumer.poll(10000,1)
         consumer.close()
+        activity_id = None
         for tp, messages in messages.items():
             for message in messages:
                 message_data = message.value
@@ -89,7 +90,8 @@ class KafkaConsumer_class:
                     pass
                 finally:
                     self.delete_task(message_data.get("task_id"))
-                    self.delete_slave_activity(activity_id)
+                    if activity_id != None:
+                        self.delete_slave_activity(activity_id)
         consumer.commit_async()
         return result
     
