@@ -27,6 +27,8 @@ def scroll_loop(action: Any ,**kwargs:Dict[str, Any]):
             got_quantity = real_got
 
 def check_and_insert_to_db(data):
+    if data is None:
+        return False
     is_exists  = MongoRepository().get_one("tiktok", {"social_id": data.get("social_id"), "video_id": data.get("video_id")})
     if is_exists == None:
         MongoRepository().insert_one("tiktok", data)

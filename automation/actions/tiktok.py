@@ -1,3 +1,5 @@
+import traceback
+
 from common.internalerror import *
 from ..common import ActionInfo, ActionType, ParamInfo
 from .baseaction import BaseAction
@@ -11,6 +13,7 @@ import json
 import re
 from .tiktok_crawler.tiktok_channel import tiktok_channel
 from .tiktok_crawler.cookies_expire_exception import CookiesExpireException
+from ..common import ActionInfo, ActionStatus
 
 
 def select(from_element, expr, by="css="):
@@ -59,22 +62,29 @@ class TiktokAction(BaseAction):
         try:
             source_account = self.get_source_account(self.params['tiktok'])
             followed_users = self.get_user_follow(source_account.get("users_follow"))
-            cookies = self.params['cookies']
+
+            if self.params['cookies'].strip() not in ['', '[]'] and self.params['cookies'] is not None:
+                cookies_str = self.params['cookies']
+            else:
+                cookies_str = source_account.get('cookie')
+            try:
+                cookies = json.loads(cookies_str)
+            except Exception as e:
+                print(e)
+                cookies = []
+
+
             browser = self.driver.get_driver()
             page = browser.new_page()
-
-            for account in followed_users:
-                try:
-                    self.get_tiktok_data(page, account, source_account, max_news, cookies)
-                    print("______________________________________________________________")
-                    source_account = self.get_source_account(self.params['tiktok'])
-                    # data.extend(fb_data)
-                except CookiesExpireException as e:
-                    raise e
-                except Exception as e:
-                    print(e)
-
+            try:
+                tiktok_channel(page=page, accounts=followed_users, cookies=cookies,
+                                    max_news=max_news)
+            except CookiesExpireException as e:
+                raise e
+            except Exception as e:
+                print(e)
         except Exception as e:
+            traceback.print_exc()
             raise e
 
     def get_source_account(self, id: str):
@@ -91,17 +101,5 @@ class TiktokAction(BaseAction):
             id_filter = [ObjectId(acc.get("follow_id")) for acc in list_ids]
             accounts,_ = MongoRepository().get_many("social_media", {"_id": {"$in": id_filter}})
             return accounts
-        except Exception as e:
-            raise e
-
-    def get_tiktok_data(self, page,account: Dict[str, Any], source_account: Dict[str, Any], max_news: int, cookies: str):
-        try:
-            cookies = json.loads(cookies)
-            link = account.get("account_link")
-            if str(account.get("social_type")) == "Object":
-                datas = tiktok_channel(page=page, link_person=link, cookies=cookies, crawl_acc_id=account.get("_id"), max_news=max_news)
-            else:
-                print('cannot determine social_type')
-            return datas
         except Exception as e:
             raise e
