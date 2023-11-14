@@ -622,89 +622,6 @@ class FeedAction(BaseAction):
                 "An error occurred while pushing data to the database!"
             )
 
-    def process_news_data(self, data_feed, kwargs, title_expr, author_expr, time_expr, content_expr, time_format, by):
-        try:
-            # print(str(data_feed))
-            url = data_feed["link"]
-            collection_name = "News"
-            check_url_exist = False
-            #check existed
-            if kwargs["mode_test"] != True:
-                day_range = 10
-                days = self.get_check_time(day_range)
-                check_url_exist = self.check_exists(url,days=days)
-            # news_info = {}
-            news_info = {}
-            news_info["source_favicon"] = kwargs["source_favicon"]
-            news_info["source_name"] = kwargs["source_name"]
-            news_info["source_host_name"] = kwargs["source_host_name"]
-            news_info["source_language"] = kwargs["source_language"]
-            news_info["source_publishing_country"] = kwargs["source_publishing_country"]
-            news_info["source_source_type"] = kwargs["source_source_type"]
-            news_info["data:class_chude"] = []
-            news_info["data:class_linhvuc"] = []
-            news_info["data:title"] = ""
-            news_info["data:content"] = ""
-            news_info["pub_date"] = get_time_now_string_y_m_now()
-            #go to link
-            page = self.driver.goto(url=data_feed["link"])
-            # check_content = False
-            # get title
-            news_info["data:title"] = self.get_title(page, data_feed["title"], title_expr, by)
-            #translate title
-            if kwargs["mode_test"] != True:
-                news_info["data:title_translate"] = self.translate(kwargs["source_language"], news_info["data:title"])
-            #get author
-            news_info["data:author"] = self.get_author(page, data_feed["author"], author_expr, by)
-            #get_time
-            news_info["data:time"] = self.get_time(page, data_feed["pubDate"], time_expr,by)
-            #get_publish_date
-            if kwargs["mode_test"] != True:
-                news_info["pub_date"] = self.get_publish_date(time_format)
-            #get_content -------------------------------------------------------
-            news_info["data:content"] = self.get_content(page, content_expr, by)
-            if news_info["data:content"] != "":
-                # check_content = True
-                if news_info["data:content"] not in ["None", None, ""]:
-                    try:
-                        news_info["data:content_translate"] = self.translate(kwargs.get("source_language"), news_info["data:content"])
-                    except Exception as e:
-                        print(e)
-                        news_info["data:content_translate"] = ""
-                if kwargs["mode_test"] != True:
-                    translated_content = news_info["data:title_translate"] + " " + news_info["data:content_translate"]
-                    news_info["keywords"] = self.get_keywords(news_info["data:content"], kwargs["source_language"], translated_content)
-                    #----------------------------------------------------------------------------        
-                    news_info["data:class_chude"] = self.get_chude(news_info["data:content"])
-                    #----------------------------------------------------------------------------
-                    news_info["data:class_linhvuc"] = self.get_linhvuc(news_info["data:content"])
-                    #--------------------------------------------------------------------------------   
-                    if kwargs.get("source_language") != "vi": 
-                        news_info["data:class_sacthai"] = self.get_sentiment(news_info["data:content_translate"], news_info["data:title_translate"])
-                    else:
-                        news_info["data:class_sacthai"] = self.get_sentiment(news_info["data:content"], news_info["data:title"])
-                    #-----------------------------------------------------------------------------
-                    news_info["data:summaries"] = self.summarize_all_level(kwargs.get("source_language"), news_info["data:title"], news_info["data:content"])
-                    #-----------------------------------------------------------------------------
-            if news_info["data:content"] == "":
-                self.create_log(ActionStatus.ERROR, "empty content", pipeline_id=kwargs.get("pipeline_id"))
-            #-----------------------------------------------------------------------
-            #get_url
-            news_info["data:url"] = url
-            #get_html_content
-            if content_expr != "None" and content_expr != "":
-                news_info["data:html"] = self.get_html_content(page, content_expr, by)
-            if kwargs["mode_test"] != True:
-                if check_url_exist == False:
-                    #insert to mongo
-                    insert_ok = self.insert_mongo(collection_name, news_info)
-                    # elastícearch
-                    if insert_ok != None:
-                        self.insert_elastic(news_info)
-            return news_info
-        except Exception as e:
-            raise e
-
     def get_feed_action(self, pipeline_id:str):
         pipeline = MongoRepository().get_one("pipelines", {"_id": pipeline_id})
         if pipeline == None:
@@ -740,7 +657,7 @@ class FeedAction(BaseAction):
                                         {"created_at": {"$lte": day_range[1]}}
                                    ]
                                 })
-        return item != None
+        return item != None #return True if existed False if not existed
 
     def check_exists(self, url, days):
         existed_news, existed_count = MongoRepository().get_many(
@@ -754,7 +671,7 @@ class FeedAction(BaseAction):
                         }
                     )
         del existed_news
-        return existed_count > 0
+        return existed_count > 0 # return True if existed
 
     def send_queue(self, message, data_feed, kwargs):
         try:
@@ -767,6 +684,87 @@ class FeedAction(BaseAction):
                 MongoRepository().delete_one("queue", {"_id": task_id})
             print(e)
     
+    
+    def process_news_data(self, data_feed, kwargs, title_expr, author_expr, time_expr, content_expr, time_format, by):
+        try:
+            url = data_feed["link"]
+            collection_name = "News"
+            check_url_exist = False
+            #check existed
+            if kwargs["mode_test"] != True:
+                day_range = 10
+                days = self.get_check_time(day_range)
+                check_url_exist = self.check_exists(url,days=days)
+            
+            # init news info dictionary
+            news_info = {}
+            news_info["source_favicon"] = kwargs["source_favicon"]
+            news_info["source_name"] = kwargs["source_name"]
+            news_info["source_host_name"] = kwargs["source_host_name"]
+            news_info["source_language"] = kwargs["source_language"]
+            news_info["source_publishing_country"] = kwargs["source_publishing_country"]
+            news_info["source_source_type"] = kwargs["source_source_type"]
+            news_info["data:class_chude"] = []
+            news_info["data:class_linhvuc"] = []
+            news_info["data:title"] = ""
+            news_info["data:content"] = ""
+            news_info["pub_date"] = get_time_now_string_y_m_now()
+
+            #go to link
+            page = self.driver.goto(url=data_feed["link"])
+            # get title
+            news_info["data:title"] = self.get_title(page, data_feed["title"], title_expr, by)
+            
+            #get author
+            news_info["data:author"] = self.get_author(page, data_feed["author"], author_expr, by)
+            #get_time
+            news_info["data:time"] = self.get_time(page, data_feed["pubDate"], time_expr,by)
+            #get_publish_date
+            if kwargs["mode_test"] != True:
+                news_info["pub_date"] = self.get_publish_date(time_format)
+            #get_content -------------------------------------------------------
+            news_info["data:content"] = self.get_content(page, content_expr, by)
+            if news_info["data:content"] not in ["None", None, ""]:
+                # check_content = True
+                if kwargs["mode_test"] != True:
+                    
+                    news_info["data:content_translate"] = self.translate(kwargs.get("source_language"), news_info["data:content"])
+                    #---------------------------------------------------------------------------
+                    news_info["data:title_translate"] = self.translate(kwargs["source_language"], news_info["data:title"])
+                    #---------------------------------------------------------------------------
+                    translated_content = news_info["data:title_translate"] + " " + news_info["data:content_translate"]
+                    news_info["keywords"] = self.get_keywords(news_info["data:content"], kwargs["source_language"], translated_content)
+                    #----------------------------------------------------------------------------        
+                    news_info["data:class_chude"] = self.get_chude(news_info["data:content"])
+                    #----------------------------------------------------------------------------
+                    news_info["data:class_linhvuc"] = self.get_linhvuc(news_info["data:content"])
+                    #--------------------------------------------------------------------------------   
+                    if kwargs.get("source_language") != "vi": 
+                        news_info["data:class_sacthai"] = self.get_sentiment(news_info["data:content_translate"], news_info["data:title_translate"])
+                    else:
+                        news_info["data:class_sacthai"] = self.get_sentiment(news_info["data:content"], news_info["data:title"])
+                    #-----------------------------------------------------------------------------
+                    news_info["data:summaries"] = self.summarize_all_level(kwargs.get("source_language"), news_info["data:title"], news_info["data:content"])
+                    #-----------------------------------------------------------------------------
+            if news_info["data:content"] == "":
+                self.create_log(ActionStatus.ERROR, "empty content", pipeline_id=kwargs.get("pipeline_id"))
+            #-----------------------------------------------------------------------
+            #get_url
+            news_info["data:url"] = url
+            #get_html_content
+            if content_expr != "None" and content_expr != "":
+                news_info["data:html"] = self.get_html_content(page, content_expr, by)
+            if kwargs["mode_test"] != True:
+                if check_url_exist == False:
+                    #insert to mongo
+                    insert_ok = self.insert_mongo(collection_name, news_info)
+                    # elastícearch
+                    if insert_ok != None:
+                        self.insert_elastic(news_info)
+            return news_info
+        except Exception as e:
+            raise e
+
     def exec_func(self, input_val=None, **kwargs):
         if not input_val:
             raise InternalError(
@@ -817,7 +815,7 @@ class FeedAction(BaseAction):
                 feed_action["params"]["data_feed"] = data_feed
                 message = {"actions": [feed_action], "input_val": "null", "kwargs": kwargs_leaf}
                 try:
-                    if not self.check_queue(data_feed['link'], day_check):
+                    if not self.check_queue(data_feed['link'], day_check) and not self.check_exists(url, day_check):
                         self.send_queue(message, data_feed, kwargs)
                 except Exception as e:
                     print(e)
