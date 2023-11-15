@@ -470,7 +470,7 @@ class GetNewsInfoAction(BaseAction):
                     result += self.driver.get_html(elems[i])
         return result
 
-    def save_news(self, news_info, url, day_check, collection_name):
+    def save_news(self, news_info, url, day_check, collection_name, detect_event):
         try:
             self.check_news_exists(url, day_check)
             
@@ -479,16 +479,17 @@ class GetNewsInfoAction(BaseAction):
             )
             self.add_news_to_object(news_info, _id)
             # print(type(_id))
-            try:
-                message = {
-                    "title": str(news_info["data:title"]),
-                    "content": str(news_info["data:content"]),
-                    "pubdate": str(news_info["pub_date"]),
-                    "id_new": str(_id),
-                }
-                KafkaProducer_class().write("events", message)
-            except:
-                print("kafka write message error")
+            if detect_event:
+                try:
+                    message = {
+                        "title": str(news_info["data:title"]),
+                        "content": str(news_info["data:content"]),
+                        "pubdate": str(news_info["pub_date"]),
+                        "id_new": str(_id),
+                    }
+                    KafkaProducer_class().write("events", message)
+                except:
+                    print("kafka write message error")
         except Exception as e:
             print("An error occurred while pushing data to the database!")
         # elastícearch
@@ -512,7 +513,8 @@ class GetNewsInfoAction(BaseAction):
             day_check = self.get_check_time(10)
             if kwargs["mode_test"] != True:
                 self.check_news_exists(url, day_check)
-
+            
+            detect_event = kwargs.get("detect_event")
             by = self.params["by"]
             title_expr = self.params["title_expr"]
             author_expr = self.params["author_expr"]
@@ -574,7 +576,7 @@ class GetNewsInfoAction(BaseAction):
                     news_info["data:summaries"] = self.summarize_all_level(kwargs.get("source_language"), news_info["data:title"], news_info["data:content"])
             
             if kwargs["mode_test"] != True:   
-                self.save_news(news_info, url, day_check, collection_name)
+                self.save_news(news_info, url, day_check, collection_name, detect_event)
             
             return news_info
         except Exception as e:

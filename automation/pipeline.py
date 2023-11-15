@@ -94,7 +94,8 @@ class Pipeline:
                 "source_publishing_country":source_mogo['publishing_country'],
                 "source_source_type":source_mogo['source_type'],
                 "first_action":self.__first_action,
-                "source_favicon": self.source_favicon
+                "source_favicon": self.source_favicon,
+                "detect_event": source_mogo["event_detect"]
             }
 
             # Run from 2nd action
@@ -205,7 +206,8 @@ class Pipeline_Kafka:
                 "source_language":self.kwargs['source_language'],
                 "source_publishing_country":self.kwargs['source_publishing_country'],
                 "source_source_type":self.kwargs['source_source_type'],
-                "source_favicon": self.kwargs['source_favicon']
+                "source_favicon": self.kwargs['source_favicon'],
+                "detect_event": self.kwargs.get('detect_event')
             }
 
             # Run from 2nd action

@@ -591,14 +591,15 @@ class FeedAction(BaseAction):
         pattern = "|".join(keyword_arr)
         return pattern
 
-    def insert_mongo(self, collection_name, news_info):
+    def insert_mongo(self, collection_name, news_info, detect_event):
         try:
             _id = MongoRepository().insert_one(
                 collection_name=collection_name, doc=news_info
             )
             self.add_news_to_object(news_info, _id)
             print("insert_mongo_succes")
-            self.send_event_to_queue(_id, news_info)
+            if detect_event:
+                self.send_event_to_queue(_id, news_info)
             return _id
         except:
             print(
@@ -685,7 +686,7 @@ class FeedAction(BaseAction):
             print(e)
     
     
-    def process_news_data(self, data_feed, kwargs, title_expr, author_expr, time_expr, content_expr, time_format, by):
+    def process_news_data(self, data_feed, kwargs, title_expr, author_expr, time_expr, content_expr, time_format, by, detect_event):
         try:
             url = data_feed["link"]
             collection_name = "News"
@@ -758,7 +759,7 @@ class FeedAction(BaseAction):
                 if self.check_exists(url,days=days):
                     raise Exception(f"{url} url existed")
                 #insert to mongo
-                insert_ok = self.insert_mongo(collection_name, news_info)
+                insert_ok = self.insert_mongo(collection_name, news_info, detect_event)
                 # elastícearch
                 if insert_ok != None:
                     self.insert_elastic(news_info)
@@ -771,6 +772,7 @@ class FeedAction(BaseAction):
             raise InternalError(
                 ERROR_REQUIRED, params={"code": ["URL"], "msg": ["URL"]}
             )
+        detect_event = kwargs.get("detect_event")
         url = str(input_val)
         by = self.params["by"]
         title_expr = self.params["title_expr"]
@@ -796,7 +798,7 @@ class FeedAction(BaseAction):
                 try:
                     news_info = self.process_news_data(data_feed, kwargs, title_expr, 
                                         author_expr, time_expr, content_expr, 
-                                        time_format, by)
+                                        time_format, by, detect_event)
                     result_test = news_info.copy()
                     if kwargs["mode_test"] != True:
                         del news_info
@@ -823,7 +825,7 @@ class FeedAction(BaseAction):
 
         elif is_send_queue == "True" and not is_root: #process_news
             try:
-                news_info = self.process_news_data(self.params.get("data_feed"), kwargs, title_expr, author_expr, time_expr, content_expr, time_expr, by)
+                news_info = self.process_news_data(self.params.get("data_feed"), kwargs, title_expr, author_expr, time_expr, content_expr, time_expr, by, detect_event)
                 result_test = news_info.copy()
             except Exception as e:
                 raise e
