@@ -341,6 +341,160 @@ class GetNewsInfoAction(BaseAction):
         except:
             print("An error occurred while pushing data to the database!")
 
+    def get_title(self, page, by, title_expr):
+        result = ""
+        if title_expr != "None" and title_expr != "":
+            elems = self.driver.select(page, by, title_expr)
+            if len(elems) > 0:
+                result = self.driver.get_content(elems[0])
+        return result
+
+    def get_author(self, page, by, author_expr):
+        result = ""
+        if author_expr != "None" and author_expr != "":
+                elems = self.driver.select(page, by, author_expr)
+                if len(elems) > 0:
+                    result = self.driver.get_content(elems[0])
+        return result
+
+    def get_time(self, page, by, time_expr, time_format, mode_test):
+        result = ""
+        result2 = get_time_now_string_y_m_now()
+        if time_expr != "None" and time_expr !="":
+            try:
+                # print('time_expr',time_expr)
+                elems = self.driver.select(page, by, time_expr)
+                if len(elems) > 0:
+                    result = self.driver.get_content(elems[0])
+                    time_string = result
+                    # print(news_info["data:time"])
+                    if mode_test != True:
+                        try:
+                            format = [",", ".", "/", "_", "-", " "]
+                            my_concat = lambda arr: "".join(arr)
+                            len_time_format = len(time_format)
+                            time_result = {}
+                            for i in range(len_time_format):
+                                if time_format[i] in format:
+                                    if i > 0:
+                                        name_time_format_1 = "time_" + str(
+                                            time_format[i - 1]
+                                        )
+                                        # print(time_format[i])
+                                        # print(time_string)
+                                        index = time_string.index(
+                                            time_format[i]
+                                        )  # split the string at the delimiter
+                                        # tg = time_string.split(time_format[i])
+                                        tg = time_string
+                                        time_string = time_string[index + 1 :]
+                                        if str(time_format[i - 1]) == "***":
+                                            continue
+
+                                        time_result[f"{name_time_format_1}"] = (
+                                            f"{tg[:index]}".replace(" ", "")
+                                            .replace("\n", "")
+                                            .replace("\t", "")
+                                        )
+                                    elif i < (len_time_format - 1):
+                                        tg = time_string.split(time_format[i])
+                                        time_string = my_concat(tg[1:])
+                                    else:
+                                        pass
+                            result2 = ""
+                            try:
+                                if (
+                                    time_result["time_yyyy"] != "None"
+                                    and time_result["time_yyyy"] != ""
+                                ):
+                                   result2 += time_result["time_yyyy"]
+                            finally:
+                                result2 += "-"
+                            try:
+                                if (
+                                    time_result["time_mm"] != "None"
+                                    and time_result["time_mm"] != ""
+                                ):
+                                    result2 += time_result["time_mm"]
+                            finally:
+                                result2 += "-"
+                            try:
+                                if (
+                                    time_result["time_dd"] != "None"
+                                    and time_result["time_dd"] != ""
+                                ):
+                                    result2 += time_result["time_dd"]
+                            except:
+                                pass
+                            finally:
+                                try:
+                                    result2 = datetime.strptime(
+                                        str(result2), "%Y-%m-%d"
+                                    )  # .date()
+                                except:
+                                    result2 = get_time_now_string_y_m_now()
+                        except:
+                            result2 = get_time_now_string_y_m_now()
+            except:
+                pass
+            return result, result2
+
+    def get_content(self, page, by, content_expr):
+        result = ""
+        if content_expr != "None" and content_expr != "":
+            elems = self.driver.select(page, by, content_expr)
+            if len(elems) > 0:
+                if len(elems) == 1:
+                    result = self.driver.get_content(elems[0])
+                elif len(elems) > 1:
+                    result = ""
+                    for i in range(len(elems)):
+                        result += self.driver.get_content(elems[i]) +"\n"
+        return result
+
+    def get_content_html(self, page, by, content_expr):
+        result = ""
+        if content_expr != "None" and content_expr != "":
+            elems = self.driver.select(page, by, content_expr)
+            if len(elems) == 1:
+                result = self.driver.get_html(elems[0])
+
+                tmp_video = self.driver.select(from_elem=page, by="css", expr="figure")
+                for i in tmp_video:
+                    result = result.replace(
+                        self.driver.get_html(i), ""
+                    )
+            elif len(elems) > 1:
+                result = ""
+                for i in range(len(elems)):
+                    result += self.driver.get_html(elems[i])
+        return result
+
+    def save_news(self, news_info, url, day_check, collection_name):
+        try:
+            self.check_news_exists(url, day_check)
+            
+            _id = MongoRepository().insert_one(
+                collection_name=collection_name, doc=news_info
+            )
+            self.add_news_to_object(news_info, _id)
+            # print(type(_id))
+            try:
+                message = {
+                    "title": str(news_info["data:title"]),
+                    "content": str(news_info["data:content"]),
+                    "pubdate": str(news_info["pub_date"]),
+                    "id_new": str(_id),
+                }
+                KafkaProducer_class().write("events", message)
+            except:
+                print("kafka write message error")
+        except Exception as e:
+            print("An error occurred while pushing data to the database!")
+        # elastícearch
+        if _id != None:
+            self.insert_elastic(news_info) 
+
     def exec_func(self, input_val=None, **kwargs):
         try: 
             collection_name = "News"
@@ -355,7 +509,6 @@ class GetNewsInfoAction(BaseAction):
             except:
                 pass
 
-            check_url_exist = "0"
             day_check = self.get_check_time(10)
             if kwargs["mode_test"] != True:
                 self.check_news_exists(url, day_check)
@@ -380,193 +533,49 @@ class GetNewsInfoAction(BaseAction):
             news_info["data:title"] = ""
             news_info["data:content"] = ""
             news_info["pub_date"] = get_time_now_string_y_m_now()
+            # news_info["data:title_translate"] = ""
+            # news_info["data:content_translate"] = ""
 
             page = input_val
             # check_content = False
-            if title_expr != "None" and title_expr != "":
-                elems = self.driver.select(page, by, title_expr)
-                if len(elems) > 0:
-                    news_info["data:title"] = self.driver.get_content(elems[0])
-                    news_info["data:title_translate"] = ""
-                    try:
-                        if kwargs["mode_test"] != True:
-                            news_info["data:title_translate"] = self.translate(news_info["data:title"], kwargs["source_language"])
-                    except Exception as e:
-                        pass
+            news_info["data:url"] = url
 
-            if author_expr != "None" and author_expr != "":
-                elems = self.driver.select(page, by, author_expr)
-                if len(elems) > 0:
-                    news_info["data:author"] = self.driver.get_content(elems[0])
-            # if time_expr != "None" and time_expr !="":
-            if True:
-                try:
-                    # print('time_expr',time_expr)
-                    elems = self.driver.select(page, by, time_expr)
-                    if len(elems) > 0:
-                        news_info["data:time"] = self.driver.get_content(elems[0])
-                        time_string = news_info["data:time"]
-                        # print(news_info["data:time"])
-                        if kwargs["mode_test"] != True:
-                            try:
-                                format = [",", ".", "/", "_", "-", " "]
-                                my_concat = lambda arr: "".join(arr)
-                                len_time_format = len(time_format)
-                                time_result = {}
-                                for i in range(len_time_format):
-                                    if time_format[i] in format:
-                                        if i > 0:
-                                            name_time_format_1 = "time_" + str(
-                                                time_format[i - 1]
-                                            )
-                                            # print(time_format[i])
-                                            # print(time_string)
-                                            index = time_string.index(
-                                                time_format[i]
-                                            )  # split the string at the delimiter
-                                            # tg = time_string.split(time_format[i])
-                                            tg = time_string
-                                            time_string = time_string[index + 1 :]
-                                            if str(time_format[i - 1]) == "***":
-                                                continue
+            news_info["data:title"] = self.get_title(page, by, title_expr)
 
-                                            time_result[f"{name_time_format_1}"] = (
-                                                f"{tg[:index]}".replace(" ", "")
-                                                .replace("\n", "")
-                                                .replace("\t", "")
-                                            )
-                                        elif i < (len_time_format - 1):
-                                            tg = time_string.split(time_format[i])
-                                            time_string = my_concat(tg[1:])
-                                        else:
-                                            pass
-                                news_info["pub_date"] = ""
-                                try:
-                                    if (
-                                        time_result["time_yyyy"] != "None"
-                                        and time_result["time_yyyy"] != ""
-                                    ):
-                                        news_info["pub_date"] += time_result["time_yyyy"]
-                                finally:
-                                    news_info["pub_date"] += "-"
-                                try:
-                                    if (
-                                        time_result["time_mm"] != "None"
-                                        and time_result["time_mm"] != ""
-                                    ):
-                                        news_info["pub_date"] += time_result["time_mm"]
-                                finally:
-                                    news_info["pub_date"] += "-"
-                                try:
-                                    if (
-                                        time_result["time_dd"] != "None"
-                                        and time_result["time_dd"] != ""
-                                    ):
-                                        news_info["pub_date"] += time_result["time_dd"]
-                                except:
-                                    pass
-                                finally:
-                                    try:
-                                        news_info["pub_date"] = datetime.strptime(
-                                            str(news_info["pub_date"]), "%Y-%m-%d"
-                                        )  # .date()
-                                    except:
-                                        news_info[
-                                            "pub_date"
-                                        ] = get_time_now_string_y_m_now()
-                            except:
-                                news_info["pub_date"] = get_time_now_string_y_m_now()
-                except:
-                    pass
+            news_info["data:author"] = self.get_author(page, by, author_expr)
+            
+            news_info["data:time"], news_info["pub_date"] =  self.get_time(page, by, time_expr, time_format, kwargs["mode_test"])
+            
+            news_info["data:content"] = self.get_content(page, by, content_expr)
 
-            # else:
-            #     news_info['pub_date'] = get_time_now_string_y_m_now()
+            news_info["data:html"] = self.get_content_html(page, by, content_expr)
 
-            if content_expr != "None" and content_expr != "":
-                elems = self.driver.select(page, by, content_expr)
-                if len(elems) > 0:
-                    if len(elems) == 1:
-                        news_info["data:content"] = self.driver.get_content(elems[0])
-                    elif len(elems) > 1:
-                        news_info["data:content"] = ""
-                        for i in range(len(elems)):
-                            news_info["data:content"] += self.driver.get_content(elems[i]) +"\n"
-                    # check_content = True
+            if news_info["data:content"] == "" and kwargs["mode_test"] != True:
+                self.create_log(ActionStatus.ERROR, "empty content", pipeline_id=kwargs.get("pipeline_id"))
 
-                    #translate content 
-                    if news_info["data:content"] not in ["None", None, ""]:
-                        news_info["data:content_translate"] = ""
-                        if kwargs.get("source_language") != "vi":
-                            try:
-                                news_info["data:content_translate"] = self.translate(news_info["data:content"], kwargs.get("source_language"))
-                            except Exception as e:
-                                print(e)
-                                news_info["data:content_translate"] = ""
-                        
-
-                    if kwargs["mode_test"] != True:
-                        content_translated = news_info["data:content_translate"]+" "+news_info["data:content_translate"]
-                        news_info["keywords"] = self.get_keywords(news_info['data:content'], kwargs["source_language"],content_translated)
-                        #--------------------------------------------------------
-                        news_info["data:class_chude"] = self.get_chude(news_info["data:content"])
-                        #--------------------------------------------------------
-                        news_info["data:class_linhvuc"] = self.get_linhvuc(news_info["data:content"])
-                        #--------------------------------------------------------
-                        if kwargs.get("source_language") != "vi":
-                            news_info["data:class_sacthai"] = self.get_sentiment(news_info["data:title_translate"], news_info["data:content_translate"])
-                        else:
-                            news_info["data:class_sacthai"] = self.get_sentiment(news_info["data:title"], news_info["data:content"])
-                        #--------------------------------------------------------
-                        do_1 = datetime.now()
-                        news_info["data:summaries"] = self.summarize_all_level(kwargs.get("source_language"), news_info["data:title"], news_info["data:content"])
-                        do_2 = datetime.now()
-                        print("summarize: ", (do_2-do_1).microseconds*1000)
-
-                if news_info["data:content"] == "":
-                    self.create_log(ActionStatus.ERROR, "empty content", pipeline_id=kwargs.get("pipeline_id"))
-                    # raise Exception("empty content")
-
-                news_info["data:url"] = url
-            if content_expr != "None" and content_expr != "":
-                elems = self.driver.select(page, by, content_expr)
-                if len(elems) == 1:
-                    news_info["data:html"] = self.driver.get_html(elems[0])
-
-                    tmp_video = self.driver.select(from_elem=page, by="css", expr="figure")
-                    for i in tmp_video:
-                        news_info["data:html"] = news_info["data:html"].replace(
-                            self.driver.get_html(i), ""
-                        )
-                elif len(elems) > 1:
-                    news_info["data:html"] = ""
-                    for i in range(len(elems)):
-                        news_info["data:html"] += self.driver.get_html(elems[i])
-
-            if kwargs["mode_test"] != True:
-                if  check_url_exist == "0":
-                    try:
-                        self.check_news_exists(url, day_check)
-                        
-                        _id = MongoRepository().insert_one(
-                            collection_name=collection_name, doc=news_info
-                        )
-                        self.add_news_to_object(news_info, _id)
-                        # print(type(_id))
-                        try:
-                            message = {
-                                "title": str(news_info["data:title"]),
-                                "content": str(news_info["data:content"]),
-                                "pubdate": str(news_info["pub_date"]),
-                                "id_new": str(_id),
-                            }
-                            KafkaProducer_class().write("events", message)
-                        except:
-                            print("kafka write message error")
-                    except Exception as e:
-                        print("An error occurred while pushing data to the database!")
-                    # elastícearch
-                    if _id != None:
-                        self.insert_elastic(news_info) 
+            if news_info["data:content"] not in ["", None, "None"]:
+                if kwargs["mode_test"] != True:   
+                    news_info["data:title_translate"] = self.translate(news_info["data:title"], kwargs["source_language"])
+                    #------------------------------------------------------- 
+                    news_info["data:content_translate"] = self.translate(news_info["data:content"], kwargs.get("source_language"))
+                    #-------------------------------------------------------
+                    content_translated = news_info["data:title_translate"]+" "+news_info["data:content_translate"]
+                    news_info["keywords"] = self.get_keywords(news_info['data:content'], kwargs["source_language"],content_translated)
+                    #--------------------------------------------------------
+                    news_info["data:class_chude"] = self.get_chude(news_info["data:content"])
+                    #--------------------------------------------------------
+                    news_info["data:class_linhvuc"] = self.get_linhvuc(news_info["data:content"])
+                    #--------------------------------------------------------
+                    if kwargs.get("source_language") != "vi":
+                        news_info["data:class_sacthai"] = self.get_sentiment(news_info["data:title_translate"], news_info["data:content_translate"])
+                    else:
+                        news_info["data:class_sacthai"] = self.get_sentiment(news_info["data:title"], news_info["data:content"])
+                    #--------------------------------------------------------
+                    news_info["data:summaries"] = self.summarize_all_level(kwargs.get("source_language"), news_info["data:title"], news_info["data:content"])
+            
+            if kwargs["mode_test"] != True:   
+                self.save_news(news_info, url, day_check, collection_name)
+            
             return news_info
         except Exception as e:
             raise e

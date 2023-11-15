@@ -8,17 +8,14 @@ from typing import *
 
 class MongoRepository:
     def __init__(self):
-        self.__host = settings.mong_host
-        self.__port = settings.mongo_port
-        self.__username = settings.mongo_username
-        self.__passwd = settings.mongo_passwd
-        self.__db_name = settings.mongo_db_name
+        self.__host = settings.MONGO_DETAILS
+        self.__db_name = settings.DATABASE_NAME
         self.__client = None
         self.__db = None
 
     def __connect(self):
-        self.__client = pymongo.MongoClient(self.__host.strip())
-        self.__db = self.__client[self.__db_name]
+        self.__client = pymongo.MongoClient(self.__host)
+        self.__db = self.__client[self.__db_name] 
 
     def __close(self):
         if self.__client is not None and self.__db is not None:
