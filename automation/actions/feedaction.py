@@ -689,12 +689,12 @@ class FeedAction(BaseAction):
         try:
             url = data_feed["link"]
             collection_name = "News"
-            check_url_exist = False
             #check existed
             if kwargs["mode_test"] != True:
                 day_range = 10
                 days = self.get_check_time(day_range)
-                check_url_exist = self.check_exists(url,days=days)
+                if self.check_exists(url,days=days):
+                    raise Exception(f"{url} url existed")
             
             # init news info dictionary
             news_info = {}
@@ -755,12 +755,13 @@ class FeedAction(BaseAction):
             if content_expr != "None" and content_expr != "":
                 news_info["data:html"] = self.get_html_content(page, content_expr, by)
             if kwargs["mode_test"] != True:
-                if check_url_exist == False:
-                    #insert to mongo
-                    insert_ok = self.insert_mongo(collection_name, news_info)
-                    # elastícearch
-                    if insert_ok != None:
-                        self.insert_elastic(news_info)
+                if self.check_exists(url,days=days):
+                    raise Exception(f"{url} url existed")
+                #insert to mongo
+                insert_ok = self.insert_mongo(collection_name, news_info)
+                # elastícearch
+                if insert_ok != None:
+                    self.insert_elastic(news_info)
             return news_info
         except Exception as e:
             raise e
@@ -815,7 +816,7 @@ class FeedAction(BaseAction):
                 feed_action["params"]["data_feed"] = data_feed
                 message = {"actions": [feed_action], "input_val": "null", "kwargs": kwargs_leaf}
                 try:
-                    if not self.check_queue(data_feed['link'], day_check) and not self.check_exists(url, day_check):
+                    if not self.check_queue(data_feed['link'], day_check) and not self.check_exists(data_feed['link'], day_check):
                         self.send_queue(message, data_feed, kwargs)
                 except Exception as e:
                     print(e)
