@@ -32,7 +32,7 @@ def get_article_data(article_raw:Locator, crawl_social_id):
         content_div_child_tag = select(content_div_tag, ">:nth-child(2)")[0]
         data["content"] = content_div_child_tag.text_content()\
                             .replace("See Translation","")\
-                            .replace("See more", "")
+                            .replace("… More", "")
         footer_tag = select(article_raw,"footer>:nth-child(1)>:nth-child(1)>:nth-child(1)>:nth-child(1)")[0]
         try:
             data["like"] = process_like(select(footer_tag, 'div[data-sigil="reactions-sentence-container"]')[0].text_content())
