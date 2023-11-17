@@ -79,7 +79,7 @@ class ForeachAction(BaseAction):
                     name="send_queue",
                     display_name="Send_Queue",
                     val_type="select",
-                    default_val="False",
+                    default_val="True",
                     options=["False", "True"],
                     validators=["required_"],
                 ),
@@ -117,7 +117,6 @@ class ForeachAction(BaseAction):
         return item != None
         
     def check_exists(self, url, days):
-       
         existed_news, existed_count = MongoRepository().get_many(
                         collection_name="News", filter_spec={"data:url": str(url),
                                                              "$and": [ 
@@ -152,14 +151,14 @@ class ForeachAction(BaseAction):
                     kwargs_leaf["list_proxy"] = [self.random_proxy(kwargs.get("list_proxy"))]
                     message = {"actions": actions, "input_val": data_url, "kwargs": kwargs_leaf}
                     try:
-                        is_existed_inqeueu = self.check_queue(data_url, check_time)
-                        if not is_existed_inqeueu:
+                        is_existed_inqueue = self.check_queue(data_url, check_time)
+                        if not is_existed_inqueue:
                             self.send_queue(message, kwargs["pipeline_id"], data_url, kwargs["source_name"])
                         else:
                             print("url existed in queue")
                     except Exception as e:
-                        print("url existed in queue")
-                        pass
+                        print("send queue failed")
+                        
                     if kwargs["mode_test"] == True:
                         break
                 else:
