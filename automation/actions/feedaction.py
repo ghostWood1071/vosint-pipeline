@@ -801,7 +801,7 @@ class FeedAction(BaseAction):
                 try:
                     news_info = self.process_news_data(data_feed, kwargs, title_expr, 
                                         author_expr, time_expr, content_expr, 
-                                        time_format, by, detect_event, is_send_queue)
+                                        time_format, by, detect_event, is_send_queue=False)
 
                     result_test = news_info.copy() if news_info is not None else news_info
                     if kwargs["mode_test"] != True:
@@ -829,7 +829,9 @@ class FeedAction(BaseAction):
 
         elif is_send_queue == "True" and not is_root: #process_news
             try:
-                news_info = self.process_news_data(self.params.get("data_feed"), kwargs, title_expr, author_expr, time_expr, content_expr, time_expr, by, detect_event)
+                news_info = self.process_news_data(self.params.get("data_feed"), kwargs, title_expr, 
+                                                   author_expr, time_expr, content_expr, 
+                                                   time_expr, by, detect_event, is_send_queue= True)
                 result_test = news_info.copy()
             except Exception as e:
                 raise e
