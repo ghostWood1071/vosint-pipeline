@@ -686,7 +686,7 @@ class FeedAction(BaseAction):
             print(e)
     
     
-    def process_news_data(self, data_feed, kwargs, title_expr, author_expr, time_expr, content_expr, time_format, by, detect_event):
+    def process_news_data(self, data_feed, kwargs, title_expr, author_expr, time_expr, content_expr, time_format, by, detect_event, is_send_queue):
         try:
             url = data_feed["link"]
             collection_name = "News"
@@ -695,8 +695,11 @@ class FeedAction(BaseAction):
                 day_range = 10
                 days = self.get_check_time(day_range)
                 if self.check_exists(url,days=days):
-                    raise Exception(f"{url} url existed")
-            
+                    if is_send_queue:
+                        raise Exception(f"{url} url existed")
+                    else:
+                        self.create_log(ActionStatus.ERROR, f"{url} url existed", kwargs.get("pipeline_id"))
+                        return None
             # init news info dictionary
             news_info = {}
             news_info["source_favicon"] = kwargs["source_favicon"]
@@ -798,8 +801,9 @@ class FeedAction(BaseAction):
                 try:
                     news_info = self.process_news_data(data_feed, kwargs, title_expr, 
                                         author_expr, time_expr, content_expr, 
-                                        time_format, by, detect_event)
-                    result_test = news_info.copy()
+                                        time_format, by, detect_event, is_send_queue)
+
+                    result_test = news_info.copy() if news_info is not None else news_info
                     if kwargs["mode_test"] != True:
                         del news_info
                     else:
