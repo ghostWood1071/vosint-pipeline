@@ -51,7 +51,7 @@ class TtxvnAction(BaseAction):
                     name="send_queue",
                     display_name="send_queue",
                     val_type="bool",
-                    default_val='False',
+                    default_val='True',
                     validators=["required_"],
                 ),
                 ParamInfo(
