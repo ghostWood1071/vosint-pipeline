@@ -25,12 +25,6 @@ def get_video_data(page: Page, url: str, cookies, data: Dict[str, Any], content)
         return None
     page.goto(url)
     time.sleep(5)
-    try:
-        content_tag = select(page, '//*[@data-e2e="browse-video-desc"]')[0]
-        content = content_tag.inner_text()
-    except Exception as e:
-        traceback.print_exc()
-        content = ''
 
     try:
         header_tag = select(page, '//*[@data-e2e="browser-nickname"]/span[1]')[0]
@@ -43,6 +37,7 @@ def get_video_data(page: Page, url: str, cookies, data: Dict[str, Any], content)
         footer_date_tag = select(page, '//*[@data-e2e="browser-nickname"]/span[3]')[0]
         footer_date = footer_date_tag.inner_text()
     except Exception as e:
+        traceback.print_exc()
         footer_date= ''
 
 
@@ -119,7 +114,13 @@ def tiktok_channel(page: Page, cookies,accounts, max_news):
         content = contents[i]
         data = datum[i]
         data = get_video_data(page, link, cookies, data, content)
-        check_and_insert_to_db(data)
+        if data is not None:
+            check = is_existed(data)
+            if check:
+                check_and_update(data)
+            else:
+                check_and_insert_to_db(data)
+
 
 def get_video_info_on_channel(page: Page, got_videos: int, crawl_social_id, max_news):
     links = []
@@ -154,11 +155,9 @@ def get_video_info_on_channel(page: Page, got_videos: int, crawl_social_id, max_
                 "id_social": crawl_social_id,
                 "content": content
             }
-            check = is_existed(data)
-            if not check:
-                links.append(link)
-                contents.append(content)
-                datum.append(data)
+            links.append(link)
+            contents.append(content)
+            datum.append(data)
         return {
             "links": links,
             "contents": contents,

@@ -8,8 +8,9 @@ from models.mongorepository import MongoRepository
 import json
 import traceback
 
-def login(page, account, password):
+def login(page:Page, account, password):
     print("login ....")
+    page.context.clear_cookies()
     page.goto("https://m.facebook.com/login")
     page.type("input#m_login_email", account)
     page.type('input#m_login_password', password)
