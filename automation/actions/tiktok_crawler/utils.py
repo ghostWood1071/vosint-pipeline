@@ -35,6 +35,18 @@ def check_and_insert_to_db(data):
         return True
     return False
 
+def check_and_update(data):
+    if data is None:
+        return False
+    tiktok_data = MongoRepository().get_one("tiktok", {"social_id": data.get("social_id"), "video_id": data.get("video_id")})
+    if tiktok_data is not None:
+        tiktok_data.update({"content": data["content"]})
+        tiktok_data.update({"like": data["like"]})
+        tiktok_data.update({"comments": data["comments"]})
+        tiktok_data.update({"share": data["share"]})
+        tiktok_data.update({"sentiment": data["sentiment"]})
+        MongoRepository().update_one('tiktok', tiktok_data)
+
 def is_existed(data):
     is_exists = MongoRepository().get_one("tiktok",
                                           {"social_id": data.get("social_id"), "video_id": data.get("video_id")})
