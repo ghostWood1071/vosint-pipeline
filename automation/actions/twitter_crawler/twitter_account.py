@@ -88,11 +88,6 @@ def get_articles(page:Page, got_article:int, crawl_social_id, max_news: int, pos
     subset_articles = articles[got_article:len(articles)]
     for article in subset_articles:
         try:
-            # # check pinned
-            # social_context_tag = select(article, '//*[@data-testid="socialContext"]')
-            # is_pinned = False;
-            # if len(social_context_tag) != 0:
-            #     is_pinned = social_context_tag[0].inner_text() == "Pinned"
 
             data = get_article_data(article, crawl_social_id, post_links)
             print('data: ', data)
@@ -106,12 +101,6 @@ def get_articles(page:Page, got_article:int, crawl_social_id, max_news: int, pos
                 return False
 
             return True
-
-            # if not success:
-            #     if is_pinned:
-            #         continue
-            #     else:
-            #         return 0
 
 
         except Exception as e:
