@@ -104,8 +104,8 @@ class BaseAction:
                 his_log["actione"] = f"{self.__class__.__name__}"
                 his_log["log"] = history
                 # his_log["link"] = "" if type(input_val) != str else input_val
+                url = None
                 try:
-                    url = None
                     try:
                         url = self.driver.get_current_url()
                     except:
@@ -116,6 +116,7 @@ class BaseAction:
                 #his_log["id_schema"] = self.params['id_schema']
                 his_log['message_error'] = ''
                 try:
+                    # if url is not None and str(url) != "about:blank":
                     MongoRepository().insert_one(collection_name="his_log", doc=his_log)
                 except:
                     pass
