@@ -33,6 +33,16 @@ def check_and_insert_to_db(data):
         return True
     return False
 
+def update_interact(data):
+    MongoRepository().update_many("facebook", 
+                                  {"post_id": data.get("post_id")}, 
+                                  {"$set": {"like": data.get("like"),
+                                            "share":data.get("share"),
+                                            "comments": data.get("comments")
+                                            }
+                                  }
+                                )
+
 def select(from_element: Union[Locator, Page], expr:str):
         element = from_element.locator(f"{expr}")
         element = [element.nth(i) for i in range(element.count())]
