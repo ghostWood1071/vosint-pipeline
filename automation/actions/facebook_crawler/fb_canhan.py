@@ -65,7 +65,8 @@ def get_articles(page:Page, got_article:int, crawl_social_id)->bool:
             success = check_and_insert_to_db(data)
             if not success:
                 print("is_existed")
-                return 0
+                update_interact(data)
+                # return 0
         except:
             continue
     return len(articles)
