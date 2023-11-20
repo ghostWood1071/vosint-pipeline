@@ -135,7 +135,6 @@ class FacebookAction(BaseAction):
         return max_news
     
     def exec_func(self, input_val=None, **kwargs):
-        collection_name = "facebook"
         time.sleep(2)
         try:
             source_account = self.get_source_account(self.params['fb'])
