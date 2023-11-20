@@ -543,6 +543,7 @@ class FeedAction(BaseAction):
 
     def get_content(self, page, content_expr, by):
         result = ""
+        result_html = []
         if content_expr != "None" and content_expr != "":
             elems = self.driver.select(page, by, content_expr)
         
@@ -552,8 +553,10 @@ class FeedAction(BaseAction):
                 elif len(elems) > 1:
                     result = ""
                     for i in range(len(elems)):
-                        result += self.driver.get_content(elems[i])+"\n"   
-        return result
+                        elem_content = self.driver.get_content(elems[i])
+                        result += elem_content +"\n"   
+                        result_html.append(f"<p>{elem_content}</p>")
+        return result, "".join(result_html)
 
     def get_html_content(self, page, content_expr, by):
         elems = self.driver.select(page, by, content_expr)
@@ -727,7 +730,7 @@ class FeedAction(BaseAction):
             if kwargs["mode_test"] != True:
                 news_info["pub_date"] = self.get_publish_date(time_format)
             #get_content -------------------------------------------------------
-            news_info["data:content"] = self.get_content(page, content_expr, by)
+            news_info["data:content"], news_info["data:html"] = self.get_content(page, content_expr, by)
             if news_info["data:content"] not in ["None", None, ""]:
                 # check_content = True
                 if kwargs["mode_test"] != True:
@@ -756,8 +759,8 @@ class FeedAction(BaseAction):
             #get_url
             news_info["data:url"] = url
             #get_html_content
-            if content_expr != "None" and content_expr != "":
-                news_info["data:html"] = self.get_html_content(page, content_expr, by)
+            # if content_expr != "None" and content_expr != "":
+            #     news_info["data:html"] = self.get_html_content(page, content_expr, by)
             if kwargs["mode_test"] != True:
                 if self.check_exists(url,days=days):
                     raise Exception(f"{url} url existed")

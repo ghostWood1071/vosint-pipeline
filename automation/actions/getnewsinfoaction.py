@@ -437,20 +437,24 @@ class GetNewsInfoAction(BaseAction):
                             result2 = get_time_now_string_y_m_now()
             except:
                 pass
-            return result, result2
+        return result, result2
 
     def get_content(self, page, by, content_expr):
         result = ""
+        result_html = []
         if content_expr != "None" and content_expr != "":
             elems = self.driver.select(page, by, content_expr)
             if len(elems) > 0:
                 if len(elems) == 1:
                     result = self.driver.get_content(elems[0])
+                    result_html = [f"<p>{result}</p>"]
                 elif len(elems) > 1:
                     result = ""
                     for i in range(len(elems)):
-                        result += self.driver.get_content(elems[i]) +"\n"
-        return result
+                        elem_content = self.driver.get_content(elems[i])
+                        result += elem_content +"\n"
+                        result_html.append(f"<p>{elem_content}</p>")
+        return result, "".join(result_html)
 
     def get_content_html(self, page, by, content_expr):
         result = ""
@@ -548,9 +552,9 @@ class GetNewsInfoAction(BaseAction):
             
             news_info["data:time"], news_info["pub_date"] =  self.get_time(page, by, time_expr, time_format, kwargs["mode_test"])
             
-            news_info["data:content"] = self.get_content(page, by, content_expr)
+            news_info["data:content"], news_info["data:html"] = self.get_content(page, by, content_expr)
 
-            news_info["data:html"] = self.get_content_html(page, by, content_expr)
+            # news_info["data:html"] = self.get_content_html(page, by, content_expr)
 
             if news_info["data:content"] == "" and kwargs["mode_test"] != True:
                 self.create_log(ActionStatus.ERROR, "empty content", pipeline_id=kwargs.get("pipeline_id"))
