@@ -688,7 +688,6 @@ class FeedAction(BaseAction):
                 MongoRepository().delete_one("queue", {"_id": task_id})
             print(e)
     
-    
     def process_news_data(self, data_feed, kwargs, title_expr, author_expr, time_expr, content_expr, time_format, by, detect_event, is_send_queue):
         try:
             url = data_feed["link"]
@@ -790,6 +789,10 @@ class FeedAction(BaseAction):
         is_root = True if self.params.get("is_root") == None or self.params.get("is_root") =="True" else False
         result_test = None
         if is_root:
+            try:
+                self.driver.goto(url)
+            except:
+                pass
             proxy = None 
             if kwargs.get("list_proxy"):
                 proxy_id =  self.random_proxy(kwargs.get("list_proxy"))

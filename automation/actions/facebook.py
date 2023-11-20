@@ -137,6 +137,10 @@ class FacebookAction(BaseAction):
     def exec_func(self, input_val=None, **kwargs):
         time.sleep(2)
         try:
+            self.driver.goto("https://m.facebook.com")
+        except:
+            pass
+        try:
             source_account = self.get_source_account(self.params['fb'])
             followed_users =  self.get_user_follow(source_account.get("users_follow"))
             max_news = self.get_max_news_quantity(kwargs)
