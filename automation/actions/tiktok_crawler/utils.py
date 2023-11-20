@@ -7,6 +7,9 @@ from typing import *
 from datetime import datetime, timedelta
 from dateutil import parser
 from models import MongoRepository
+import requests
+from core.config import settings
+import json
 
 def scroll_loop(action: Any ,**kwargs:Dict[str, Any]):
     kwargs.update({'got_videos': 0})
@@ -96,3 +99,27 @@ def process_like(likes_string:str):
         return likes_quantity
     else:
         return 0
+
+def translate(language:str, content:str):
+    result = ""
+    try:
+        lang_dict = {
+            'cn': 'chinese',
+            'ru': 'russia',
+            'en': 'english'
+        }
+        lang_code = lang_dict.get(language)
+        if lang_code is None:
+            return ""
+        req = requests.post(settings.TRANSLATE_API, data=json.dumps(
+            {
+                "language": lang_code,
+                "text": content
+            }
+        ))
+        result = req.json().get("translate_text")
+        if not req.ok:
+            raise Exception()
+    except:
+        result = ""
+    return result

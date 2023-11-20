@@ -60,16 +60,28 @@ def get_video_data(page: Page, url: str, cookies, data: Dict[str, Any], content)
         share = share_tag.inner_text()
     except Exception as e:
         traceback.print_exc()
-        share  = 0
+        share = 0
 
     try:
-        sentiment = get_sentiment(header, content)
+        lang = langdetect.detect(content)
+    except Exception as e:
+        print('Detect language error')
+        lang = ''
+
+    try:
+        languages = ['cn', 'ru', 'en']
+        if lang in languages:
+            translated_content = translate(lang, content)
+            sentiment = get_sentiment(header, translated_content)
+        elif lang == 'vi':
+            sentiment = get_sentiment(header, content)
+        else:
+            sentiment = "0"
     except Exception as e:
         traceback.print_exc()
         sentiment = '0'
 
     try:
-        lang = langdetect.detect(content)
         keywords = get_keywords(content, lang)
         print('lang: ', lang)
     except Exception as e:
