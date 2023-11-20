@@ -42,7 +42,6 @@ class TwitterAction(BaseAction):
 
     def exec_func(self, input_val=None, **kwargs):
         collection_name = "twitter"
-        self.driver.goto("https://twitter.com/")
         try:
             first_action = kwargs['first_action']
             max_news = int(first_action['params']['max_new'])
@@ -52,6 +51,10 @@ class TwitterAction(BaseAction):
 
         time.sleep(2)
         try:
+            try:
+                self.driver.goto("https://twitter.com/")
+            except:
+                pass
             pipeline_id = kwargs['pipeline_id']
             source_account = self.get_source_account(self.params['twitter'])
             followed_users =  self.get_user_follow(source_account.get("users_follow"))

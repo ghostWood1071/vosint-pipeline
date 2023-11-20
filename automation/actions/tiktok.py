@@ -60,6 +60,10 @@ class TiktokAction(BaseAction):
             max_news = 0
         time.sleep(2)
         try:
+            try:
+                self.driver.goto("https://www.tiktok.com/")
+            except:
+                pass
             pipeline_id = kwargs.get('pipeline_id')
             source_account = self.get_source_account(self.params['tiktok'])
             followed_users = self.get_user_follow(source_account.get("users_follow"))
