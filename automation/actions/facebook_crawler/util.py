@@ -85,3 +85,37 @@ def process_like(likes_string:str):
         return likes_quantity
     else:
         return 0
+
+def get_image_links(elems):
+    img_links = []
+    for elem in elems:
+        try:
+            computed_style = elem.evaluate('(element) => getComputedStyle(element)', elem)
+            background_image_url = computed_style['backgroundImage']
+            background_image_url = background_image_url.replace('url("', '').replace('")', '')
+            img_links.append(background_image_url)
+        except Exception as e:
+            continue
+    return img_links
+
+def get_video_links(elems):
+    video_links = []
+    for elem in elems:
+        try:
+            elem.click()
+            time.sleep(0.1)
+            video_tags = select(elem, "video")
+            if len(video_tags)>0:
+                video_links.append(video_tags[0].get_attribute("src"))
+        except Exception as e:
+            continue
+    return video_links
+
+def get_other_links(elems: List[Locator]):
+    other_links = []
+    for elem in elems:
+        try:
+            other_links.append(elem.get_attribute("href"))
+        except Exception as e:
+            continue
+    return other_links
