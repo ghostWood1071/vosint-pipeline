@@ -43,7 +43,14 @@ def get_article_data(article_raw:Locator, crawl_social_id, post_links):
             share = 0
 
         try:
-            sentiment = get_sentiment(header, content)
+            languages = ['cn', 'ru', 'en']
+            if lang in languages:
+                translated_content = translate(lang, content)
+                sentiment = get_sentiment(header, translated_content)
+            elif lang == 'vi':
+                sentiment = get_sentiment(header, content)
+            else:
+                sentiment = "0"
         except Exception as e:
             sentiment = "0"
             print('Lỗi khi gọi API sentiment: ', e)
@@ -76,29 +83,35 @@ def get_article_data(article_raw:Locator, crawl_social_id, post_links):
         print(e)
         raise Exception("post none")
 
-def get_articles(page:Page, got_article:int, crawl_social_id, max_news: int, post_links)->bool:
+def get_articles(page:Page, got_article:int, crawl_social_id, max_news: int, post_links, pre_link_len: int)->bool:
     articles = select(page, "article")
     subset_articles = articles[got_article:len(articles)]
     for article in subset_articles:
         try:
-            # check pinned
-            social_context_tag = select(article, '//*[@data-testid="socialContext"]')
-            is_pinned = False;
-            if len(social_context_tag) != 0:
-                is_pinned = social_context_tag[0].inner_text() == "Pinned"
+            # # check pinned
+            # social_context_tag = select(article, '//*[@data-testid="socialContext"]')
+            # is_pinned = False;
+            # if len(social_context_tag) != 0:
+            #     is_pinned = social_context_tag[0].inner_text() == "Pinned"
 
             data = get_article_data(article, crawl_social_id, post_links)
             print('data: ', data)
-            success = check_and_insert_to_db(data)
-            print("success: ", success)
+            result = check_and_insert_to_db(data)
+            print("result: ", result)
             if len(post_links) >= max_news:
-                return -1
+                return False
 
-            if not success:
-                if is_pinned:
-                    continue
-                else:
-                    return 0
+            current_link_len = len(post_links)
+            if current_link_len <= pre_link_len:
+                return False
+
+            return True
+
+            # if not success:
+            #     if is_pinned:
+            #         continue
+            #     else:
+            #         return 0
 
 
         except Exception as e:
