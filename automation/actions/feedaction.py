@@ -755,6 +755,8 @@ class FeedAction(BaseAction):
                     summarize_s60 = str(news_info["data:summaries"].get("s60")).strip()
                     if summarize_s60 not in ["None", ""]:
                         news_info["summarize_s60"] = self.translate(kwargs.get("source_language"), summarize_s60)
+                        if news_info["summarize_s60"] == "":
+                            news_info["summarize_s60"] = summarize_s60
                     else:
                         news_info["summarize_s60"] = ""
             if news_info["data:content"] == "":
