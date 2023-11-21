@@ -1,5 +1,5 @@
 from common.internalerror import *
-from ..common import ActionInfo, ActionType, ParamInfo
+from ..common import ActionInfo, ActionType, ParamInfo, ActionStatus
 from .baseaction import BaseAction
 from models import MongoRepository
 from playwright.sync_api import Playwright, sync_playwright
@@ -51,6 +51,11 @@ class TwitterAction(BaseAction):
 
         time.sleep(2)
         try:
+            try:
+                self.driver.goto("https://twitter.com/")
+            except:
+                pass
+            pipeline_id = kwargs['pipeline_id']
             source_account = self.get_source_account(self.params['twitter'])
             followed_users =  self.get_user_follow(source_account.get("users_follow"))
             for account in followed_users:
@@ -58,7 +63,7 @@ class TwitterAction(BaseAction):
                     self.get_twitter_data(account, source_account, max_news)
                     print("______________________________________________________________")
                     source_account = self.get_source_account(self.params['twitter'])
-                    # data.extend(fb_data)
+                    self.create_log(ActionStatus.COMPLETED, account.get('account_link'), pipeline_id)
                 except Exception as e:
                     print(e)
                     traceback.print_exc()

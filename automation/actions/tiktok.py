@@ -60,6 +60,11 @@ class TiktokAction(BaseAction):
             max_news = 0
         time.sleep(2)
         try:
+            try:
+                self.driver.goto("https://www.tiktok.com/")
+            except:
+                pass
+            pipeline_id = kwargs.get('pipeline_id')
             source_account = self.get_source_account(self.params['tiktok'])
             followed_users = self.get_user_follow(source_account.get("users_follow"))
 
@@ -78,10 +83,11 @@ class TiktokAction(BaseAction):
             page = browser.new_page()
             try:
                 tiktok_channel(page=page, accounts=followed_users, cookies=cookies,
-                                    max_news=max_news)
+                                    max_news=max_news, create_log=self.create_log, pipeline_id=pipeline_id)
             except CookiesExpireException as e:
                 raise e
             except Exception as e:
+                traceback.print_exc()
                 print(e)
         except Exception as e:
             traceback.print_exc()
