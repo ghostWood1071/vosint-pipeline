@@ -582,6 +582,8 @@ class GetNewsInfoAction(BaseAction):
                     summarize_s60 = str(news_info["data:summaries"].get("s60")).strip()
                     if summarize_s60 not in ["None", ""]:
                         news_info["summarize_s60"] = self.translate(summarize_s60, kwargs.get("source_language"))
+                        if news_info["summarize_s60"] == "":
+                            news_info["summarize_s60"] = summarize_s60
                     else:
                         news_info["summarize_s60"] = ""
             
