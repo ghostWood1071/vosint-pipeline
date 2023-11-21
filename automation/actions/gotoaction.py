@@ -1,9 +1,10 @@
 from common.internalerror import *
 
-from ..common import ActionInfo, ActionType
+from ..common import ActionInfo, ActionType,ParamInfo
 from .baseaction import BaseAction
 from models import MongoRepository
 import json
+import time
 class GotoAction(BaseAction):
     @classmethod
     def get_action_info(cls) -> ActionInfo:
@@ -13,6 +14,14 @@ class GotoAction(BaseAction):
             action_type=ActionType.COMMON,
             readme="Mở địa chỉ URL",
             z_index=1,
+            param_infos=[
+                ParamInfo(
+                    name="wait",
+                    display_name="Time wait for load",
+                    val_type="str",
+                    default_val="0",
+                )
+            ]
         )
 
     def exec_func(self, input_val=None, **kwargs):
@@ -34,4 +43,9 @@ class GotoAction(BaseAction):
                 result = self.driver.goto(url)
         else:
             result = self.driver.goto(url)
+        time_wait_str = self.params.get("wait")
+        if str(time_wait_str).strip() in ["None", ""]:
+            time_wait_str = "0"
+        time_wait = float(time_wait_str.strip())
+        time.sleep(time_wait)
         return result
