@@ -16,11 +16,9 @@ class PlaywrightDriver(BaseDriver):
     
     def create_browser(self, headless=True):
         self.playwright = sync_playwright().start()
-        self.driver = self.playwright.chromium.launch(channel="chrome", headless=headless, args=[
-            f"--disable-extensions-except={settings.EXTENSIONS_PATH}/shadow-root",
-            f"--load-extension={settings.EXTENSIONS_PATH}/shadow-root",
-        ])
+        self.driver = self.playwright.chromium.launch(channel="chrome", headless=headless)
         self.page = self.driver.new_page(user_agent=settings.USER_AGENT)
+        self.page.add_init_script(path=f"{settings.EXTENSIONS_PATH}/shadow-root/inject.js")
 
     def create_proxy_browser(self, ip_proxy, port ,username, password, headless = True):
         self.proxy_server = {
@@ -29,16 +27,13 @@ class PlaywrightDriver(BaseDriver):
                 'password': password
             }
         self.playwright = sync_playwright().start()
-        self.driver = self.playwright.chromium.launch(channel="chrome",proxy=self.proxy_server, args=[
-            f"--disable-extensions-except={settings.EXTENSIONS_PATH}/shadow-root",
-            f"--load-extension={settings.EXTENSIONS_PATH}/shadow-root",
-        ], headless=headless)
+        self.driver = self.playwright.chromium.launch(channel="chrome", proxy=self.proxy_server, headless=headless)
         self.page = self.driver.new_page(proxy={
             'server': ip_proxy+":"+port,
             'username': username,
             'password': password
-        }, user_agent=settings.USER_AGENT) #self.driver.new_page()
-        
+        }, user_agent=settings.USER_AGENT)
+        self.page.add_init_script(path=f"{settings.EXTENSIONS_PATH}/shadow-root/inject.js")
         print("using proxy ...")
 
     def get_driver(self):
