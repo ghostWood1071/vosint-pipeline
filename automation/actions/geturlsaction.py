@@ -2,7 +2,7 @@ from common.internalerror import *
 
 from ..common import ActionInfo, ActionType, ParamInfo, SelectorBy
 from .baseaction import BaseAction
-
+from urllib.parse import urlparse
 
 class GetUrlsAction(BaseAction):
     @classmethod
@@ -75,11 +75,19 @@ class GetUrlsAction(BaseAction):
     def __map_to_url(self, elem):
         origin = self.params["origin"] if "origin" in self.params else None
         href = self.driver.get_attr(elem, "href")
-        
         if href is None:
             return None
-        if 'http://' in href or 'www.' in href or 'https://' in href:
+        if href.startswith("//"):
+            url = href.lstrip("//")
+        else:
             url = href
+        
+        if 'http://' in url or 'www.' in url or 'https://' in url:
+            pass
         else:
             url = f"{origin}{href}" if origin is not None and origin not in href else href
+        
+        if "http://" not in url and "https://" not in url:
+            protocol = urlparse(self.driver.get_current_url()).scheme
+            url = f"{protocol}://{url}"
         return url

@@ -14,6 +14,7 @@ from pymongo.errors import PyMongoError
 from typing import *
 import re
 import traceback
+from ..common.actionstatus import ActionStatus
 
 class FacebookAction(BaseAction):
     @classmethod
@@ -134,8 +135,11 @@ class FacebookAction(BaseAction):
         return max_news
     
     def exec_func(self, input_val=None, **kwargs):
-        collection_name = "facebook"
         time.sleep(2)
+        try:
+            self.driver.goto("https://m.facebook.com")
+        except:
+            pass
         try:
             source_account = self.get_source_account(self.params['fb'])
             followed_users =  self.get_user_follow(source_account.get("users_follow"))
@@ -145,6 +149,7 @@ class FacebookAction(BaseAction):
                     self.get_facebook_data(account, source_account, max_news)
                     print("______________________________________________________________")
                     source_account = self.get_source_account(self.params['fb'])
+                    self.create_log(ActionStatus.COMPLETED, account.get("account_link"), kwargs.get("pipeline_id"))
                 except Exception as e:
                     print(e)
                     traceback.print_exc()

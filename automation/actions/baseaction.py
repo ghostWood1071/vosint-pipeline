@@ -98,14 +98,14 @@ class BaseAction:
             res = self.exec_func(input_val, **kwargs)
             history = self.return_str_status(ActionStatus.COMPLETED)
             #if f"{self.__class__.__name__}" == "GetNewsInfoAction" or f"{self.__class__.__name__}" == "FeedAction" or f"{self.__class__.__name__}" == "FacebookAction":
-            if f"{self.__class__.__name__}" in ["GetNewsInfoAction", "FeedAction", "FacebookAction", "TtxvnAction"]:
+            if f"{self.__class__.__name__}" in ["GetNewsInfoAction", "FeedAction", "FacebookAction", "TtxvnAction", "TiktokAction", "TwitterAction"]:
                 his_log = {}
                 his_log["pipeline_id"] = kwargs["pipeline_id"]
                 his_log["actione"] = f"{self.__class__.__name__}"
                 his_log["log"] = history
                 # his_log["link"] = "" if type(input_val) != str else input_val
+                url = None
                 try:
-                    url = None
                     try:
                         url = self.driver.get_current_url()
                     except:
@@ -116,8 +116,7 @@ class BaseAction:
                 #his_log["id_schema"] = self.params['id_schema']
                 his_log['message_error'] = ''
                 try:
-                    print("error:  ")
-                    print(his_log)
+                    # if url is not None and str(url) != "about:blank":
                     MongoRepository().insert_one(collection_name="his_log", doc=his_log)
                 except:
                     pass
