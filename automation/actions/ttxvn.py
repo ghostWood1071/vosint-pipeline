@@ -108,12 +108,10 @@ class TtxvnAction(BaseAction):
         return result
 
     def get_exists(self, articles):
-        check_url_exist = '0'
         existed_ids = []
         article_ids = [article["ArticleID"] for article in articles]
         try:
             existed_articles,_ = MongoRepository().get_many(collection_name='ttxvn',filter_spec={"ArticleID": {"$in": article_ids}})
-            del b
             existed_ids = [article["ArticleID"] for article in existed_articles]
         except:
             pass

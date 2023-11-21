@@ -578,6 +578,12 @@ class GetNewsInfoAction(BaseAction):
                         news_info["data:class_sacthai"] = self.get_sentiment(news_info["data:title"], news_info["data:content"])
                     #--------------------------------------------------------
                     news_info["data:summaries"] = self.summarize_all_level(kwargs.get("source_language"), news_info["data:title"], news_info["data:content"])
+                    #--------------------------------------------------------
+                    summarize_s60 = str(news_info["data:summaries"].get("s60")).strip()
+                    if summarize_s60 not in ["None", ""]:
+                        news_info["summarize_s60"] = self.translate(summarize_s60, kwargs.get("source_language"))
+                    else:
+                        news_info["summarize_s60"] = ""
             
             if kwargs["mode_test"] != True:   
                 self.save_news(news_info, url, day_check, collection_name, detect_event)
