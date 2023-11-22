@@ -96,8 +96,9 @@ class TwitterAction(BaseAction):
             password = source_account.get("password")
             source_account_id = str(source_account.get("_id"))
             link = account.get("account_link")
+            header = account.get("social_name")
             if str(account.get("social_type")) == "Object":
-                datas = twitter_account(browser=self.driver.get_driver(), link_person=link, cookies = cookies, account=username, password=password, source_acc_id=source_account_id, crawl_acc_id = account.get("_id"), max_news=max_news)
+                datas = twitter_account(browser=self.driver.get_driver(), link_person=link, cookies = cookies, account=username, password=password, source_acc_id=source_account_id, crawl_acc_id = account.get("_id"), header=header, max_news=max_news)
             return datas
         except Exception as e:
             raise e
