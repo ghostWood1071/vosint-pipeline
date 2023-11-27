@@ -483,17 +483,18 @@ class GetNewsInfoAction(BaseAction):
             )
             self.add_news_to_object(news_info, _id)
             # print(type(_id))
-            if detect_event:
-                try:
-                    message = {
-                        "title": str(news_info["data:title"]),
-                        "content": str(news_info["data:content"]),
-                        "pubdate": str(news_info["pub_date"]),
-                        "id_new": str(_id),
-                    }
-                    KafkaProducer_class().write("events", message)
-                except:
-                    print("kafka write message error")
+            # if detect_event:
+            try:
+                message = {
+                    "title": str(news_info["data:title"]),
+                    "content": str(news_info["data:content"]),
+                    "pubdate": str(news_info["pub_date"]),
+                    "id_new": str(_id),
+                    "display": detect_event
+                }
+                KafkaProducer_class().write("events", message)
+            except:
+                print("kafka write message error")
         except Exception as e:
             print("An error occurred while pushing data to the database!")
         # elastícearch

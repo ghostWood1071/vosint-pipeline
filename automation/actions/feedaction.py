@@ -573,13 +573,14 @@ class FeedAction(BaseAction):
                 result += self.driver.get_html(elems[i])
         return result
 
-    def send_event_to_queue(self, _id, news_info):
+    def send_event_to_queue(self, _id, news_info, display):
         try:
             message = {
                 "title": str(news_info["data:title"]),
                 "content": str(news_info["data:content"]),
                 "pubdate": str(news_info["pub_date"]),
                 "id_new": str(_id),
+                "display": display
             }
             KafkaProducer_class().write("events", message)
         except:
@@ -601,8 +602,7 @@ class FeedAction(BaseAction):
             )
             self.add_news_to_object(news_info, _id)
             print("insert_mongo_succes")
-            if detect_event:
-                self.send_event_to_queue(_id, news_info)
+            self.send_event_to_queue(_id, news_info,detect_event)
             return _id
         except:
             print(
