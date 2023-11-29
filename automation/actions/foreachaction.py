@@ -95,7 +95,13 @@ class ForeachAction(BaseAction):
     
     def send_queue(self, message, pipeline_id, url, source_name):
         try:
-            task_id = MongoRepository().insert_one("queue", {"url": url, "pipeline": pipeline_id, "source": source_name})
+            task_id = MongoRepository().insert_one("queue", 
+                                                   {
+                                                       "url": url, 
+                                                        "pipeline": pipeline_id, 
+                                                        "source": source_name,
+                                                        "expire": datetime.now()
+                                                    })
             message["task_id"] = str(task_id)
             KafkaProducer_class().write("crawling_", message)
             print('write to kafka ...')

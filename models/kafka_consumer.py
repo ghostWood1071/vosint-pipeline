@@ -89,7 +89,7 @@ class KafkaConsumer_class:
                 except Exception as e:
                     pass
                 finally:
-                    self.delete_task(message_data.get("task_id"))
+                    #self.delete_task(message_data.get("task_id"))
                     if activity_id != None:
                         self.delete_slave_activity(activity_id)
         consumer.commit_async()

@@ -679,7 +679,13 @@ class FeedAction(BaseAction):
 
     def send_queue(self, message, data_feed, kwargs):
         try:
-            task_id = MongoRepository().insert_one("queue", {"url": data_feed['link'], "pipeline": kwargs["pipeline_id"], "source": kwargs["source_name"]})
+            task_id = MongoRepository().insert_one("queue", 
+                                                   {
+                                                        "url": data_feed['link'], 
+                                                        "pipeline": kwargs["pipeline_id"], 
+                                                        "source": kwargs["source_name"],
+                                                        "expire": datetime.now()
+                                                    })
             message["task_id"] = str(task_id)
             KafkaProducer_class().write("crawling_", message)
             self.create_log(ActionStatus.INQUEUE, f"{data_feed['link']} is transported to queue", kwargs["pipeline_id"])
