@@ -180,10 +180,10 @@ class TtxvnAction(BaseAction):
                                                             "expire": datetime.now()
                                                         }
                                                     )
-                print(task_id)
-                message["task_id"] = task_id
-                KafkaProducer_class().write("crawling_", message)
-                self.create_log(ActionStatus.INQUEUE, f"news: {url} transported to queue", pipeline_id)
+                if task_id:
+                    message["task_id"] = task_id
+                    KafkaProducer_class().write("crawling_", message)
+                    self.create_log(ActionStatus.INQUEUE, f"news: {url} transported to queue", pipeline_id)
         except Exception as e:
             if task_id != None:
                 MongoRepository().delete_one("queue", {"_id": task_id})

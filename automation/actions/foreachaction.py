@@ -102,10 +102,11 @@ class ForeachAction(BaseAction):
                                                         "source": source_name,
                                                         "expire": datetime.now()
                                                     })
-            message["task_id"] = str(task_id)
-            KafkaProducer_class().write("crawling_", message)
-            print('write to kafka ...')
-            self.create_log(ActionStatus.INQUEUE, f'news {str(url)} transported to queue', pipeline_id)
+            if task_id:
+                message["task_id"] = str(task_id)
+                KafkaProducer_class().write("crawling_", message)
+                print('write to kafka ...')
+                self.create_log(ActionStatus.INQUEUE, f'news {str(url)} transported to queue', pipeline_id)
         except Exception as e:
             if task_id != None:
                 MongoRepository().delete_one("queue", {"_id": task_id})

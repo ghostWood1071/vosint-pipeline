@@ -686,9 +686,10 @@ class FeedAction(BaseAction):
                                                         "source": kwargs["source_name"],
                                                         "expire": datetime.now()
                                                     })
-            message["task_id"] = str(task_id)
-            KafkaProducer_class().write("crawling_", message)
-            self.create_log(ActionStatus.INQUEUE, f"{data_feed['link']} is transported to queue", kwargs["pipeline_id"])
+            if task_id:
+                message["task_id"] = str(task_id)
+                KafkaProducer_class().write("crawling_", message)
+                self.create_log(ActionStatus.INQUEUE, f"{data_feed['link']} is transported to queue", kwargs["pipeline_id"])
         except Exception as e:
             if task_id != None:
                 MongoRepository().delete_one("queue", {"_id": task_id})
