@@ -574,6 +574,11 @@ class FeedAction(BaseAction):
         return result
 
     def send_event_to_queue(self, _id, news_info, display):
+        title_condition = str(news_info.get("data:title")).strip().str(".") in ["None", None, ""]
+        content_condition = str(news_info.get("data:content")).strip().strip(".") in ["None", None, ""]
+        if title_condition or content_condition:
+            print("can not extract event because of null")
+            return
         try:
             message = {
                 "title": str(news_info["data:title"]),
@@ -602,7 +607,6 @@ class FeedAction(BaseAction):
             )
             self.add_news_to_object(news_info, _id)
             print("insert_mongo_succes")
-            self.send_event_to_queue(_id, news_info,detect_event)
             return _id
         except:
             print(
@@ -678,6 +682,7 @@ class FeedAction(BaseAction):
         return existed_count > 0 # return True if existed
 
     def send_queue(self, message, data_feed, kwargs):
+        task_id = None
         try:
             task_id = MongoRepository().insert_one("queue", 
                                                    {
@@ -686,7 +691,7 @@ class FeedAction(BaseAction):
                                                         "source": kwargs["source_name"],
                                                         "expire": datetime.now()
                                                     })
-            if task_id:
+            if task_id is not None:
                 message["task_id"] = str(task_id)
                 KafkaProducer_class().write("crawling_", message)
                 self.create_log(ActionStatus.INQUEUE, f"{data_feed['link']} is transported to queue", kwargs["pipeline_id"])
@@ -782,6 +787,7 @@ class FeedAction(BaseAction):
                 # elastícearch
                 if insert_ok != None:
                     self.insert_elastic(news_info)
+                    self.send_event_to_queue(insert_ok, news_info, detect_event)
             return news_info
         except Exception as e:
             raise e

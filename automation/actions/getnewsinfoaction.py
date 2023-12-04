@@ -474,6 +474,24 @@ class GetNewsInfoAction(BaseAction):
                     result += self.driver.get_html(elems[i])
         return result
 
+    def send_event_to_queue(self, _id, news_info, detect_event):
+        title_condition = str(news_info.get("data:title")).strip().str(".") in ["None", None, ""]
+        content_condition = str(news_info.get("data:content")).strip().strip(".") in ["None", None, ""]
+        if title_condition or content_condition:
+            print("can not extract event because of null")
+            return
+        try:
+            message = {
+                "title": str(news_info["data:title"]),
+                "content": str(news_info["data:content"]),
+                "pubdate": str(news_info["pub_date"]),
+                "id_new": str(_id),
+                "display": detect_event
+            }
+            KafkaProducer_class().write("events", message)
+        except:
+            print("kafka write message error")
+
     def save_news(self, news_info, url, day_check, collection_name, detect_event):
         try:
             self.check_news_exists(url, day_check)
@@ -484,21 +502,11 @@ class GetNewsInfoAction(BaseAction):
             self.add_news_to_object(news_info, _id)
             # print(type(_id))
             # if detect_event:
-            try:
-                message = {
-                    "title": str(news_info["data:title"]),
-                    "content": str(news_info["data:content"]),
-                    "pubdate": str(news_info["pub_date"]),
-                    "id_new": str(_id),
-                    "display": detect_event
-                }
-                KafkaProducer_class().write("events", message)
-            except:
-                print("kafka write message error")
         except Exception as e:
             print("An error occurred while pushing data to the database!")
         # elastícearch
         if _id != None:
+            self.send_event_to_queue(_id, news_info, detect_event)
             self.insert_elastic(news_info) 
 
     def exec_func(self, input_val=None, **kwargs):
