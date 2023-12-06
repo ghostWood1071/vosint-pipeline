@@ -172,11 +172,18 @@ class TtxvnAction(BaseAction):
     def send_queue(self, message, pipeline_id, url, daycheck): 
         try:
             if not self.check_queue(url, daycheck):
-                task_id = MongoRepository().insert_one("queue", {"url": url, "pipeline": pipeline_id, "source": "TTXVN"})
-                print(task_id)
-                message["task_id"] = task_id
-                KafkaProducer_class().write("crawling_", message)
-                self.create_log(ActionStatus.INQUEUE, f"news: {url} transported to queue", pipeline_id)
+                task_id = MongoRepository().insert_one("queue", 
+                                                       {
+                                                           "url": url, 
+                                                            "pipeline": pipeline_id, 
+                                                            "source": "TTXVN",
+                                                            "expire": datetime.now()
+                                                        }
+                                                    )
+                if task_id:
+                    message["task_id"] = task_id
+                    KafkaProducer_class().write("crawling_", message)
+                    self.create_log(ActionStatus.INQUEUE, f"news: {url} transported to queue", pipeline_id)
         except Exception as e:
             if task_id != None:
                 MongoRepository().delete_one("queue", {"_id": task_id})
