@@ -30,6 +30,7 @@ import re
 from urllib.request import ProxyBasicAuthHandler, build_opener, install_opener, urlopen
 from ..common import ActionInfo, ActionStatus
 from bson.objectid import ObjectId
+import traceback
 
 rss_version_2_0 = {
     "author": "author",
@@ -696,9 +697,9 @@ class FeedAction(BaseAction):
                 KafkaProducer_class().write("crawling_", message)
                 self.create_log(ActionStatus.INQUEUE, f"{data_feed['link']} is transported to queue", kwargs["pipeline_id"])
         except Exception as e:
+            traceback.print_exc()
             if task_id != None:
                 MongoRepository().delete_one("queue", {"_id": task_id})
-            print(e)
     
     def process_news_data(self, data_feed, kwargs, title_expr, author_expr, time_expr, content_expr, time_format, by, detect_event, is_send_queue):
         try:

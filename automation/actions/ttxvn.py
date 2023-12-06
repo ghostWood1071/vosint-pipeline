@@ -18,7 +18,7 @@ from random import randint
 from datetime import timedelta
 from elasticsearch import helpers
 from db.elastic_main import My_ElasticSearch
-
+import traceback
 class ElementNotFoundError(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
@@ -185,6 +185,7 @@ class TtxvnAction(BaseAction):
                     KafkaProducer_class().write("crawling_", message)
                     self.create_log(ActionStatus.INQUEUE, f"news: {url} transported to queue", pipeline_id)
         except Exception as e:
+            traceback.print_exc()
             if task_id != None:
                 MongoRepository().delete_one("queue", {"_id": task_id})
             self.create_log(ActionStatus.ERROR, "send news to queue error", pipeline_id)
