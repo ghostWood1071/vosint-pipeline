@@ -575,11 +575,6 @@ class FeedAction(BaseAction):
         return result
 
     def send_event_to_queue(self, _id, news_info, display):
-        title_condition = str(news_info.get("data:title")).strip().str(".") in ["None", None, ""]
-        content_condition = str(news_info.get("data:content")).strip().strip(".") in ["None", None, ""]
-        if title_condition or content_condition:
-            print("can not extract event because of null")
-            return
         try:
             message = {
                 "title": str(news_info["data:title"]),
