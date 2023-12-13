@@ -7,6 +7,7 @@ from typing import *
 from datetime import datetime, timedelta
 from dateutil import parser
 from models import MongoRepository
+import json 
 
 def scroll_loop(action: Any, max_news:int ,**kwargs:Dict[str, Any]):
     kwargs.update({'got_article': 0})
@@ -36,10 +37,12 @@ def check_and_insert_to_db(data):
 def update_interact(data):
     MongoRepository().update_many("facebook", 
                                   {"post_id": data.get("post_id")}, 
-                                  {"$set": {"like": data.get("like"),
+                                  {"$set": 
+                                        {
+                                            "like": data.get("like"),
                                             "share":data.get("share"),
                                             "comments": data.get("comments")
-                                            }
+                                        }
                                   }
                                 )
 
@@ -119,3 +122,11 @@ def get_other_links(elems: List[Locator]):
         except Exception as e:
             continue
     return other_links
+
+def get_post_id(elem, crawl_social_id):
+   data_json_raw = elem.get_attribute("data-store")
+   raw_post_id = json.loads(data_json_raw).get("share_id")
+   post_id = str(crawl_social_id) + str(raw_post_id)
+   return post_id
+
+   

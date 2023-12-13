@@ -15,7 +15,8 @@ import traceback
         
 def get_article_data(article_raw:Locator, crawl_social_id):
     try:
-        data_ft = article_raw.get_attribute("data-ft")
+        # data_ft = article_raw.get_attribute("store")
+        post_id = get_post_id(article_raw, crawl_social_id)
         content_div_tag = select(article_raw, "div > .story_body_container")[0]
         header = select(content_div_tag, "header")[0]
         info = select(header, "a")[1].text_content()
@@ -57,8 +58,8 @@ def get_article_data(article_raw:Locator, crawl_social_id):
             data["share"] =re.findall(r'\d+',select(footer_tag,">:nth-child(1)>:nth-child(2)>:nth-child(2)")[0].text_content())[0]
         except Exception as e:
             data["share"] = "0"
-        data["id_data_ft"] = data_ft
-        data["post_id"] = json.loads(data_ft).get("mf_story_key")
+        data["id_data_ft"] = ""
+        data["post_id"] = post_id #json.loads(data_ft).get("share_id")
         data["footer_type"] = "page"
         data["id_social"] = crawl_social_id
         data["sentiment"] = get_sentiment(data["header"], data["content"])

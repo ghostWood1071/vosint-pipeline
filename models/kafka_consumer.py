@@ -18,6 +18,24 @@ class KafkaConsumer_class:
         self.preducer = KafkaProducer_class()
         self.storage = StorageFactory('hbase')
 
+    @staticmethod
+    def test_connection(topic, group_ids):
+        print("--------------TEST KAFKA CONNECTION START----------")
+        try:
+            print(f"kafa-connect-server: {settings.KAFKA_CONNECT}")
+            consumer = KafkaConsumer(
+                topic,
+                bootstrap_servers=[settings.KAFKA_CONNECT],
+                auto_offset_reset='earliest',
+                enable_auto_commit=True,  # Tắt tự động commit offset
+                group_id= group_ids,
+                value_deserializer=lambda m: json.loads(m.decode('utf-8'))
+            )
+            print(f"connect status: {consumer.bootstrap_connected()}")
+        except Exception as e:
+            print(f"connect status: ", e)
+        print("------------TEST KAFKA CONNECTION END--------------")
+
     def create_slave_activity(self, url, source):
         try:
             activity_id = MongoRepository().insert_one("slave_activity", {
@@ -89,7 +107,7 @@ class KafkaConsumer_class:
                 except Exception as e:
                     pass
                 finally:
-                    self.delete_task(message_data.get("task_id"))
+                    #self.delete_task(message_data.get("task_id"))
                     if activity_id != None:
                         self.delete_slave_activity(activity_id)
         consumer.commit_async()

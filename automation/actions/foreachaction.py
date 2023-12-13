@@ -26,6 +26,7 @@ from random import randint
 from .sendkeyaction import SendKeyAction
 from .typingaction import TypingAction
 from .inputs.urlinputaction import URLInputAction
+import traceback
 
 def get_action_class(name: str):
     action_dict = {
@@ -95,12 +96,20 @@ class ForeachAction(BaseAction):
     
     def send_queue(self, message, pipeline_id, url, source_name):
         try:
-            task_id = MongoRepository().insert_one("queue", {"url": url, "pipeline": pipeline_id, "source": source_name})
-            message["task_id"] = str(task_id)
-            KafkaProducer_class().write("crawling_", message)
-            print('write to kafka ...')
-            self.create_log(ActionStatus.INQUEUE, f'news {str(url)} transported to queue', pipeline_id)
+            task_id = MongoRepository().insert_one("queue", 
+                                                   {
+                                                       "url": url, 
+                                                        "pipeline": pipeline_id, 
+                                                        "source": source_name,
+                                                        "expire": datetime.now()
+                                                    })
+            if task_id:
+                message["task_id"] = str(task_id)
+                KafkaProducer_class().write("crawling_", message)
+                print('write to kafka ...')
+                self.create_log(ActionStatus.INQUEUE, f'news {str(url)} transported to queue', pipeline_id)
         except Exception as e:
+            traceback.print_exc()
             if task_id != None:
                 MongoRepository().delete_one("queue", {"_id": task_id})
             raise e

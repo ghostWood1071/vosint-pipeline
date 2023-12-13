@@ -30,6 +30,7 @@ import re
 from urllib.request import ProxyBasicAuthHandler, build_opener, install_opener, urlopen
 from ..common import ActionInfo, ActionStatus
 from bson.objectid import ObjectId
+import traceback
 
 rss_version_2_0 = {
     "author": "author",
@@ -573,13 +574,14 @@ class FeedAction(BaseAction):
                 result += self.driver.get_html(elems[i])
         return result
 
-    def send_event_to_queue(self, _id, news_info):
+    def send_event_to_queue(self, _id, news_info, display):
         try:
             message = {
                 "title": str(news_info["data:title"]),
                 "content": str(news_info["data:content"]),
                 "pubdate": str(news_info["pub_date"]),
                 "id_new": str(_id),
+                "display": display
             }
             KafkaProducer_class().write("events", message)
         except:
@@ -601,8 +603,6 @@ class FeedAction(BaseAction):
             )
             self.add_news_to_object(news_info, _id)
             print("insert_mongo_succes")
-            if detect_event:
-                self.send_event_to_queue(_id, news_info)
             return _id
         except:
             print(
@@ -678,15 +678,23 @@ class FeedAction(BaseAction):
         return existed_count > 0 # return True if existed
 
     def send_queue(self, message, data_feed, kwargs):
+        task_id = None
         try:
-            task_id = MongoRepository().insert_one("queue", {"url": data_feed['link'], "pipeline": kwargs["pipeline_id"], "source": kwargs["source_name"]})
-            message["task_id"] = str(task_id)
-            KafkaProducer_class().write("crawling_", message)
-            self.create_log(ActionStatus.INQUEUE, f"{data_feed['link']} is transported to queue", kwargs["pipeline_id"])
+            task_id = MongoRepository().insert_one("queue", 
+                                                   {
+                                                        "url": data_feed['link'], 
+                                                        "pipeline": kwargs["pipeline_id"], 
+                                                        "source": kwargs["source_name"],
+                                                        "expire": datetime.now()
+                                                    })
+            if task_id is not None:
+                message["task_id"] = str(task_id)
+                KafkaProducer_class().write("crawling_", message)
+                self.create_log(ActionStatus.INQUEUE, f"{data_feed['link']} is transported to queue", kwargs["pipeline_id"])
         except Exception as e:
+            traceback.print_exc()
             if task_id != None:
                 MongoRepository().delete_one("queue", {"_id": task_id})
-            print(e)
     
     def process_news_data(self, data_feed, kwargs, title_expr, author_expr, time_expr, content_expr, time_format, by, detect_event, is_send_queue):
         try:
@@ -775,6 +783,7 @@ class FeedAction(BaseAction):
                 # elastícearch
                 if insert_ok != None:
                     self.insert_elastic(news_info)
+                    self.send_event_to_queue(insert_ok, news_info, detect_event)
             return news_info
         except Exception as e:
             raise e
