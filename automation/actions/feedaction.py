@@ -772,9 +772,7 @@ class FeedAction(BaseAction):
             #-----------------------------------------------------------------------
             #get_url
             news_info["data:url"] = url
-            #get_html_content
-            # if content_expr != "None" and content_expr != "":
-            #     news_info["data:html"] = self.get_html_content(page, content_expr, by)
+            
             if kwargs["mode_test"] != True:
                 if self.check_exists(url,days=days):
                     raise Exception(f"{url} url existed")

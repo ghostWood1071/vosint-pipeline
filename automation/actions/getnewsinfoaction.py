@@ -81,8 +81,8 @@ class GetNewsInfoAction(BaseAction):
         pattern = ""
         for key in list(keyword_dict.keys()):
             pattern = pattern + keyword_dict.get(key) +","
-        keyword_arr = [keyword.strip() for keyword in pattern.split(",")]
-        keyword_arr = [rf"\b{keyword.strip()}\b" for keyword in list(filter(lambda x: x!="", keyword_arr))]
+        keyword_arr = [str(keyword).strip() for keyword in pattern.split(",")]
+        keyword_arr = [rf"\b{str(keyword).strip()}\b" for keyword in list(filter(lambda x: x!="", keyword_arr))]
         pattern = "|".join(keyword_arr)
         return pattern
         
@@ -477,10 +477,10 @@ class GetNewsInfoAction(BaseAction):
     def send_event_to_queue(self, _id, news_info, detect_event):
         try:
             message = {
-                "title": str(news_info["data:title"]),
-                "content": str(news_info["data:content"]),
+                "title": news_info["data:title"],
+                "content": news_info["data:content"],
                 "pubdate": str(news_info["pub_date"]),
-                "id_new": str(_id),
+                "id_new": _id,
                 "display": detect_event
             }
             KafkaProducer_class().write("events", message)
@@ -528,8 +528,6 @@ class GetNewsInfoAction(BaseAction):
             author_expr = self.params["author_expr"]
             time_expr = self.params["time"]["time_expr"]
             time_format = self.params["time"]["time_format"]
-            # print(type(time_format),time_format)
-            # time_format = ['***',',','dd','/','mm','/','yyyy','-',"***"]
             content_expr = self.params["content_expr"]
             news_info = {}
             news_info["source_favicon"]=kwargs["source_favicon"]
@@ -543,8 +541,6 @@ class GetNewsInfoAction(BaseAction):
             news_info["data:title"] = ""
             news_info["data:content"] = ""
             news_info["pub_date"] = get_time_now_string_y_m_now()
-            # news_info["data:title_translate"] = ""
-            # news_info["data:content_translate"] = ""
 
             page = input_val
             # check_content = False
@@ -557,8 +553,6 @@ class GetNewsInfoAction(BaseAction):
             news_info["data:time"], news_info["pub_date"] =  self.get_time(page, by, time_expr, time_format, kwargs["mode_test"])
             
             news_info["data:content"], news_info["data:html"] = self.get_content(page, by, content_expr)
-
-            # news_info["data:html"] = self.get_content_html(page, by, content_expr)
 
             if news_info["data:content"] == "" and kwargs["mode_test"] != True:
                 self.create_log(ActionStatus.ERROR, "empty content", pipeline_id=kwargs.get("pipeline_id"))
