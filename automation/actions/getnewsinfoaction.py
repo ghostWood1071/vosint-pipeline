@@ -9,12 +9,10 @@ from utils import get_time_now_string_y_m_now
 import requests
 import json
 import re
-from elasticsearch import Elasticsearch
 from db.elastic_main import My_ElasticSearch
-import time
 from models.kafka_producer import KafkaProducer_class
 from core.config import settings
-from datetime import datetime, timedelta
+from datetime import datetime
 from ..common.actionstatus import ActionStatus
 
 
@@ -35,7 +33,6 @@ class GetNewsInfoAction(BaseAction):
                 ParamInfo(
                     name="by",
                     display_name="Select by",
-                    # val_type="str",
                     val_type="select",
                     default_val=SelectorBy.CSS,
                     options=SelectorBy.to_list(),
