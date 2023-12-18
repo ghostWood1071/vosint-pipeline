@@ -35,11 +35,14 @@ def authenticate(browser:Browser, cookies:Any, link, account, password, source_a
         if page.title() in ["Log in to Facebook | Facebook", "Facebook – log in or sign up"] or "login" in page.url or "| Facebook" in page.title():
             print("need to login")
             cookies = login(page, account, password)
-            print("cookies after login: ", cookies)
-            context.clear_cookies()
-            context.add_cookies(cookies)
-            page.goto(link)
-            MongoRepository().update_one('socials', {"_id": source_acc_id, "cookie":json.dumps(cookies)})
+            if page.title() in ["Log in to Facebook | Facebook", "Facebook – log in or sign up"] or "login" in page.url or "| Facebook" in page.title():
+                MongoRepository().update_one('socials', {"_id": source_acc_id, "error":True})
+            else:
+                print("cookies after login: ", cookies)
+                context.clear_cookies()
+                context.add_cookies(cookies)
+                page.goto(link)
+                MongoRepository().update_one('socials', {"_id": source_acc_id, "cookie":json.dumps(cookies), "error": False})
     except Exception as e:
         raise e
     return page
