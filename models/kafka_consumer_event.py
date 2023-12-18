@@ -11,10 +11,6 @@ from core.config import settings
 class KafkaConsumer_event_class:
     def __init__(self):
         self.preducer = KafkaProducer_class()
-        #self.extract_event = Extrac_events()
-        # self.extract_event = Extrac_events()
-        # self.driver = DriverFactory('playwright')
-        # self.storage = StorageFactory('hbase')
 
     def run(self, topic, group_ids="group_id"):
         result = ""
@@ -64,7 +60,7 @@ class KafkaConsumer_event_class:
             message["id_new"],
         )
         # i = 0
-        # f = open('/home/ds1/vosint/v-osint-backend/vosint_ingestion/time_log_events.txt','a')
+        # f = open('/home/ds1/vosint/v-osint-backend/vstosint_ingestion/time_log_events.txt','a')
         # f.write(str(i)+ ' '+str(time.time()-start_time)+'\n')
         # f.close()
         # i+=1
