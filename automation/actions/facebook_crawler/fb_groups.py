@@ -11,19 +11,6 @@ from playwright.sync_api import Browser, Page, Locator
 from typing import *
 from .util import *
 
-
-# def get_post_id(data_ft:Dict[str, Any]):
-#     result = data_ft.get("mf_story_key")
-#     if result == None:
-#         try:
-            
-#             owner_id = data_ft.get("content_owner_id_new")
-#             post_id = data_ft.get("page_insights").get(owner_id).get("targets")[0].get("post_id")
-#             return post_id
-#         except:
-#             return ""
-#     return result
-
         
 def get_article_data(article_raw:Locator, crawl_social_id):
     try:
@@ -94,6 +81,6 @@ def get_articles(page:Page, got_article:int, crawl_social_id)->bool:
             continue
     return len(articles)
 
-def fb_groups(browser, cookies,link_person, account, password, source_acc_id,crawl_acc_id, max_news):
-    page:Page = authenticate(browser, cookies, link_person, account, password, source_acc_id) 
+def fb_groups(browser, cookies,link_person, account, password, source_acc_id,crawl_acc_id, max_news, device):
+    page:Page = authenticate(browser, cookies, link_person, account, password, source_acc_id, device) 
     scroll_loop(get_articles, max_news, page=page, crawl_social_id=crawl_acc_id)

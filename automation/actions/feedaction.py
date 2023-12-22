@@ -816,6 +816,7 @@ class FeedAction(BaseAction):
             if len(data_feeds) == 0:
                 raise Exception("There is no news in this source")
         
+        #is a root but not parallel
         if is_send_queue != "True" and is_root: #process news list
             for data_feed in data_feeds:
                 try:
@@ -831,7 +832,9 @@ class FeedAction(BaseAction):
                 except Exception as e:
                     raise e
                 
+        #is a root but parallel        
         elif is_send_queue == "True" and is_root: #send news to queue
+            self.create_log_permission = False
             feed_action = self.get_feed_action(kwargs["pipeline_id"])
             kwargs_leaf = kwargs.copy()
             kwargs_leaf["list_proxy"] = [self.random_proxy(kwargs.get("list_proxy"))]
@@ -846,7 +849,7 @@ class FeedAction(BaseAction):
                         self.send_queue(message, data_feed, kwargs)
                 except Exception as e:
                     print(e)
-
+        #is a node
         elif is_send_queue == "True" and not is_root: #process_news
             try:
                 news_info = self.process_news_data(self.params.get("data_feed"), kwargs, title_expr, 
@@ -856,8 +859,6 @@ class FeedAction(BaseAction):
             except Exception as e:
                 raise e
                 
-        
-
         if kwargs["mode_test"] == True:
             if result_test:
                 tmp = news_info.copy()

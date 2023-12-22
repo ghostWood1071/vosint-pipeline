@@ -86,8 +86,8 @@ def get_articles(page:Page, got_article:int, crawl_social_id)->bool:
             continue
     return len(articles)
 
-def fb_page(browser:Browser, cookies,link_person, account, password, source_acc_id, crawl_acc_id, max_news):
-    page:Page = authenticate(browser, cookies, link_person, account, password, source_acc_id) 
+def fb_page(browser:Browser, cookies,link_person, account, password, source_acc_id, crawl_acc_id, max_news, device):
+    page:Page = authenticate(browser, cookies, link_person, account, password, source_acc_id, device) 
     # articles = select(page, "article")
     # for article in articles:
     #      get_article_data(article) 
