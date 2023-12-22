@@ -180,7 +180,7 @@ class BaseAction:
     def return_str_status(self, status: str):
         return status
     
-    def create_log(self, action_status, content, pipeline_id):
+    def create_log(self, action_status, content, pipeline_id, is_social = False):
         history = self.return_str_status(action_status)
         his_log = {}
         his_log["pipeline_id"] = pipeline_id
@@ -188,10 +188,13 @@ class BaseAction:
         his_log["log"] = history
         try:
             url = None
-            try:
-                url = self.driver.get_current_url()
-            except:
-                pass
+            if is_social:
+                url = content
+            else:
+                try:
+                    url = self.driver.get_current_url()
+                except:
+                    pass
             his_log["link"] = url
         except:
             pass

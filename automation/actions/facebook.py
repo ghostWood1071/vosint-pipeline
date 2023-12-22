@@ -54,13 +54,14 @@ class FacebookAction(BaseAction):
             raise e
 
     def get_facebook_data(self, account:Dict[str, Any], source_account:Dict[str, Any], max_news:int):
+        device = self.driver.get_device('iPad (gen 6)')
         try:
             cookies = json.loads(source_account.get("cookie")) if source_account.get("cookie") not in [" "] else []
             username = source_account.get("username")
             password = source_account.get("password")
             source_account_id = str(source_account.get("_id"))
             link = account.get("account_link")
-            link = re.sub("www\.", "m.", link)
+            link = re.sub("www\.", "mobile.", link)
             if str(account.get("social_type")) == "Object":
                 datas = fb_canhan(
                         browser=self.driver.get_driver(), 
@@ -70,7 +71,8 @@ class FacebookAction(BaseAction):
                         password=password, 
                         source_acc_id=source_account_id, 
                         crawl_acc_id = account.get("_id"),
-                        max_news = max_news
+                        max_news = max_news,
+                        device = device
                     )
             elif str(account.get("social_type")) == "Group":
                 datas = fb_groups(
@@ -81,7 +83,8 @@ class FacebookAction(BaseAction):
                         password=password, 
                         source_acc_id=source_account_id, 
                         crawl_acc_id = account.get("_id"),
-                        max_news = max_news
+                        max_news = max_news,
+                        device = device
                     )
             else:
                 datas = fb_page(
@@ -92,7 +95,8 @@ class FacebookAction(BaseAction):
                     password=password, 
                     source_acc_id=source_account_id, 
                     crawl_acc_id = account.get("_id"),
-                    max_news = max_news
+                    max_news = max_news, 
+                    device = device
                 )
             return datas
         except Exception as e:
@@ -139,8 +143,9 @@ class FacebookAction(BaseAction):
         try:
             self.driver.goto("https://m.facebook.com")
         except:
-            pass
+            raise Exception("can not access facebook page")
         try:
+            self.create_log_permission = False
             source_account = self.get_source_account(self.params['fb'])
             followed_users =  self.get_user_follow(source_account.get("users_follow"))
             max_news = self.get_max_news_quantity(kwargs)
@@ -149,11 +154,10 @@ class FacebookAction(BaseAction):
                     self.get_facebook_data(account, source_account, max_news)
                     print("______________________________________________________________")
                     source_account = self.get_source_account(self.params['fb'])
-                    self.create_log(ActionStatus.COMPLETED, account.get("account_link"), kwargs.get("pipeline_id"))
+                    self.create_log(ActionStatus.COMPLETED, account.get("account_link"), kwargs.get("pipeline_id"), is_social=True)
                 except Exception as e:
-                    print(e)
+                    self.create_log(ActionStatus.ERROR, account.get("account_link"), kwargs.get("pipeline_id"), is_social=True)
                     traceback.print_exc()
-            # self.insert_data(data, collection_name)
         except Exception as e:
             traceback.print_exc()
             raise e

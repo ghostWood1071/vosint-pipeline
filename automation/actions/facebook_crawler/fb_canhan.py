@@ -75,13 +75,12 @@ def get_articles(page:Page, got_article:int, crawl_social_id)->bool:
             if not success:
                 print("is_existed")
                 update_interact(data)
-                # return 0
         except:
             continue
     return len(articles)
 
-def fb_canhan(browser, cookies,link_person, account, password, source_acc_id,crawl_acc_id, max_news):
-    page:Page = authenticate(browser, cookies, link_person, account, password, source_acc_id)
+def fb_canhan(browser, cookies,link_person, account, password, source_acc_id,crawl_acc_id, max_news, device):
+    page:Page = authenticate(browser, cookies, link_person, account, password, source_acc_id, device)
     scroll_loop(get_articles, max_news , page=page, crawl_social_id=crawl_acc_id)
 
 
