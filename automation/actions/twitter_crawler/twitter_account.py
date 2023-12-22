@@ -44,7 +44,7 @@ def get_article_data(article_raw:Locator, crawl_social_id, post_links, header):
             comments = 0
 
         try:
-            share = select(article_raw, '//*[@data-testid="reply"]')[0].text_content()
+            share = select(article_raw, '//*[@data-testid="retweet"]')[0].text_content()
             share = process_like(share)
         except:
             share = 0

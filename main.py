@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from models.kafka_producer import KafkaProducer_class
 
 from core.config import settings
 from db import init_db
@@ -39,12 +40,13 @@ class Settings(BaseModel):
 
 @app.on_event("startup")
 async def on_startup():
-    await init_db.connect_db()
+    KafkaProducer_class.test_kafka_connection()
+    # await init_db.connect_db()
 
 
 @app.on_event("shutdown")
 async def on_shutdown():
-    await init_db.close_db()
+    print("shutdown!")
 
 
 # """

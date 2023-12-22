@@ -12,17 +12,17 @@ from typing import *
 from .util import *
 
 
-def get_post_id(data_ft:Dict[str, Any]):
-    result = data_ft.get("mf_story_key")
-    if result == None:
-        try:
+# def get_post_id(data_ft:Dict[str, Any]):
+#     result = data_ft.get("mf_story_key")
+#     if result == None:
+#         try:
             
-            owner_id = data_ft.get("content_owner_id_new")
-            post_id = data_ft.get("page_insights").get(owner_id).get("targets")[0].get("post_id")
-            return post_id
-        except:
-            return ""
-    return result
+#             owner_id = data_ft.get("content_owner_id_new")
+#             post_id = data_ft.get("page_insights").get(owner_id).get("targets")[0].get("post_id")
+#             return post_id
+#         except:
+#             return ""
+#     return result
 
         
 def get_article_data(article_raw:Locator, crawl_social_id):
@@ -76,7 +76,7 @@ def get_article_data(article_raw:Locator, crawl_social_id):
         data["keywords"] = get_keywords(data["content"])
         print(data)
         return data
-    except:
+    except Exception as e:
         raise Exception("post none")
 #this is action
 def get_articles(page:Page, got_article:int, crawl_social_id)->bool:

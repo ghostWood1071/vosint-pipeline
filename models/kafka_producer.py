@@ -10,6 +10,17 @@ class KafkaProducer_class:
         self.producer = KafkaProducer(
             bootstrap_servers=[settings.KAFKA_CONNECT]
         )
+
+    @staticmethod
+    def test_kafka_connection():
+        print("--------------TEST KAFKA CONNECTION START----------")
+        print(f"kafa-connect-server: {settings.KAFKA_CONNECT}")
+        try:
+            producer = KafkaProducer(bootstrap_servers=[settings.KAFKA_CONNECT])
+            print(f"connect status: {producer.bootstrap_connected()}")
+        except Exception as e:
+            print("connect status: ", e)
+        print("------------TEST KAFKA CONNECTION END--------------")
            
     def write(self, topic: str, message):
         # if not self.check_topic_exist(topic):

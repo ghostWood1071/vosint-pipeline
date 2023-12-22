@@ -30,6 +30,7 @@ import re
 from urllib.request import ProxyBasicAuthHandler, build_opener, install_opener, urlopen
 from ..common import ActionInfo, ActionStatus
 from bson.objectid import ObjectId
+import traceback
 
 rss_version_2_0 = {
     "author": "author",
@@ -574,11 +575,6 @@ class FeedAction(BaseAction):
         return result
 
     def send_event_to_queue(self, _id, news_info, display):
-        title_condition = str(news_info.get("data:title")).strip().str(".") in ["None", None, ""]
-        content_condition = str(news_info.get("data:content")).strip().strip(".") in ["None", None, ""]
-        if title_condition or content_condition:
-            print("can not extract event because of null")
-            return
         try:
             message = {
                 "title": str(news_info["data:title"]),
@@ -696,9 +692,9 @@ class FeedAction(BaseAction):
                 KafkaProducer_class().write("crawling_", message)
                 self.create_log(ActionStatus.INQUEUE, f"{data_feed['link']} is transported to queue", kwargs["pipeline_id"])
         except Exception as e:
+            traceback.print_exc()
             if task_id != None:
                 MongoRepository().delete_one("queue", {"_id": task_id})
-            print(e)
     
     def process_news_data(self, data_feed, kwargs, title_expr, author_expr, time_expr, content_expr, time_format, by, detect_event, is_send_queue):
         try:
@@ -776,9 +772,7 @@ class FeedAction(BaseAction):
             #-----------------------------------------------------------------------
             #get_url
             news_info["data:url"] = url
-            #get_html_content
-            # if content_expr != "None" and content_expr != "":
-            #     news_info["data:html"] = self.get_html_content(page, content_expr, by)
+            
             if kwargs["mode_test"] != True:
                 if self.check_exists(url,days=days):
                     raise Exception(f"{url} url existed")
