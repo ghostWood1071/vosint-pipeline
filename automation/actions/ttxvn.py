@@ -330,7 +330,6 @@ class TtxvnAction(BaseAction):
         )
 
         day_check = self.get_check_time(10)
-        #MongoRepository().insert_one(collection_name='ttxvn',doc=article)
         self.account = self.get_ttxvn_account()
         self.proxies = self.get_proxies()
 
@@ -341,6 +340,7 @@ class TtxvnAction(BaseAction):
             tmp_news = [header for header in news_headers if header["ArticleID"] not in existed_ids]
             news_headers = tmp_news
         
+        #is a node
         if is_root == False and send_queue == True:
             try:
                 document['PublishDate']=self.format_time(document['PublishDate'])
@@ -350,6 +350,7 @@ class TtxvnAction(BaseAction):
             except Exception as e:
                 raise e
         
+        #is a root but not parallel
         elif is_root == True and send_queue == False:
             for header in news_headers:
                 header['PublishDate']=self.format_time(header['PublishDate'])
@@ -357,7 +358,9 @@ class TtxvnAction(BaseAction):
             self.crawl_article_content(news_headers)
             self.save_articles(news_headers)
 
+        #is a root and it parallel
         elif is_root == True and send_queue == True:
+            self.create_log_permission = False
             ttxvn_action = self.get_ttxvn_action(kwargs.get("pipeline_id"))
             kwargs_leaf = kwargs.copy()
             kwargs_leaf["list_proxy"] = [self.random_proxy(kwargs.get("list_proxy"))]
