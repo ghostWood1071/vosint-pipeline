@@ -17,8 +17,11 @@ def login(page:Page, account, password):
     # page.type('input#m_login_password', password)
     page.press('input[type="password"]', "Enter")
     time.sleep(15)
-    confirm = page.locator('button[value="OK"]')
-    confirm.click()
+    try:    
+        confirm = page.locator('button[value="OK"]')
+        confirm.click()
+    except:
+        pass
     return page.context.cookies()
 
 def authenticate(browser:Browser, cookies:Any, link, account, password, source_acc_id, device):
