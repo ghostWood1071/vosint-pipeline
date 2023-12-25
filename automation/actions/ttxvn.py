@@ -352,7 +352,7 @@ class TtxvnAction(BaseAction):
                 raise e
         
         #is a root but not parallel
-        elif is_root == True and send_queue == False:
+        elif (is_root == True and send_queue == False) or kwargs["mode_test"] == True:
             for header in news_headers:
                 header['PublishDate']=self.format_time(header['PublishDate'])
                 header['Created']=self.format_time(header['Created'])
@@ -360,7 +360,7 @@ class TtxvnAction(BaseAction):
             self.save_articles(news_headers)
 
         #is a root and it parallel
-        elif is_root == True and send_queue == True:
+        elif is_root == True and send_queue == True and kwargs["mode_test"] == False:
             self.create_log_permission = False
             ttxvn_action = self.get_ttxvn_action(kwargs.get("pipeline_id"))
             kwargs_leaf = kwargs.copy()
