@@ -146,6 +146,7 @@ class ForeachAction(BaseAction):
             day_range = 10 
             check_time = self.get_check_time(day_range)
             for val in input_val:
+                # check duplicate
                 if kwargs["mode_test"] != True:
                     data_url = str(val)
                     start_check = datetime.now()
@@ -155,7 +156,7 @@ class ForeachAction(BaseAction):
                     if is_existed:
                         print("url already exist")
                         continue
-                if str(self.params["send_queue"]) == "True":
+                if str(self.params["send_queue"]) == "True" and kwargs["mode_test"] != True:
                     kwargs_leaf = kwargs.copy()
                     kwargs_leaf["list_proxy"] = [self.random_proxy(kwargs.get("list_proxy"))]
                     message = {"actions": actions, "input_val": data_url, "kwargs": kwargs_leaf}

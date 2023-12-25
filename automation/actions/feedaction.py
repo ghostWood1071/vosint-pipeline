@@ -817,23 +817,8 @@ class FeedAction(BaseAction):
                 raise Exception("There is no news in this source")
         
         #is a root but not parallel
-        if is_send_queue != "True" and is_root: #process news list
-            for data_feed in data_feeds:
-                try:
-                    news_info = self.process_news_data(data_feed, kwargs, title_expr, 
-                                        author_expr, time_expr, content_expr, 
-                                        time_format, by, detect_event, is_send_queue=False)
-
-                    result_test = news_info.copy() if news_info is not None else news_info
-                    if kwargs["mode_test"] != True:
-                        del news_info
-                    else:
-                        break
-                except Exception as e:
-                    raise e
-                
-        #is a root but parallel        
-        elif is_send_queue == "True" and is_root: #send news to queue
+        #but if mode test == True the pipeline change to synchronous 
+        if is_send_queue == "True" and is_root and kwargs["mode_test"] == False: #send news to queue
             self.create_log_permission = False
             feed_action = self.get_feed_action(kwargs["pipeline_id"])
             kwargs_leaf = kwargs.copy()
@@ -849,6 +834,24 @@ class FeedAction(BaseAction):
                         self.send_queue(message, data_feed, kwargs)
                 except Exception as e:
                     print(e)
+
+        #is a root but parallel 
+        #when send queue is true but mode test is true then it run this situation
+        elif (is_send_queue != "True" and is_root) or kwargs["mode_test"] == True: #process news list
+            for data_feed in data_feeds:
+                try:
+                    news_info = self.process_news_data(data_feed, kwargs, title_expr, 
+                                        author_expr, time_expr, content_expr, 
+                                        time_format, by, detect_event, is_send_queue=False)
+
+                    result_test = news_info.copy() if news_info is not None else news_info
+                    if kwargs["mode_test"] != True:
+                        del news_info
+                    else:
+                        break
+                except Exception as e:
+                    raise e
+                
         #is a node
         elif is_send_queue == "True" and not is_root: #process_news
             try:
