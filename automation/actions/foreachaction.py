@@ -139,8 +139,9 @@ class ForeachAction(BaseAction):
     def exec_func(self, input_val=None, **kwargs):
         actions = self.params["actions"]
         flatten = False if "flatten" not in self.params else self.params["flatten"]
-        # print(input_val)
         # Run foreach actions
+        if kwargs.get("mode_test") in [None, 'false']:
+            kwargs.update({"mode_test": False})
         res = []
         if input_val is not None:
             day_range = 10 
