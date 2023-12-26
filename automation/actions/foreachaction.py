@@ -140,7 +140,7 @@ class ForeachAction(BaseAction):
         actions = self.params["actions"]
         flatten = False if "flatten" not in self.params else self.params["flatten"]
         # Run foreach actions
-        if kwargs.get("mode_test") in [None, 'false']:
+        if kwargs.get("mode_test") in [None, 'false', 'False', False]:
             kwargs.update({"mode_test": False})
         res = []
         if input_val is not None:
