@@ -167,6 +167,9 @@ class FacebookAction(BaseAction):
                 except Exception as e:
                     self.create_log(ActionStatus.ERROR, f"{account.get('account_link')}: {str(e)}", kwargs.get("pipeline_id"), is_social=True)
                     traceback.print_exc()
+                finally:
+                    if kwargs.get("mode_test") == True:
+                        break
             return data
         except Exception as e:
             traceback.print_exc()

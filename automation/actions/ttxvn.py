@@ -303,6 +303,9 @@ class TtxvnAction(BaseAction):
             raise InternalError(
                 ERROR_REQUIRED, params={"code": ["FROM_ELEM"], "msg": ["From element"]}
             )
+
+        if kwargs.get("mode_test") in [None, 'false']:
+            kwargs.update({"mode_test": False})
         
         is_root = self.validate_input(
             self.params.get('is_root'), 

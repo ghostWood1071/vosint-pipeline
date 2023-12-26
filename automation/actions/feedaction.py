@@ -791,6 +791,8 @@ class FeedAction(BaseAction):
             raise InternalError(
                 ERROR_REQUIRED, params={"code": ["URL"], "msg": ["URL"]}
             )
+        if kwargs.get("mode_test") in [None, 'false']:
+            kwargs.update({"mode_test": False})
         detect_event = kwargs.get("detect_event")
         url = str(input_val)
         by = self.params["by"]
@@ -816,7 +818,7 @@ class FeedAction(BaseAction):
             if len(data_feeds) == 0:
                 raise Exception("There is no news in this source")
         
-        #is a root but not parallel
+        #is a root but parallel
         #but if mode test == True the pipeline change to synchronous 
         if is_send_queue == "True" and is_root and kwargs["mode_test"] == False: #send news to queue
             self.create_log_permission = False
@@ -835,7 +837,7 @@ class FeedAction(BaseAction):
                 except Exception as e:
                     print(e)
 
-        #is a root but parallel 
+        #is a root but not parallel 
         #when send queue is true but mode test is true then it run this situation
         elif (is_send_queue != "True" and is_root) or kwargs["mode_test"] == True: #process news list
             for data_feed in data_feeds:
