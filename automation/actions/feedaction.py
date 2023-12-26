@@ -791,7 +791,7 @@ class FeedAction(BaseAction):
             raise InternalError(
                 ERROR_REQUIRED, params={"code": ["URL"], "msg": ["URL"]}
             )
-        if kwargs.get("mode_test") in [None, 'false']:
+        if kwargs.get("mode_test") in [None, 'false', 'False', False]:
             kwargs.update({"mode_test": False})
         detect_event = kwargs.get("detect_event")
         url = str(input_val)

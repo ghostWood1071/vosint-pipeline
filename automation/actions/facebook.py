@@ -144,7 +144,7 @@ class FacebookAction(BaseAction):
     
     def exec_func(self, input_val=None, **kwargs):
         data = []
-        if kwargs.get("mode_test") in [None, 'false']:
+        if kwargs.get("mode_test") in [None, 'false', 'False', False]:
             kwargs.update({"mode_test": False})
         try:
             self.driver.goto("https://mobile.facebook.com")
