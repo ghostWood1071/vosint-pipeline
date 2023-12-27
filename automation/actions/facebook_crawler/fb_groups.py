@@ -11,19 +11,6 @@ from playwright.sync_api import Browser, Page, Locator
 from typing import *
 from .util import *
 
-
-# def get_post_id(data_ft:Dict[str, Any]):
-#     result = data_ft.get("mf_story_key")
-#     if result == None:
-#         try:
-            
-#             owner_id = data_ft.get("content_owner_id_new")
-#             post_id = data_ft.get("page_insights").get(owner_id).get("targets")[0].get("post_id")
-#             return post_id
-#         except:
-#             return ""
-#     return result
-
         
 def get_article_data(article_raw:Locator, crawl_social_id):
     try:
@@ -79,21 +66,24 @@ def get_article_data(article_raw:Locator, crawl_social_id):
     except Exception as e:
         raise Exception("post none")
 #this is action
-def get_articles(page:Page, got_article:int, crawl_social_id)->bool:
+def get_articles(page:Page, got_article:int, crawl_social_id, mode_test)->bool:
     articles = select(page, "#m_group_stories_container> section > article")
     subset_articles = articles[got_article:len(articles)]
+    collected_data = []
     for article in subset_articles:
         try: 
             data = get_article_data(article, crawl_social_id)
-            success = check_and_insert_to_db(data)
-            if not success:
-                print("is_existed")
-                update_interact(data)
-                # return 0
+            if mode_test == False:
+                success = check_and_insert_to_db(data)
+                if not success:
+                    print("is_existed")
+                    update_interact(data)
+            collected_data.append(data)
         except:
             continue
-    return len(articles)
+    return len(articles), collected_data
 
-def fb_groups(browser, cookies,link_person, account, password, source_acc_id,crawl_acc_id, max_news):
-    page:Page = authenticate(browser, cookies, link_person, account, password, source_acc_id) 
-    scroll_loop(get_articles, max_news, page=page, crawl_social_id=crawl_acc_id)
+def fb_groups(browser, cookies,link_person, account, password, source_acc_id,crawl_acc_id, max_news, device, mode_test):
+    page:Page = authenticate(browser, cookies, link_person, account, password, source_acc_id, device) 
+    collected = scroll_loop(get_articles, max_news, page=page, crawl_social_id=crawl_acc_id, mode_test = mode_test)
+    return collected

@@ -8,16 +8,19 @@ from datetime import datetime, timedelta
 from dateutil import parser
 from models import MongoRepository
 import json 
+from datetime import datetime
 
 def scroll_loop(action: Any, max_news:int ,**kwargs:Dict[str, Any]):
     kwargs.update({'got_article': 0})
     page:Page = kwargs.get("page")
     got_quantity = 1
+    collected_data = []
     while got_quantity>0:
         page.keyboard.press("End")
         page.wait_for_selector("body")
         time.sleep(10)
-        real_got = action(**kwargs)
+        real_got, page_data_collected = action(**kwargs)
+        collected_data.extend(page_data_collected)
         if(real_got==0):
             break
         else:
@@ -25,13 +28,22 @@ def scroll_loop(action: Any, max_news:int ,**kwargs:Dict[str, Any]):
                 print("i'm break")
                 break
             got_quantity = real_got
+    return collected_data
+        
 
 def check_and_insert_to_db(data):
     is_exists  = MongoRepository().get_one("facebook", {"post_id": data.get("post_id")})
     if is_exists == None:
-        post_id = MongoRepository().insert_one("facebook", data)
-        print("inserted: ", post_id)
-        return True
+        exists_in_queue = MongoRepository().insert_one("queue", 
+                                    {
+                                        "url": data.get("post_id"),  
+                                        "source": "facebook",
+                                        "expire": datetime.now()
+                                    })
+        if exists_in_queue != None:
+            post_object_id = MongoRepository().insert_one("facebook", data)
+            print("inserted: ", post_object_id)
+            return True
     return False
 
 def update_interact(data):

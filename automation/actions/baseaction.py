@@ -29,31 +29,20 @@ class BaseAction:
                 ERROR_REQUIRED, params={"code": ["STORAGE"], "msg": ["Storage"]}
             )
 
-        # Validate input parameters
         self.__validate_params(**params)
-
         self.driver = driver
         self.storage = storage
         self.params = params
-        #print(params)
-        
-
         self.set_status(ActionStatus.INITIALIZED)
+        self.create_log_permission = True
 
     def __validate_params(self, **params):
         action_info = self.get_action_info()
-        # print('aaaaaaaaaaaaaaaaaa',action_info.param_infos)
         for p_info in action_info.param_infos:
-            # print("p_info",p_info.validators)
             validators = p_info.validators
-            # Validate with validators
             if validators:
                 for v in validators:
                     if v == "required":
-                        # print('p_info.name',p_info.name)
-                        # print('params',str(params))
-                        # print(p_info.name not in params)
-                        # print('abc',not '')
                         if p_info.name not in params or not params[p_info.name]:
                             raise InternalError(
                                 ERROR_REQUIRED,
@@ -63,17 +52,7 @@ class BaseAction:
                                 },
                             )
             
-            # Validate value must be in options
-            # print('params',str(params))
-            # print('1p_info.options', p_info.options)
-            # print('1.5',p_info.name)
-            # print('2params[p_info.name]',params[p_info.name])
-            # print('3???',params[p_info.name] not in p_info.options)
             if (p_info.default_val==None or p_info.default_val==[]) and (p_info.options and params[p_info.name] not in p_info.options):
-                # print('1p_info.options', p_info.options)
-                # print('2params[p_info.name]',params[p_info.name])
-                # print('3???',params[p_info.name] not in p_info.options)
-                #print('aaaaaaaaaaaaaaaaaaaaaaaaa')
                 options = ", ".join(list(map(lambda o: str(o), p_info.options)))
                 raise InternalError(
                     ERROR_NOT_IN,
@@ -92,18 +71,16 @@ class BaseAction:
         tmp_val = ""
         res =""
         self.set_status(ActionStatus.RUNNING)
-        #print(kwargs)
         
         try:
             res = self.exec_func(input_val, **kwargs)
             history = self.return_str_status(ActionStatus.COMPLETED)
             #if f"{self.__class__.__name__}" == "GetNewsInfoAction" or f"{self.__class__.__name__}" == "FeedAction" or f"{self.__class__.__name__}" == "FacebookAction":
-            if f"{self.__class__.__name__}" in ["GetNewsInfoAction", "FeedAction", "FacebookAction", "TtxvnAction", "TiktokAction", "TwitterAction"]:
+            if f"{self.__class__.__name__}" in ["GetNewsInfoAction", "FeedAction", "FacebookAction", "TtxvnAction", "TiktokAction", "TwitterAction"] and self.create_log_permission:
                 his_log = {}
                 his_log["pipeline_id"] = kwargs["pipeline_id"]
                 his_log["actione"] = f"{self.__class__.__name__}"
                 his_log["log"] = history
-                # his_log["link"] = "" if type(input_val) != str else input_val
                 url = None
                 try:
                     try:
@@ -113,10 +90,8 @@ class BaseAction:
                     his_log["link"] = url
                 except:
                     pass
-                #his_log["id_schema"] = self.params['id_schema']
                 his_log['message_error'] = ''
                 try:
-                    # if url is not None and str(url) != "about:blank":
                     MongoRepository().insert_one(collection_name="his_log", doc=his_log)
                 except:
                     pass
@@ -135,7 +110,6 @@ class BaseAction:
                 his_log["link"] = url
             except:
                 pass
-            #print('abbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',his_log["actione"])
             try:
                 his_log["id_schema"] = self.params['id_schema']
             except:
@@ -206,19 +180,21 @@ class BaseAction:
     def return_str_status(self, status: str):
         return status
     
-    def create_log(self, action_status, content, pipeline_id):
+    def create_log(self, action_status, content, pipeline_id, is_social = False):
         history = self.return_str_status(action_status)
         his_log = {}
         his_log["pipeline_id"] = pipeline_id
         his_log["actione"] = f"{self.__class__.__name__}"
         his_log["log"] = history
-        # his_log["link"] = "" if type(input_val) != str else input_val
         try:
             url = None
-            try:
-                url = self.driver.get_current_url()
-            except:
-                pass
+            if is_social:
+                url = content
+            else:
+                try:
+                    url = self.driver.get_current_url()
+                except:
+                    pass
             his_log["link"] = url
         except:
             pass

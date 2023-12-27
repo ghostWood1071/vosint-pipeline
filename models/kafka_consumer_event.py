@@ -11,9 +11,6 @@ from core.config import settings
 class KafkaConsumer_event_class:
     def __init__(self):
         self.preducer = KafkaProducer_class()
-        # self.extract_event = Extrac_events()
-        # self.driver = DriverFactory('playwright')
-        # self.storage = StorageFactory('hbase')
 
     def run(self, topic, group_ids="group_id"):
         result = ""

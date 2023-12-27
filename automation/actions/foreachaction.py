@@ -139,13 +139,15 @@ class ForeachAction(BaseAction):
     def exec_func(self, input_val=None, **kwargs):
         actions = self.params["actions"]
         flatten = False if "flatten" not in self.params else self.params["flatten"]
-        # print(input_val)
         # Run foreach actions
+        if kwargs.get("mode_test") in [None, 'false', 'False', False]:
+            kwargs.update({"mode_test": False})
         res = []
         if input_val is not None:
             day_range = 10 
             check_time = self.get_check_time(day_range)
             for val in input_val:
+                # check duplicate
                 if kwargs["mode_test"] != True:
                     data_url = str(val)
                     start_check = datetime.now()
@@ -155,7 +157,7 @@ class ForeachAction(BaseAction):
                     if is_existed:
                         print("url already exist")
                         continue
-                if str(self.params["send_queue"]) == "True":
+                if str(self.params["send_queue"]) == "True" and kwargs["mode_test"] != True:
                     kwargs_leaf = kwargs.copy()
                     kwargs_leaf["list_proxy"] = [self.random_proxy(kwargs.get("list_proxy"))]
                     message = {"actions": actions, "input_val": data_url, "kwargs": kwargs_leaf}

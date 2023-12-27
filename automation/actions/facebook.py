@@ -53,16 +53,18 @@ class FacebookAction(BaseAction):
         except Exception as e:
             raise e
 
-    def get_facebook_data(self, account:Dict[str, Any], source_account:Dict[str, Any], max_news:int):
+    def get_facebook_data(self, account:Dict[str, Any], source_account:Dict[str, Any], max_news:int, mode_test = True):
+        device = self.driver.get_device('iPad (gen 6)')
         try:
-            cookies = json.loads(source_account.get("cookie")) if source_account.get("cookie") not in [" "] else []
+            cookies = json.loads(source_account.get("cookie")) if source_account.get("cookie") not in [" ", "", None, "None"] else []
             username = source_account.get("username")
             password = source_account.get("password")
             source_account_id = str(source_account.get("_id"))
             link = account.get("account_link")
-            link = re.sub("www\.", "m.", link)
+            link = re.sub("www\.", "mobile.", link)
+            data = None
             if str(account.get("social_type")) == "Object":
-                datas = fb_canhan(
+                data = fb_canhan(
                         browser=self.driver.get_driver(), 
                         link_person=link, 
                         cookies = cookies, 
@@ -70,10 +72,12 @@ class FacebookAction(BaseAction):
                         password=password, 
                         source_acc_id=source_account_id, 
                         crawl_acc_id = account.get("_id"),
-                        max_news = max_news
+                        max_news = max_news,
+                        device = device,
+                        mode_test = mode_test
                     )
             elif str(account.get("social_type")) == "Group":
-                datas = fb_groups(
+                data = fb_groups(
                         browser=self.driver.get_driver(), 
                         link_person=link, 
                         cookies = cookies, 
@@ -81,10 +85,12 @@ class FacebookAction(BaseAction):
                         password=password, 
                         source_acc_id=source_account_id, 
                         crawl_acc_id = account.get("_id"),
-                        max_news = max_news
+                        max_news = max_news,
+                        device = device,
+                        mode_test = mode_test
                     )
             else:
-                datas = fb_page(
+                data = fb_page(
                     browser=self.driver.get_driver(), 
                     link_person=link, 
                     cookies = cookies, 
@@ -92,9 +98,11 @@ class FacebookAction(BaseAction):
                     password=password, 
                     source_acc_id=source_account_id, 
                     crawl_acc_id = account.get("_id"),
-                    max_news = max_news
+                    max_news = max_news, 
+                    device = device,
+                    mode_test = mode_test
                 )
-            return datas
+            return data
         except Exception as e:
             raise e
 
@@ -135,25 +143,34 @@ class FacebookAction(BaseAction):
         return max_news
     
     def exec_func(self, input_val=None, **kwargs):
-        time.sleep(2)
+        data = []
+        if kwargs.get("mode_test") in [None, 'false', 'False', False]:
+            kwargs.update({"mode_test": False})
         try:
-            self.driver.goto("https://m.facebook.com")
+            self.driver.goto("https://mobile.facebook.com")
         except:
-            pass
+            raise Exception("can not access facebook page")
         try:
+            self.create_log_permission = False
             source_account = self.get_source_account(self.params['fb'])
             followed_users =  self.get_user_follow(source_account.get("users_follow"))
             max_news = self.get_max_news_quantity(kwargs)
             for account in followed_users:
                 try:
-                    self.get_facebook_data(account, source_account, max_news)
+                    collected = self.get_facebook_data(account, source_account, max_news, mode_test=kwargs.get("mode_test"))
+                    if collected == [] or collected == None:
+                        raise Exception("empty source")
+                    data.extend(collected)
                     print("______________________________________________________________")
                     source_account = self.get_source_account(self.params['fb'])
-                    self.create_log(ActionStatus.COMPLETED, account.get("account_link"), kwargs.get("pipeline_id"))
+                    self.create_log(ActionStatus.COMPLETED, account.get("account_link"), kwargs.get("pipeline_id"), is_social=True)
                 except Exception as e:
-                    print(e)
+                    self.create_log(ActionStatus.ERROR, f"{account.get('account_link')}: {str(e)}", kwargs.get("pipeline_id"), is_social=True)
                     traceback.print_exc()
-            # self.insert_data(data, collection_name)
+                finally:
+                    if kwargs.get("mode_test") == True:
+                        break
+            return data
         except Exception as e:
             traceback.print_exc()
             raise e

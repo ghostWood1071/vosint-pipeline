@@ -575,11 +575,6 @@ class FeedAction(BaseAction):
         return result
 
     def send_event_to_queue(self, _id, news_info, display):
-        title_condition = str(news_info.get("data:title")).strip().str(".") in ["None", None, ""]
-        content_condition = str(news_info.get("data:content")).strip().strip(".") in ["None", None, ""]
-        if title_condition or content_condition:
-            print("can not extract event because of null")
-            return
         try:
             message = {
                 "title": str(news_info["data:title"]),
@@ -777,9 +772,7 @@ class FeedAction(BaseAction):
             #-----------------------------------------------------------------------
             #get_url
             news_info["data:url"] = url
-            #get_html_content
-            # if content_expr != "None" and content_expr != "":
-            #     news_info["data:html"] = self.get_html_content(page, content_expr, by)
+            
             if kwargs["mode_test"] != True:
                 if self.check_exists(url,days=days):
                     raise Exception(f"{url} url existed")
@@ -798,6 +791,8 @@ class FeedAction(BaseAction):
             raise InternalError(
                 ERROR_REQUIRED, params={"code": ["URL"], "msg": ["URL"]}
             )
+        if kwargs.get("mode_test") in [None, 'false', 'False', False]:
+            kwargs.update({"mode_test": False})
         detect_event = kwargs.get("detect_event")
         url = str(input_val)
         by = self.params["by"]
@@ -823,22 +818,10 @@ class FeedAction(BaseAction):
             if len(data_feeds) == 0:
                 raise Exception("There is no news in this source")
         
-        if is_send_queue != "True" and is_root: #process news list
-            for data_feed in data_feeds:
-                try:
-                    news_info = self.process_news_data(data_feed, kwargs, title_expr, 
-                                        author_expr, time_expr, content_expr, 
-                                        time_format, by, detect_event, is_send_queue=False)
-
-                    result_test = news_info.copy() if news_info is not None else news_info
-                    if kwargs["mode_test"] != True:
-                        del news_info
-                    else:
-                        break
-                except Exception as e:
-                    raise e
-                
-        elif is_send_queue == "True" and is_root: #send news to queue
+        #is a root but parallel
+        #but if mode test == True the pipeline change to synchronous 
+        if is_send_queue == "True" and is_root and kwargs["mode_test"] == False: #send news to queue
+            self.create_log_permission = False
             feed_action = self.get_feed_action(kwargs["pipeline_id"])
             kwargs_leaf = kwargs.copy()
             kwargs_leaf["list_proxy"] = [self.random_proxy(kwargs.get("list_proxy"))]
@@ -854,6 +837,24 @@ class FeedAction(BaseAction):
                 except Exception as e:
                     print(e)
 
+        #is a root but not parallel 
+        #when send queue is true but mode test is true then it run this situation
+        elif (is_send_queue != "True" and is_root) or kwargs["mode_test"] == True: #process news list
+            for data_feed in data_feeds:
+                try:
+                    news_info = self.process_news_data(data_feed, kwargs, title_expr, 
+                                        author_expr, time_expr, content_expr, 
+                                        time_format, by, detect_event, is_send_queue=False)
+
+                    result_test = news_info.copy() if news_info is not None else news_info
+                    if kwargs["mode_test"] != True:
+                        del news_info
+                    else:
+                        break
+                except Exception as e:
+                    raise e
+                
+        #is a node
         elif is_send_queue == "True" and not is_root: #process_news
             try:
                 news_info = self.process_news_data(self.params.get("data_feed"), kwargs, title_expr, 
@@ -863,8 +864,6 @@ class FeedAction(BaseAction):
             except Exception as e:
                 raise e
                 
-        
-
         if kwargs["mode_test"] == True:
             if result_test:
                 tmp = news_info.copy()

@@ -17,7 +17,7 @@ def get_article_data(article_raw:Locator, crawl_social_id):
     try:
         # data_ft = article_raw.get_attribute("store")
         post_id = get_post_id(article_raw, crawl_social_id)
-        content_div_tag = select(article_raw, "div > .story_body_container")[0]
+        content_div_tag = select(article_raw, ".story_body_container")[0]
         header = select(content_div_tag, "header")[0]
         info = select(header, "a")[1].text_content()
         footer_date = select(header, 'div[data-sigil="m-feed-voice-subtitle"]')[0].text_content()
@@ -68,30 +68,31 @@ def get_article_data(article_raw:Locator, crawl_social_id):
     except:
         raise Exception("post none")
 #this is action
-def get_articles(page:Page, got_article:int, crawl_social_id)->bool:
+def get_articles(page:Page, got_article:int, crawl_social_id, mode_test)->bool:
     articles = select(page, "article")
     subset_articles = articles[got_article:len(articles)]
+    collected_data = []
     for article in subset_articles:
         try: 
             data = get_article_data(article, crawl_social_id)
             print("here is data: ", data)
-            success = check_and_insert_to_db(data)
-            if not success:
-                print("is_existed")
-                update_interact(data)
+            if mode_test == False:
+                success = check_and_insert_to_db(data)
+                if not success:
+                    print("is_existed")
+                    update_interact(data)
                 # return 0
+                collected_data.append(data)
         except Exception as e:
             print("error in get article: ", e)
             traceback.print_exc()
             continue
-    return len(articles)
+    return len(articles), collected_data
 
-def fb_page(browser:Browser, cookies,link_person, account, password, source_acc_id, crawl_acc_id, max_news):
-    page:Page = authenticate(browser, cookies, link_person, account, password, source_acc_id) 
-    # articles = select(page, "article")
-    # for article in articles:
-    #      get_article_data(article) 
-    scroll_loop(get_articles, max_news ,page=page, crawl_social_id=crawl_acc_id)
+def fb_page(browser:Browser, cookies,link_person, account, password, source_acc_id, crawl_acc_id, max_news, device, mode_test):
+    page:Page = authenticate(browser, cookies, link_person, account, password, source_acc_id, device) 
+    collected = scroll_loop(get_articles, max_news ,page=page, crawl_social_id=crawl_acc_id, mode_test=mode_test)
+    return collected
     
          
 

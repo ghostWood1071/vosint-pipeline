@@ -64,3 +64,7 @@ class BaseDriver:
     @abstractmethod
     def init_proxy(self, proxy):
         raise NotImplementedError()
+    
+    @abstractmethod
+    def get_device(self, device_name):
+        raise NotImplementedError()

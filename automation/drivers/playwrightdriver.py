@@ -9,6 +9,7 @@ from core.config import settings
 class PlaywrightDriver(BaseDriver):
     def __init__(self,ip_proxy = None, port = None, username = None, password = None):
         self.proxy_server = None
+        self.devices = None
         if ip_proxy != None and port != None and username != None and password != None:
             self.create_proxy_browser(ip_proxy, port, username, password)
         else:
@@ -16,6 +17,7 @@ class PlaywrightDriver(BaseDriver):
     
     def create_browser(self, headless=True):
         self.playwright = sync_playwright().start()
+        self.devices = self.playwright.devices
         self.driver = self.playwright.chromium.launch(channel="chrome", headless=headless)
         self.page = self.driver.new_page(user_agent=settings.USER_AGENT)
         self.page.add_init_script(path=f"{settings.EXTENSIONS_PATH}/shadow-root/inject.js")
@@ -27,6 +29,7 @@ class PlaywrightDriver(BaseDriver):
                 'password': password
             }
         self.playwright = sync_playwright().start()
+        self.devices = self.playwright.devices
         self.driver = self.playwright.chromium.launch(channel="chrome", proxy=self.proxy_server, headless=headless)
         self.page = self.driver.new_page(proxy={
             'server': ip_proxy+":"+port,
@@ -157,3 +160,6 @@ class PlaywrightDriver(BaseDriver):
     
     def get_cookies(self):
         return self.page.context.cookies()
+    
+    def get_device(self, device_name):
+        return self.devices.get(device_name)

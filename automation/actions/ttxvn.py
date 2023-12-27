@@ -303,6 +303,9 @@ class TtxvnAction(BaseAction):
             raise InternalError(
                 ERROR_REQUIRED, params={"code": ["FROM_ELEM"], "msg": ["From element"]}
             )
+
+        if kwargs.get("mode_test") in [None, 'false', 'False', False]:
+            kwargs.update({"mode_test": False})
         
         is_root = self.validate_input(
             self.params.get('is_root'), 
@@ -331,7 +334,6 @@ class TtxvnAction(BaseAction):
         )
 
         day_check = self.get_check_time(10)
-        #MongoRepository().insert_one(collection_name='ttxvn',doc=article)
         self.account = self.get_ttxvn_account()
         self.proxies = self.get_proxies()
 
@@ -342,6 +344,7 @@ class TtxvnAction(BaseAction):
             tmp_news = [header for header in news_headers if header["ArticleID"] not in existed_ids]
             news_headers = tmp_news
         
+        #is a node
         if is_root == False and send_queue == True:
             try:
                 document['PublishDate']=self.format_time(document['PublishDate'])
@@ -351,14 +354,17 @@ class TtxvnAction(BaseAction):
             except Exception as e:
                 raise e
         
-        elif is_root == True and send_queue == False:
+        #is a root but not parallel
+        elif (is_root == True and send_queue == False) or kwargs["mode_test"] == True:
             for header in news_headers:
                 header['PublishDate']=self.format_time(header['PublishDate'])
                 header['Created']=self.format_time(header['Created'])
             self.crawl_article_content(news_headers)
             self.save_articles(news_headers)
 
-        elif is_root == True and send_queue == True:
+        #is a root and it parallel
+        elif is_root == True and send_queue == True and kwargs["mode_test"] == False:
+            self.create_log_permission = False
             ttxvn_action = self.get_ttxvn_action(kwargs.get("pipeline_id"))
             kwargs_leaf = kwargs.copy()
             kwargs_leaf["list_proxy"] = [self.random_proxy(kwargs.get("list_proxy"))]
