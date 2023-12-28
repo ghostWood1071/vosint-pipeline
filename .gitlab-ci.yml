@@ -65,7 +65,7 @@ deploy-sca:
   timeout: 5 hours 30 minutes
   
   tags:
-    - smart-cyber-analytics
+    - dev
   only:
     - smart-cyber-analytics
   before_script:
