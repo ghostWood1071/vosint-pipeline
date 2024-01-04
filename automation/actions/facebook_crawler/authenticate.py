@@ -42,7 +42,7 @@ def authenticate(browser:Browser, cookies:Any, link, account, password, source_a
             print("need to login")
             cookies = login(page, account, password)
             if page.title() in ["Log in to Facebook | Facebook", "Facebook – log in or sign up"] or "login" in page.url or "| Facebook" in page.title():
-                MongoRepository().update_one('socials', {"_id": source_acc_id, "error":True, "cookie": cookies})
+                MongoRepository().update_one('socials', {"_id": source_acc_id, "error":True, "cookie": json.dumps(cookies)})
                 raise Exception("login failed")
             else:
                 print("cookies after login: ", cookies)
