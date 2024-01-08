@@ -1,33 +1,20 @@
 from datetime import datetime
-import json
-
 from automation import Session
 from common.internalerror import *
-from features.pipeline.services import PipelineService
+# from features.job.services import PipelineService
+from .pipelineservice import PipelineService
 from logger import Logger
 from models import MongoRepository
 from scheduler import Scheduler
-from utils import get_time_now_string
-from automation.actions import TtxvnAction
 import requests
 from bson.objectid import ObjectId
-from elasticsearch import helpers
 import time
-# from models import MongoRepository
 from db.elastic_main import My_ElasticSearch
-
-# from nlp.hieu.vosint_v3_document_clustering_main_16_3.create_keyword import Create_vocab_corpus
-# from nlp.keyword_extraction.keywords_ext import Keywords_Ext
-from db.elastic_main import (
-    My_ElasticSearch,
-)
-
-my_es = My_ElasticSearch()
-# from .crawling_ttxvn import crawl_ttxvn
 from automation.actions.ttxvn_crawler.crawling_ttxvn import crawl_ttxvn
 from typing import *
 from threading import Lock
 
+my_es = My_ElasticSearch()
 
 def start_job(actions: list[dict], pipeline_id=None, source_favicon=None):
     session = Session(
