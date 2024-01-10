@@ -5,18 +5,9 @@ from .baseaction import BaseAction
 from models import MongoRepository
 from datetime import datetime, timedelta
 from utils import get_time_now_string_y_m_now
-
-# from nlp.keyword_extraction.keywords_ext import Keywords_Ext
-# from nlp.toan.v_osint_topic_sentiment_main.sentiment_analysis import (
-#     topic_sentiment_classification,
-# )
-# from nlp.hieu.vosintv3_text_clustering_main_15_3.src.inference import text_clustering
-
 import requests
 from random import randint
-
 import json
-from elasticsearch import Elasticsearch
 from db.elastic_main import My_ElasticSearch
 import time
 from models.kafka_producer import KafkaProducer_class
@@ -29,8 +20,9 @@ my_es = My_ElasticSearch(
 import re
 from urllib.request import ProxyBasicAuthHandler, build_opener, install_opener, urlopen
 from ..common import ActionInfo, ActionStatus
-from bson.objectid import ObjectId
 import traceback
+from time import mktime
+from dateutil import parser
 
 rss_version_2_0 = {
     "author": "author",
@@ -75,6 +67,11 @@ def pure_request(url, proxy):
     except Exception as e:
         raise Exception(f"can not parse feed data when using proxy: {proxy.get('ip_address')}")
 
+def get_publish_time_key(keys):
+    for key in keys:
+        if "_parsed" in key:
+            return key
+
 def feed(
     url: str = None,
     link_key: str = rss_version_1_0["link"],
@@ -99,6 +96,10 @@ def feed(
         raise feed.bozo_exception
     # Loop through the entries and print the link and title of each news article
     data_feeds = []
+    time_key = None
+    if len(feed.entries)>0:
+        time_key = get_publish_time_key(feed.entries[0].keys())
+
     for entry in feed.entries:
         # print(entry)
         data_feed = {}
@@ -115,9 +116,15 @@ def feed(
         except:
             data_feed["title"] = ""
         try:
-            pubDate = getattr(entry, pubDate_key)
+            pubDate = getattr(entry, time_key)
             if pubDate != None:
+                if type(pubDate) == time.struct_time:
+                    pubDate = datetime.fromtimestamp(mktime(pubDate))
+                else:
+                    pubDate = parser.parse(str(pubDate))
                 data_feed["pubDate"] = pubDate
+            else:
+                data_feed["pubDate"] = ""
         except:
             data_feed["pubDate"] = ""
         try:
@@ -126,8 +133,9 @@ def feed(
                 data_feed["author"] = author
         except:
             data_feed["author"] = ""
-
-        data_feeds.append(data_feed)
+        if data_feed.get("pubDate") != "" and type(data_feed.get("pubDate")) == datetime:
+            if data_feed.get("pubDate") - datetime.now() <= timedelta(days=30):
+                data_feeds.append(data_feed)
     return data_feeds
 
 class FeedAction(BaseAction):
@@ -696,6 +704,10 @@ class FeedAction(BaseAction):
             if task_id != None:
                 MongoRepository().delete_one("queue", {"_id": task_id})
     
+    def get_html_content(self, str_content):
+        paragraph = str_content.split("\n")
+        return "\n".join(list(map(lambda p: f"<p>{p}<\p>", paragraph)))
+
     def process_news_data(self, data_feed, kwargs, title_expr, author_expr, time_expr, content_expr, time_format, by, detect_event, is_send_queue):
         try:
             url = data_feed["link"]
@@ -720,24 +732,33 @@ class FeedAction(BaseAction):
             news_info["source_source_type"] = kwargs["source_source_type"]
             news_info["data:class_chude"] = []
             news_info["data:class_linhvuc"] = []
-            news_info["data:title"] = ""
+            news_info["data:title"] = data_feed.get("title")
             news_info["data:content"] = ""
-            news_info["pub_date"] = get_time_now_string_y_m_now()
+            news_info["pub_date"] = data_feed.get("pubDate")
+            news_info["author"] = data_feed.get("author")
 
             #go to link
             page = self.driver.goto(url=data_feed["link"])
             # get title
-            news_info["data:title"] = self.get_title(page, data_feed["title"], title_expr, by)
+            if title_expr not in ["", " ", None, "None"]:
+                news_info["data:title"] = self.get_title(page, data_feed["title"], title_expr, by)
             
             #get author
-            news_info["data:author"] = self.get_author(page, data_feed["author"], author_expr, by)
+            if author_expr not in ["", " ", None, "None"]:
+                news_info["data:author"] = self.get_author(page, data_feed["author"], author_expr, by)
             #get_time
-            news_info["data:time"] = self.get_time(page, data_feed["pubDate"], time_expr,by)
+            if time_expr not in ["", " ", None, "None"]:
+                news_info["data:time"] = self.get_time(page, data_feed["pubDate"], time_expr,by)
             #get_publish_date
             if kwargs["mode_test"] != True:
-                news_info["pub_date"] = self.get_publish_date(time_format)
+                date_tmp = self.parse_str_time(page, time_expr, "".join(time_format), kwargs.get("source_language"), by) #self.get_publish_date(time_format)
+                if date_tmp != None:
+                    news_info["pub_date"] = date_tmp
             #get_content -------------------------------------------------------
             news_info["data:content"], news_info["data:html"] = self.get_content(page, content_expr, by)
+            if news_info["data:html"] in ["", None]:
+                news_info["data:html"] = self.get_html_content(news_info["data:content"])
+                
             if news_info["data:content"] not in ["None", None, ""]:
                 # check_content = True
                 if kwargs["mode_test"] != True:
@@ -829,6 +850,7 @@ class FeedAction(BaseAction):
             day_check = self.get_check_time(10)
             for data_feed in data_feeds:
                 feed_action["url"] = data_feed["link"]
+                data_feed["pubDate"] = datetime.strftime(data_feed["pubDate"], "%Y-%m-%d %H:%M")
                 feed_action["params"]["data_feed"] = data_feed
                 message = {"actions": [feed_action], "input_val": "null", "kwargs": kwargs_leaf}
                 try:
@@ -857,7 +879,9 @@ class FeedAction(BaseAction):
         #is a node
         elif is_send_queue == "True" and not is_root: #process_news
             try:
-                news_info = self.process_news_data(self.params.get("data_feed"), kwargs, title_expr, 
+                data_feed_node = self.params.get("data_feed")
+                data_feed_node["pubDate"] = datetime.strptime(data_feed_node["pubDate"], "%Y-%m-%d %H:%M")
+                news_info = self.process_news_data(data_feed_node, kwargs, title_expr, 
                                                    author_expr, time_expr, content_expr, 
                                                    time_expr, by, detect_event, is_send_queue= True)
                 result_test = news_info.copy()

@@ -548,7 +548,10 @@ class GetNewsInfoAction(BaseAction):
             news_info["data:author"] = self.get_author(page, by, author_expr)
             
             news_info["data:time"], news_info["pub_date"] =  self.get_time(page, by, time_expr, time_format, kwargs["mode_test"])
-            
+            publish_date_tmp = self.parse_str_time(page, time_expr, "".join(time_format), kwargs.get("source_language"), by)
+            if publish_date_tmp:
+                news_info["pub_date"] = publish_date_tmp
+
             news_info["data:content"], news_info["data:html"] = self.get_content(page, by, content_expr)
 
             if news_info["data:content"] == "" and kwargs["mode_test"] != True:
