@@ -55,7 +55,7 @@ def get_article_data(article_raw:Locator, crawl_social_id):
         except:
             data["comments"] = "0"
         try:
-            data["share"] =re.findall(r'\d+',select(footer_tag,">:nth-child(1)>:nth-child(2)>:nth-child(2)")[0].text_content())[0]
+            data["share"] =re.findall(r'\d+',select(footer_tag,">:nth-child(2)>:nth-child(2)")[0].text_content())[0]
         except Exception as e:
             data["share"] = "0"
         data["id_data_ft"] = ""
