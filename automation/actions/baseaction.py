@@ -8,7 +8,7 @@ from ..common import ActionInfo, ActionStatus
 from ..drivers import BaseDriver
 from ..storages import BaseStorage
 from datetime import datetime, timedelta
-from utils import get_time_string_zone
+from utils import get_time_string_zone, parse_string_time
 import requests
 from core.config import settings
 import json
@@ -136,6 +136,14 @@ class BaseAction:
     def exec_func(self, input_val=None, **kwargs):
         raise NotImplementedError()
     
+    def parse_str_time(self, page, time_expr:str, date_pattern:str, lang:str, by:str):
+        try:
+            elems = self.driver.select(page, by, time_expr)
+            input_date = self.driver.get_content(elems[0])
+            return parse_string_time(input_date, date_pattern, lang)
+        except:
+            return None
+        
     def summarize(self, lang: str = "", title: str = "", paras: str = "", k: float = 0.4):
         try:
             request = requests.post(
