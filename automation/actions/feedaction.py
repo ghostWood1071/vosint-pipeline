@@ -478,7 +478,7 @@ class FeedAction(BaseAction):
             else:
                return ""
         else:
-            return feed_date
+            return str(feed_date)
     
     def get_publish_date(self, time_format):
         result = ""
@@ -893,4 +893,4 @@ class FeedAction(BaseAction):
                 tmp = news_info.copy()
                 news_info = []
                 news_info.append(tmp)
-        return result_test
+        return [result_test]

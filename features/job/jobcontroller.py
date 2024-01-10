@@ -133,6 +133,10 @@ class JobController:
                 except:
                     pass
                 try:
+                    result["data:time"] = str(result["data:time"])
+                except:
+                    pass
+                try:
                     result["_id"] = str(result["_id"])
                 except:
                     pass
