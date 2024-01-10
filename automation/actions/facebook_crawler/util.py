@@ -108,7 +108,8 @@ def get_image_links(elems):
             computed_style = elem.evaluate('(element) => getComputedStyle(element)', elem)
             background_image_url = computed_style['backgroundImage']
             background_image_url = background_image_url.replace('url("', '').replace('")', '')
-            img_links.append(background_image_url)
+            if "static.xx.fbcdn.net" not in background_image_url:
+                img_links.append(background_image_url)
         except Exception as e:
             continue
     return img_links
