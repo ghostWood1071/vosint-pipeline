@@ -108,7 +108,13 @@ def get_image_links(elems):
             computed_style = elem.evaluate('(element) => getComputedStyle(element)', elem)
             background_image_url = computed_style['backgroundImage']
             background_image_url = background_image_url.replace('url("', '').replace('")', '')
-            img_links.append(background_image_url)
+            if "static.xx.fbcdn.net" not in background_image_url:
+                if not background_image_url.startswith("https://"):
+                    if not background_image_url.startswith("/"):
+                        background_image_url = "https://m.facebook.com/"+background_image_url
+                    else:
+                        background_image_url = "https://m.facebook.com"+background_image_url
+                img_links.append(background_image_url)
         except Exception as e:
             continue
     return img_links
@@ -121,6 +127,12 @@ def get_video_links(elems):
             time.sleep(0.1)
             video_tags = select(elem, "video")
             if len(video_tags)>0:
+                link = video_tags[0].get_attribute("src")
+                if not link.startswith("https://"):
+                    if not link.startswith("/"):
+                        link = "https://m.facebook.com/" + link
+                    else:
+                        link = "https://m.facebook.com" + link
                 video_links.append(video_tags[0].get_attribute("src"))
         except Exception as e:
             continue
@@ -130,7 +142,13 @@ def get_other_links(elems: List[Locator]):
     other_links = []
     for elem in elems:
         try:
-            other_links.append(elem.get_attribute("href"))
+            link = elem.get_attribute("href")
+            if not link.startswith("https://"):
+                if not link.startswith("/"):
+                    link = "https://m.facebook.com/" + link
+                else:
+                    link = "https://m.facebook.com" + link
+            other_links.append()
         except Exception as e:
             continue
     return other_links

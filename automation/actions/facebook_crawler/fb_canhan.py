@@ -38,7 +38,7 @@ def get_article_data(article_raw:Locator, crawl_social_id):
         data["other_link"] = []
         if len(media_elems) > 0:
             media_div = media_elems[0]
-            data["image_link"] = get_image_links(select(media_div, 'a div i[role="img"]'))
+            data["image_link"] = get_image_links(select(media_div, 'i.img[role="img"]'))
             data["video_link"] = get_video_links(select(media_div, 'div[data-sigil="inlineVideo"]'))
             data["other_link"] = get_other_links(select(media_div, 'a.touchable'))
         footer_tag = select(article_raw,"footer>:nth-child(1)>:nth-child(1)>:nth-child(1)>:nth-child(1)")[0]
@@ -52,7 +52,7 @@ def get_article_data(article_raw:Locator, crawl_social_id):
         except:
             data["comments"] = "0"
         try:
-            data["share"] =re.findall(r'\d+',select(footer_tag,">:nth-child(1)>:nth-child(2)>:nth-child(2)")[0].text_content())[0]
+            data["share"] =re.findall(r'\d+',select(footer_tag,">:nth-child(2)>:nth-child(2)")[0].text_content())[0]
         except Exception as e:
             data["share"] = "0"
         data["id_data_ft"] = ""
