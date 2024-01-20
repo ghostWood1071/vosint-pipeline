@@ -222,6 +222,10 @@ class FeedAction(BaseAction):
         except:
             pass
         try:
+            doc_es["subject_id"] = news_info["subject_id"]
+        except:
+            pass
+        try:
             doc_es["data:author"] = news_info["data:author"]
         except:
             pass
@@ -762,7 +766,7 @@ class FeedAction(BaseAction):
             if news_info["data:content"] not in ["None", None, ""]:
                 # check_content = True
                 if kwargs["mode_test"] != True:
-                    
+                    news_info["subject_id"] = kwargs["first_action"]["params"]["subject_id"]
                     news_info["data:content_translate"] = self.translate(kwargs.get("source_language"), news_info["data:content"])
                     #---------------------------------------------------------------------------
                     news_info["data:title_translate"] = self.translate(kwargs["source_language"], news_info["data:title"])

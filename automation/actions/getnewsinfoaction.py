@@ -227,6 +227,10 @@ class GetNewsInfoAction(BaseAction):
             except:
                 pass
             try:
+                doc_es["subject_id"] = news_info["subject_id"]
+            except:
+                pass
+            try:
                 doc_es["data:author"] = news_info["data:author"]
             except:
                 pass
@@ -491,14 +495,12 @@ class GetNewsInfoAction(BaseAction):
             _id = MongoRepository().insert_one(
                 collection_name=collection_name, doc=news_info
             )
-            self.add_news_to_object(news_info, _id)
             # print(type(_id))
             # if detect_event:
         except Exception as e:
             print("An error occurred while pushing data to the database!")
         # elastícearch
         if _id != None:
-            self.send_event_to_queue(_id, news_info, detect_event)
             self.insert_elastic(news_info) 
 
     def exec_func(self, input_val=None, **kwargs):
@@ -527,6 +529,7 @@ class GetNewsInfoAction(BaseAction):
             time_format = self.params["time"]["time_format"]
             content_expr = self.params["content_expr"]
             news_info = {}
+            news_info["subject_id"] = kwargs["first_action"]["params"]["subject_id"]
             news_info["source_favicon"]=kwargs["source_favicon"]
             news_info["source_name"] = kwargs["source_name"]
             news_info["source_host_name"] = kwargs["source_host_name"]
