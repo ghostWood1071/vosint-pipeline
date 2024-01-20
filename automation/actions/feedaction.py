@@ -613,7 +613,6 @@ class FeedAction(BaseAction):
             _id = MongoRepository().insert_one(
                 collection_name=collection_name, doc=news_info
             )
-            self.add_news_to_object(news_info, _id)
             print("insert_mongo_succes")
             return _id
         except:
@@ -806,7 +805,6 @@ class FeedAction(BaseAction):
                 # elastícearch
                 if insert_ok != None:
                     self.insert_elastic(news_info)
-                    self.send_event_to_queue(insert_ok, news_info, detect_event)
             return news_info
         except Exception as e:
             raise e
