@@ -55,7 +55,7 @@ class Settings:
     KAFKA_CONNECT: str = ""
     #elastic
     ELASTIC_CONNECT: str = ""
-  
+    ELASTIC_NEWS_INDEX: str =""
     SUMMARIZE_API:str = ""
     EXTRACT_KEYWORD_API: str = ""
     DOCUMENT_CLUSTERING_API: str = ""

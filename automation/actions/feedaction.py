@@ -626,7 +626,7 @@ class FeedAction(BaseAction):
             doc_es = self.create_es_doc(news_info.copy(), news_info)
             try:
                 my_es.insert_document(
-                    index_name="vosint",
+                    index_name=settings.ELASTIC_NEWS_INDEX,
                     id=doc_es["id"],
                     document=doc_es,
                 )

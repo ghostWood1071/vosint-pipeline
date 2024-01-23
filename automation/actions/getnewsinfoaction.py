@@ -335,7 +335,7 @@ class GetNewsInfoAction(BaseAction):
             # print(doc_es)
             try:
                 my_es.insert_document(
-                    index_name="vosint", id=doc_es["id"], document=doc_es
+                    index_name=settings.ELASTIC_NEWS_INDEX, id=doc_es["id"], document=doc_es
                 )
             except:
                 print("insert elastic search false")
