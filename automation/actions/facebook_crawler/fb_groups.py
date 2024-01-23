@@ -32,7 +32,14 @@ def get_article_data(article_raw:Locator, crawl_social_id):
         content_div_child_tag = select(content_div_tag, ">:nth-child(2)")[0]
         data["content"] = content_div_child_tag.text_content().replace("… More","").replace("See Translation","")
         #data["link"] = "http://m.facebook.com" + select(content_div_child_tag, "a")[0].get_attribute("href")
-        data["link"] = content_div_tag.locator('div[data-sigil="m-feed-voice-subtitle"] > a')
+        data["link"] = select(content_div_child_tag, "a")[0].get_attribute("href")
+        if data["link"] in ["#", None, ""]:
+            try:
+                data["link"] = content_div_tag.locator('div[data-sigil="m-feed-voice-subtitle"] > a').nth(1).get_attribute("href", timeout=2)
+            except Exception as e:
+                data["link"] = "#"
+        if not data["link"].startswith("https://"):
+            data["link"] = "https://m.facebook.com/"+data["link"].strip("/")
         media_elems = select(content_div_tag, ">:nth-child(3)")
         data["video_link"] = []
         data["image_link"] = []
