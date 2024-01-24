@@ -32,13 +32,20 @@ def get_article_data(article_raw:Locator, crawl_social_id):
         content_div_child_tag = select(content_div_tag, ">:nth-child(2)")[0]
         data["content"] = content_div_child_tag.text_content().replace("… More","").replace("See Translation","")
         data["link"] = select(content_div_child_tag, "a")[0].get_attribute("href")
+        if data["link"] in ["#", None, ""]:
+            try:
+                data["link"] = content_div_tag.locator('div[data-sigil="m-feed-voice-subtitle"] > a').nth(1).get_attribute("href", timeout=2)
+            except Exception as e:
+                data["link"] = "#"
+        if not data["link"].startswith("https://"):
+            data["link"] = "https://m.facebook.com/"+data["link"].strip("/")
         media_elems = select(content_div_tag, ">:nth-child(3)")
         data["video_link"] = []
         data["image_link"] = []
         data["other_link"] = []
         if len(media_elems) > 0:
             media_div = media_elems[0]
-            data["image_link"] = get_image_links(select(media_div, 'a div i[role="img"]'))
+            data["image_link"] = get_image_links(select(media_div, 'i.img[role="img"]'))
             data["video_link"] = get_video_links(select(media_div, 'div[data-sigil="inlineVideo"]'))
             data["other_link"] = get_other_links(select(media_div, 'a.touchable'))
         footer_tag = select(article_raw,"footer>:nth-child(1)>:nth-child(1)>:nth-child(1)>:nth-child(1)")[0]
@@ -52,7 +59,7 @@ def get_article_data(article_raw:Locator, crawl_social_id):
         except:
             data["comments"] = "0"
         try:
-            data["share"] =re.findall(r'\d+',select(footer_tag,">:nth-child(1)>:nth-child(2)>:nth-child(2)")[0].text_content())[0]
+            data["share"] =re.findall(r'\d+',select(footer_tag,">:nth-child(2)>:nth-child(2)")[0].text_content())[0]
         except Exception as e:
             data["share"] = "0"
         data["id_data_ft"] = ""

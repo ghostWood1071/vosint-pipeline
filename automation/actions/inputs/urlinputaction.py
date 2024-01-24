@@ -27,6 +27,14 @@ class URLInputAction(BaseAction):
                     validators=["required_"]
                 ),
                 ParamInfo(#check URL input .run only url
+                    name="subject_id",
+                    display_name="Chủ đề",
+                    val_type="subject_id",  # val_type='str',
+                    default_val='',
+                    options='',
+                    validators=["required_"]
+                ),
+                ParamInfo(#check URL input .run only url
                     name="proxy_list",
                     display_name="Danh sách proxy",
                     val_type="proxy",  # val_type='str',

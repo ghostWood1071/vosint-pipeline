@@ -183,7 +183,6 @@ class ForeachAction(BaseAction):
         return res
 
     def __run_actions(self, actions: list[dict], input_val, **kwargs):
-        start_lol = datetime.now()
         tmp_val = input_val
         
         for act in actions:

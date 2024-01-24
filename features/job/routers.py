@@ -1,13 +1,8 @@
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from .jobcontroller import JobController
-from db.elastic_main import (
-    My_ElasticSearch,
-)
 from pydantic import BaseModel
-import asyncio
 from typing import *
-from seleniumwire.webdriver import Chrome
 
 class Translate(BaseModel):
     lang: str
@@ -20,13 +15,6 @@ class Filter_spec(BaseModel):
 
 job_controller = JobController()
 router = APIRouter()
-
-
-@router.post("/api/crawling_ttxvn")
-def crawling_ttxvn(job_ids: List[str]):
-    response = job_controller.crawling_ttxvn(job_ids)
-    return JSONResponse(response)
-
 
 @router.post("/api/start_job/{pipeline_id}")
 def start_job(pipeline_id: str):
@@ -46,11 +34,3 @@ def run_only_job(pipeline_id: str, mode_test=True):
     if str(mode_test) == "True" or str(mode_test) == "true":
         mode_test = True
     return JSONResponse(job_controller.run_only(pipeline_id, mode_test))
-
-
-@router.post("/api/crawling_ttxvn_news")
-def crawling_ttxvn_news():
-    try:
-        return JSONResponse(job_controller.crawl_ttxvn_news())
-    except:
-        return JSONResponse({"succes: false"})
