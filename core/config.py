@@ -24,7 +24,7 @@ class Settings:
         "http://192.168.1.101:2000",
         "http://118.70.52.237:2000",
     ]
-    APP_TITLE: str = "V-OSINT INGESTION"
+    APP_TITLE: str = "SCA INGESTION"
     # APP_ORIGINS: List[AnyHttpUrl] =["*"]
 
     APP_HOST: str =""
