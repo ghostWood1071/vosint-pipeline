@@ -765,6 +765,7 @@ class FeedAction(BaseAction):
             if news_info["data:content"] not in ["None", None, ""]:
                 # check_content = True
                 if kwargs["mode_test"] != True:
+                    news_info["source_id"] = kwargs["first_action"]["params"]["source"]
                     news_info["subject_id"] = kwargs["first_action"]["params"]["subject_id"]
                     news_info["data:content_translate"] = self.translate(kwargs.get("source_language"), news_info["data:content"])
                     #---------------------------------------------------------------------------

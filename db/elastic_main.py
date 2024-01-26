@@ -250,9 +250,9 @@ class My_ElasticSearch:
         """
         try:
             if id != '':
-                self.es.index(index=index_name,id = id,doc_type='_doc', body=document)
+                self.es.index(index=index_name,id = id, body=document)
             else:
-                self.es.index(index=index_name,doc_type='_doc', body=document)
+                self.es.index(index=index_name, body=document)
             return 'Document đã được thêm vào Index'
         except elasticsearch.exceptions.RequestError as e:
             return (f"Error: {e} ")

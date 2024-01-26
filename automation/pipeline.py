@@ -207,7 +207,8 @@ class Pipeline_Kafka:
                 "source_publishing_country":self.kwargs['source_publishing_country'],
                 "source_source_type":self.kwargs['source_source_type'],
                 "source_favicon": self.kwargs['source_favicon'],
-                "detect_event": self.kwargs.get('detect_event')
+                "detect_event": self.kwargs.get('detect_event'), 
+                "first_action": self.kwargs.get('first_action') 
             }
 
             # Run from 2nd action
