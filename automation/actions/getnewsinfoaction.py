@@ -337,7 +337,7 @@ class GetNewsInfoAction(BaseAction):
                 my_es.insert_document(
                     index_name=settings.ELASTIC_NEWS_INDEX, id=doc_es["id"], document=doc_es
                 )
-            except:
+            except Exception as e:
                 print("insert elastic search false")
         except:
             print("An error occurred while pushing data to the database!")
@@ -475,19 +475,6 @@ class GetNewsInfoAction(BaseAction):
                     result += self.driver.get_html(elems[i])
         return result
 
-    def send_event_to_queue(self, _id, news_info, detect_event):
-        try:
-            message = {
-                "title": news_info["data:title"],
-                "content": news_info["data:content"],
-                "pubdate": str(news_info["pub_date"]),
-                "id_new": _id,
-                "display": detect_event
-            }
-            KafkaProducer_class().write("events", message)
-        except:
-            print("kafka write message error")
-
     def save_news(self, news_info, url, day_check, collection_name, detect_event):
         try:
             self.check_news_exists(url, day_check)
@@ -530,6 +517,7 @@ class GetNewsInfoAction(BaseAction):
             content_expr = self.params["content_expr"]
             news_info = {}
             news_info["subject_id"] = kwargs["first_action"]["params"]["subject_id"]
+            news_info["source_id"] = kwargs["first_action"]["params"]["source"]
             news_info["source_favicon"]=kwargs["source_favicon"]
             news_info["source_name"] = kwargs["source_name"]
             news_info["source_host_name"] = kwargs["source_host_name"]
