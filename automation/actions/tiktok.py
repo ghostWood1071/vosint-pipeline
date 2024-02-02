@@ -80,9 +80,8 @@ class TiktokAction(BaseAction):
 
 
             browser = self.driver.get_driver()
-            page = browser.new_page()
             try:
-                tiktok_channel(page=page, accounts=followed_users, cookies=cookies,
+                tiktok_channel(page=self.driver.get_page(), accounts=followed_users, cookies=cookies,
                                     max_news=max_news, create_log=self.create_log, pipeline_id=pipeline_id)
             except CookiesExpireException as e:
                 raise e

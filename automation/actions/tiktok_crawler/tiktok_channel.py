@@ -20,12 +20,14 @@ from ...common import ActionInfo, ActionType, ParamInfo, ActionStatus
 
 
 def get_video_data(page: Page, url: str, cookies, data: Dict[str, Any], content) -> bool:
-    time.sleep(5)
     if content == '':
         print('video has no text content')
         return None
-    page.goto(url)
-    time.sleep(5)
+    try:
+        page.goto(url)
+    except Exception as ex:
+        return None
+    time.sleep(60)
 
     try:
         header_tag = select(page, '//*[@data-e2e="browser-nickname"]/span[1]')[0]
@@ -111,30 +113,28 @@ def tiktok_channel(page: Page, cookies,accounts, max_news, create_log, pipeline_
         page.context.add_cookies(cookies)
     except Exception as e:
         print(e)
-    # links = []
-    # contents = []
-    # datum = []
-    account_dict = {}
     for account in accounts:
-        page.goto(account.get('account_link'))
+        try:
+            page.goto(account.get('account_link'), timeout=60000)
+        except TimeoutError as e:
+            locator = page.locator('body')
+            if locator.inner_html() == '':
+                raise e
         time.sleep(10)
+        continue_btn = select(page, 'text="Continue as guest"')
+        if len(continue_btn) > 0:
+            continue_btn[0].click()
+            try:
+                page.reload()
+            except TimeoutError as e:
+                locator = page.locator('body')
+                if locator.inner_html() == '':
+                    raise e
         info = get_video_info_on_channel(page, 0, account.get("_id"), max_news)
         links = info['links']
         contents = info['contents']
         datum = info['datum']
-        account_dict[account.get('account_link')] = {
-            "links": links,
-            "contents": contents,
-            "datum": datum
-        }
-        # links.extend(info['links'])
-        # contents.extend(info['contents'])
-        # datum.extend(info['datum'])
-    for account in accounts:
-        account_info = account_dict.get(account.get('account_link'))
-        links = account_info.get('links')
-        contents = account_info.get('contents')
-        datum = account_info.get('datum')
+
         for i in range(len(links)):
             link = links[i]
             content = contents[i]
@@ -148,18 +148,6 @@ def tiktok_channel(page: Page, cookies,accounts, max_news, create_log, pipeline_
                     check_and_insert_to_db(data)
         create_log(ActionStatus.COMPLETED, account.get('account_link'), pipeline_id)
 
-    # for i in range(len(links)):
-    #     link = links[i]
-    #     content = contents[i]
-    #     data = datum[i]
-    #     data = get_video_data(page, link, cookies, data, content)
-    #     if data is not None:
-    #         check = is_existed(data)
-    #         if check:
-    #             check_and_update(data)
-    #         else:
-    #             check_and_insert_to_db(data)
-
 
 def get_video_info_on_channel(page: Page, got_videos: int, crawl_social_id, max_news):
     links = []
@@ -167,15 +155,37 @@ def get_video_info_on_channel(page: Page, got_videos: int, crawl_social_id, max_
     datum = []
     try:
         time.sleep(10)
+        continue_btn = select(page, 'text="Continue as guest"')
+        if len(continue_btn) > 0:
+            continue_btn[0].click()
+            try:
+                page.reload()
+            except TimeoutError as e:
+                locator = page.locator('body')
+                if locator.inner_html() == '':
+                    raise e
+        time.sleep(20)
+        refresh_btn = select(page, 'text="Refresh"')
+        if len(refresh_btn) > 0:
+            refresh_btn[0].click()
+            time.sleep(10)
         page.wait_for_selector('body')
-        videos = select(page, '//*[@data-e2e="user-post-item-list"]/div')
+        page.keyboard.press('End')
+        try:
+            videos = select(page, '//*[@data-e2e="user-post-item-list"]/div')
+        except Exception as ex:
+            print(ex)
         if len(videos) == 0:
             raise CookiesExpireException('Cannot find any videos. Cookies may be expired.')
         subset_videos = videos[got_videos:len(videos)]
         for i in range(len(subset_videos)):
             video = subset_videos[i]
-            link_tag = video.locator('//*[@data-e2e="user-post-item-desc"]/a[1]')
-            link = link_tag.get_attribute('href')
+            try:
+                link_tag = video.locator('//*[@data-e2e="user-post-item-desc"]/a[1]')
+                link = link_tag.get_attribute('href')
+            except:
+                continue
+            
             try:
                 # content_tag = select(video, '//*[@data-e2e="user-post-item-desc"]/a')[0]
                 content = link_tag.get_attribute('title')
@@ -184,6 +194,7 @@ def get_video_info_on_channel(page: Page, got_videos: int, crawl_social_id, max_
                 content = ''
             if i >= max_news:
                 break
+
 
             link_arr = link.split('/')
             social_id = link_arr[3]
