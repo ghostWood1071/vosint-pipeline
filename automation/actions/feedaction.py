@@ -798,7 +798,7 @@ class FeedAction(BaseAction):
             #get_url
             news_info["data:url"] = url
             
-            if kwargs["mode_test"] != True:
+            if kwargs["mode_test"] != True and news_info["data:content"] not in ["", None]:
                 if self.check_exists(url,days=days):
                     raise Exception(f"{url} url existed")
                 #insert to mongo

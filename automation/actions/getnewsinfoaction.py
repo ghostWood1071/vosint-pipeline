@@ -576,7 +576,7 @@ class GetNewsInfoAction(BaseAction):
                     else:
                         news_info["summarize_s60"] = ""
             
-            if kwargs["mode_test"] != True:   
+            if kwargs["mode_test"] != True and news_info["data:content"] not in ["", None]:   
                 self.save_news(news_info, url, day_check, collection_name, detect_event)
             
             return news_info
