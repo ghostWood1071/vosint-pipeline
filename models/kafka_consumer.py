@@ -22,10 +22,10 @@ class KafkaConsumer_class:
     def test_connection(topic, group_ids):
         print("--------------TEST KAFKA CONNECTION START----------")
         try:
-            print(f"kafa-connect-server: {settings.KAFKA_CONNECT}")
+            print(f"kafa-connect-server: {settings.KAFKA_CONNECT.split(',')}")
             consumer = KafkaConsumer(
                 topic,
-                bootstrap_servers=[settings.KAFKA_CONNECT],
+                bootstrap_servers=settings.KAFKA_CONNECT.split(","),
                 auto_offset_reset='earliest',
                 enable_auto_commit=True,  # Tắt tự động commit offset
                 group_id= group_ids,
@@ -85,7 +85,7 @@ class KafkaConsumer_class:
         result = ''
         consumer = KafkaConsumer(
             topic,
-            bootstrap_servers=[settings.KAFKA_CONNECT],
+            bootstrap_servers=settings.KAFKA_CONNECT.split(","),
             auto_offset_reset='earliest',
             enable_auto_commit=True,  # Tắt tự động commit offset
             group_id= group_ids,

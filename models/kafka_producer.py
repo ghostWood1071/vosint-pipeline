@@ -8,15 +8,15 @@ class KafkaProducer_class:
     def __init__(self):
         # Create a Kafka producer object
         self.producer = KafkaProducer(
-            bootstrap_servers=[settings.KAFKA_CONNECT]
+            bootstrap_servers=settings.KAFKA_CONNECT.split(",")
         )
 
     @staticmethod
     def test_kafka_connection():
         print("--------------TEST KAFKA CONNECTION START----------")
-        print(f"kafa-connect-server: {settings.KAFKA_CONNECT}")
+        print(f"kafa-connect-server: {settings.KAFKA_CONNECT.split(',')}")
         try:
-            producer = KafkaProducer(bootstrap_servers=[settings.KAFKA_CONNECT])
+            producer = KafkaProducer(bootstrap_servers=settings.KAFKA_CONNECT.split(","))
             print(f"connect status: {producer.bootstrap_connected()}")
         except Exception as e:
             print("connect status: ", e)
@@ -32,7 +32,7 @@ class KafkaProducer_class:
 
     def check_topic_exist(self,topic_name):
         #print(1)
-        admin_client = KafkaAdminClient(bootstrap_servers=[settings.KAFKA_CONNECT])
+        admin_client = KafkaAdminClient(bootstrap_servers=settings.KAFKA_CONNECT.split(","))
         #print(2)
         topic_metadata = admin_client.list_topics()
         #print(3)

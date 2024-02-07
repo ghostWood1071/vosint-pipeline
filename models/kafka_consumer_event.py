@@ -16,7 +16,7 @@ class KafkaConsumer_event_class:
         result = ""
         consumer = KafkaConsumer(
             topic,
-            bootstrap_servers=[settings.KAFKA_CONNECT],
+            bootstrap_servers=[settings.KAFKA_CONNECT.split(",")],
             auto_offset_reset="earliest",
             enable_auto_commit=False,  # Tắt tự động commit offset
             group_id=group_ids,
