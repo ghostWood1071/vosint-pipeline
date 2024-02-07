@@ -73,15 +73,6 @@ class GetNewsInfoAction(BaseAction):
             ],
             z_index=4,
         )
-    
-    def get_keyword_regex(self,keyword_dict):
-        pattern = ""
-        for key in list(keyword_dict.keys()):
-            pattern = pattern + keyword_dict.get(key) +","
-        keyword_arr = [str(keyword).strip() for keyword in pattern.split(",")]
-        keyword_arr = [rf"\b{str(keyword).strip()}\b" for keyword in list(filter(lambda x: x!="", keyword_arr))]
-        pattern = "|".join(keyword_arr)
-        return pattern
         
     def get_sentiment(self, title:str, content:str):
         sentiment = "0"
@@ -179,20 +170,6 @@ class GetNewsInfoAction(BaseAction):
         result = req.json().get("translate_text")
         return result
 
-    def add_news_to_object(self, news, news_id):
-        objects,_ = MongoRepository().get_many("object", {})
-        object_ids = []
-        for object in objects:
-            pattern = self.get_keyword_regex(object.get("keywords"))
-            if pattern == "":
-                continue
-            if re.search(pattern, news['data:content']) or \
-               re.search(pattern, news['data:title']) or \
-               re.search(pattern, news['data:title_translate'] if news['data:title_translate'] != None else ""):
-                object_ids.append(object.get('_id'))
-        if(len(object_ids)>0):
-            MongoRepository().update_many('object', {"_id": {"$in": object_ids}}, {"$push": {"news_list": news_id}})
-    
     def check_news_exists(self, url, day_check):
         exists = False
         a, b = MongoRepository().get_many(
@@ -408,7 +385,7 @@ class GetNewsInfoAction(BaseAction):
                                     time_result["time_yyyy"] != "None"
                                     and time_result["time_yyyy"] != ""
                                 ):
-                                   result2 += time_result["time_yyyy"]
+                                   result2 += str(time_result["time_yyyy"])
                             finally:
                                 result2 += "-"
                             try:
@@ -416,7 +393,7 @@ class GetNewsInfoAction(BaseAction):
                                     time_result["time_mm"] != "None"
                                     and time_result["time_mm"] != ""
                                 ):
-                                    result2 += time_result["time_mm"]
+                                    result2 += str(time_result["time_mm"])
                             finally:
                                 result2 += "-"
                             try:
@@ -424,7 +401,7 @@ class GetNewsInfoAction(BaseAction):
                                     time_result["time_dd"] != "None"
                                     and time_result["time_dd"] != ""
                                 ):
-                                    result2 += time_result["time_dd"]
+                                    result2 += str(time_result["time_dd"])
                             except:
                                 pass
                             finally:
@@ -453,7 +430,7 @@ class GetNewsInfoAction(BaseAction):
                     result = ""
                     for i in range(len(elems)):
                         elem_content = self.driver.get_content(elems[i])
-                        result += elem_content +"\n"
+                        result += str(elem_content) +"\n"
                         result_html.append(f"<p>{elem_content}</p>")
         return result, "".join(result_html)
 
@@ -472,7 +449,7 @@ class GetNewsInfoAction(BaseAction):
             elif len(elems) > 1:
                 result = ""
                 for i in range(len(elems)):
-                    result += self.driver.get_html(elems[i])
+                    result += str(self.driver.get_html(elems[i]))
         return result
 
     def save_news(self, news_info, url, day_check, collection_name, detect_event):
@@ -554,7 +531,7 @@ class GetNewsInfoAction(BaseAction):
                     #------------------------------------------------------- 
                     news_info["data:content_translate"] = self.translate(news_info["data:content"], kwargs.get("source_language"))
                     #-------------------------------------------------------
-                    content_translated = news_info["data:title_translate"]+" "+news_info["data:content_translate"]
+                    content_translated = str(news_info["data:title_translate"])+" "+str(news_info["data:content_translate"])
                     news_info["keywords"] = self.get_keywords(news_info['data:content'], kwargs["source_language"],content_translated)
                     #--------------------------------------------------------
                     news_info["data:class_chude"] = self.get_chude(news_info["data:content"])
