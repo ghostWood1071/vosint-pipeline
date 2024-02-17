@@ -105,7 +105,7 @@ class ForeachAction(BaseAction):
                                                     })
             if task_id:
                 message["task_id"] = str(task_id)
-                KafkaProducer_class().write("crawling_", message)
+                KafkaProducer_class().write("sca_crawl", message)
                 print('write to kafka ...')
                 self.create_log(ActionStatus.INQUEUE, f'news {str(url)} transported to queue', pipeline_id)
         except Exception as e:

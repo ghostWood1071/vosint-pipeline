@@ -182,7 +182,7 @@ class TtxvnAction(BaseAction):
                                                     )
                 if task_id:
                     message["task_id"] = task_id
-                    KafkaProducer_class().write("crawling_", message)
+                    KafkaProducer_class().write("sca_crawl", message)
                     self.create_log(ActionStatus.INQUEUE, f"news: {url} transported to queue", pipeline_id)
         except Exception as e:
             traceback.print_exc()
