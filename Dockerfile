@@ -1,6 +1,6 @@
 FROM python:3.10-bullseye
 
-RUN apt-get update && apt-get upgrade -y
+RUN apt-get update 
 
 WORKDIR /usr/app
 #RUN python -m venv /usr/app/venv
