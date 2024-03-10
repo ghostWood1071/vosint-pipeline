@@ -42,7 +42,7 @@ class KafkaConsumer_class:
 
     def prepare(self):
         topic_id = settings.KAFKA_TOPIC_CRAWLING_NAME
-        kafka_client = KafkaAdminClient(bootstrap_servers = settings.KAFKA_CONNECT.split(";"))
+        kafka_client = KafkaAdminClient(bootstrap_servers = settings.KAFKA_CONNECT.split(","))
         group_ds = kafka_client.describe_consumer_groups([settings.KAFKA_GROUP_CRAWLING_NAME])[0]
         topic_ds = kafka_client.describe_topics([topic_id])[0]
         if group_ds.state=='Dead' or topic_ds["error_code"] == 3:
