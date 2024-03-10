@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
-from kafka import KafkaConsumer
+from kafka import KafkaConsumer, KafkaAdminClient
+from kafka.admin import NewPartitions, NewTopic
 from models.kafka_producer import KafkaProducer_class
+from kafka.coordinator.assignors.roundrobin import RoundRobinPartitionAssignor
 
 import json
 
@@ -17,6 +19,7 @@ class KafkaConsumer_class:
     def __init__(self):
         self.preducer = KafkaProducer_class()
         self.storage = StorageFactory('hbase')
+        self.consumer = self.create_consumer(settings.KAFKA_TOPIC_CRAWLING_NAME, settings.KAFKA_GROUP_CRAWLING_NAME)
 
     @staticmethod
     def test_connection(topic, group_ids):
@@ -35,6 +38,32 @@ class KafkaConsumer_class:
         except Exception as e:
             print(f"connect status: ", e)
         print("------------TEST KAFKA CONNECTION END--------------")
+
+
+    def prepare(self):
+        topic_id = settings.KAFKA_TOPIC_CRAWLING_NAME
+        kafka_client = KafkaAdminClient(bootstrap_servers = settings.KAFKA_CONNECT.split(";"))
+        group_ds = kafka_client.describe_consumer_groups([settings.KAFKA_GROUP_CRAWLING_NAME])[0]
+        topic_ds = kafka_client.describe_topics([topic_id])[0]
+        if group_ds.state=='Dead' or topic_ds["error_code"] == 3:
+            if self.create_topic(kafka_client):
+                return
+            else:
+                raise RuntimeError("create topic failed")
+        if len(group_ds.members) > len(topic_ds["partitions"]):
+            self.create_new_partition(kafka_client, topic_id, len(topic_ds["partitions"]))
+
+    def create_consumer(self, topic, group_ids):
+        self.prepare()
+        return KafkaConsumer(
+            topic,
+            bootstrap_servers=settings.KAFKA_CONNECT.split(","),
+            auto_offset_reset='earliest',
+            enable_auto_commit=True,  # Tắt tự động commit offset
+            group_id= group_ids,
+            value_deserializer=lambda m: json.loads(m.decode('utf-8')),
+            partition_assignment_strategy = [RoundRobinPartitionAssignor]
+        )
 
     def create_slave_activity(self, url, source):
         try:
@@ -77,23 +106,20 @@ class KafkaConsumer_class:
     def get_task(self, task_id):
         task = MongoRepository().get_one("queue", {"_id": task_id})
         return task
-
-    def delete_task(self, task_id):
-        MongoRepository().delete_one("queue", {"_id": task_id})
-
-    def poll(self,topic,group_ids = 'group_id'):
+    
+    def create_new_partition(self, kafka_client:KafkaAdminClient, topic_name:str, current_num_partitions):
+        kafka_client.create_partitions({topic_name: NewPartitions(total_count=current_num_partitions+1)})
+    
+    def create_topic(self, admin_client:KafkaAdminClient):
+        try:
+            admin_client.create_topics([NewTopic(settings.KAFKA_TOPIC_CRAWLING_NAME, 1, 1)])
+            return True
+        except Exception as e:
+            return False
+        
+    def poll(self):
         result = ''
-        consumer = KafkaConsumer(
-            topic,
-            bootstrap_servers=settings.KAFKA_CONNECT.split(","),
-            auto_offset_reset='earliest',
-            enable_auto_commit=True,  # Tắt tự động commit offset
-            group_id= group_ids,
-            value_deserializer=lambda m: json.loads(m.decode('utf-8'))
-        )
-
-        messages = consumer.poll(10000,1)
-        consumer.close()
+        messages = self.consumer.poll(10000,10)
         activity_id = None
         for tp, messages in messages.items():
             for message in messages:
@@ -105,12 +131,10 @@ class KafkaConsumer_class:
                     activity_id = self.create_slave_activity(url, source)
                     result = self.excute(message_data)
                 except Exception as e:
-                    pass
+                    print(e)
                 finally:
-                    #self.delete_task(message_data.get("task_id"))
                     if activity_id != None:
                         self.delete_slave_activity(activity_id)
-        consumer.commit_async()
         return result
     
     def excute(self,message):
@@ -119,7 +143,15 @@ class KafkaConsumer_class:
             self.driver = DriverFactory(name='playwright',id_proxy=proxy_id)
         except Exception as e:
             self.driver = DriverFactory('playwright')
-        pipe_line = Pipeline_Kafka(driver=self.driver,storage=self.storage,actions=message['actions'],pipeline_id=message['kwargs']['pipeline_id'],mode_test=message['kwargs']['mode_test'],input_val = message['input_val'],kwargs=message['kwargs'])
+        pipe_line = Pipeline_Kafka(
+            driver = self.driver,
+            storage = self.storage,
+            actions = message['actions'],
+            pipeline_id = message['kwargs']['pipeline_id'],
+            mode_test = message['kwargs']['mode_test'],
+            input_val = message['input_val'],
+            kwargs = message['kwargs']
+        )
         return pipe_line.run()
     
 
