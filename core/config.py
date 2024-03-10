@@ -65,7 +65,6 @@ class Settings:
     USER_AGENT:str = ""
     EXTENSIONS_PATH:str = ""
     KAFKA_TOPIC_CRAWLING_NAME:str = ""
-    KAFKA_TOPIC_CRAWLING_PARTITION_NUM:int = 20
     KAFKA_GROUP_CRAWLING_NAME:str = ""
 
     def dict(self):
