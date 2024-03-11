@@ -116,20 +116,27 @@ class KafkaConsumer_class:
             return True
         except Exception as e:
             return False
+    
+    def update_task(self, task_id):
+        task = MongoRepository().update_many("queue", {"_id": task_id}, {"$set": {"executed": True}})
+        return task
         
     def poll(self):
         result = ''
-        messages = self.consumer.poll(10000,10)
+        messages = self.consumer.poll(10000,1)
         activity_id = None
         for tp, messages in messages.items():
             for message in messages:
                 message_data = message.value
                 try:
                     task = self.get_task(message_data.get("task_id"))
+                    if task.get("executed"):
+                        continue
                     url = task.get("url")
                     source = task.get("source")
                     activity_id = self.create_slave_activity(url, source)
                     result = self.excute(message_data)
+                    self.update_task(message_data.get("task_id"))
                 except Exception as e:
                     print(e)
                 finally:
