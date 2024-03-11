@@ -173,7 +173,7 @@ class BaseAction:
         date_now = datetime.now()
         end_time = datetime(date_now.year, date_now.month, date_now.day, 0, 0, 0, 0)
         start_time = end_time - timedelta(day_range)
-        end_str = get_time_string_zone(end_time, fmt="%Y/%m/%d 23:59:59")
+        end_str = datetime.strftime((end_time + timedelta(days=2)), "%Y/%m/%d %H:%M:%S")  #get_time_string_zone(end_time, fmt="%Y/%m/%d 23:59:59")
         start_str = datetime.strftime(start_time, "%Y/%m/%d %H:%M:%S")
         return (start_str, end_str)
 
