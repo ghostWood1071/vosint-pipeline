@@ -19,7 +19,7 @@ class KafkaConsumer_class:
     def __init__(self):
         self.preducer = KafkaProducer_class()
         self.storage = StorageFactory('hbase')
-        self.consumer = self.create_consumer(settings.KAFKA_TOPIC_CRAWLING_NAME, settings.KAFKA_GROUP_CRAWLING_NAME)
+        # self.consumer = self.create_consumer(settings.KAFKA_TOPIC_CRAWLING_NAME, settings.KAFKA_GROUP_CRAWLING_NAME)
 
     @staticmethod
     def test_connection(topic, group_ids):
@@ -54,7 +54,6 @@ class KafkaConsumer_class:
             self.create_new_partition(kafka_client, topic_id, len(topic_ds["partitions"]))
 
     def create_consumer(self, topic, group_ids):
-        self.prepare()
         return KafkaConsumer(
             topic,
             bootstrap_servers=settings.KAFKA_CONNECT.split(","),
@@ -123,7 +122,9 @@ class KafkaConsumer_class:
         
     def poll(self):
         result = ''
+        self.consumer = self.create_consumer(settings.KAFKA_TOPIC_CRAWLING_NAME, settings.KAFKA_GROUP_CRAWLING_NAME)
         messages = self.consumer.poll(10000,1)
+        self.consumer.close()
         activity_id = None
         for tp, messages in messages.items():
             for message in messages:
