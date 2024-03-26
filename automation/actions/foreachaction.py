@@ -27,6 +27,7 @@ from .sendkeyaction import SendKeyAction
 from .typingaction import TypingAction
 from .inputs.urlinputaction import URLInputAction
 import traceback
+from core.config import settings
 
 def get_action_class(name: str):
     action_dict = {
@@ -105,12 +106,13 @@ class ForeachAction(BaseAction):
                                                     })
             if task_id:
                 message["task_id"] = str(task_id)
-                KafkaProducer_class().write("crawling_", message)
+                KafkaProducer_class().write(settings.KAFKA_TOPIC_CRAWLING_NAME, message)
                 print('write to kafka ...')
                 self.create_log(ActionStatus.INQUEUE, f'news {str(url)} transported to queue', pipeline_id)
         except Exception as e:
             traceback.print_exc()
             if task_id != None:
+                print(f"send to kafka failed, delete_task: {task_id}")
                 MongoRepository().delete_one("queue", {"_id": task_id})
             raise e
 

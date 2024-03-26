@@ -19,6 +19,7 @@ from datetime import timedelta
 from elasticsearch import helpers
 from db.elastic_main import My_ElasticSearch
 import traceback
+from core.config import settings
 class ElementNotFoundError(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
@@ -182,7 +183,7 @@ class TtxvnAction(BaseAction):
                                                     )
                 if task_id:
                     message["task_id"] = task_id
-                    KafkaProducer_class().write("crawling_", message)
+                    KafkaProducer_class().write(settings.KAFKA_TOPIC_CRAWLING_NAME, message)
                     self.create_log(ActionStatus.INQUEUE, f"news: {url} transported to queue", pipeline_id)
         except Exception as e:
             traceback.print_exc()

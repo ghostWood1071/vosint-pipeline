@@ -33,9 +33,9 @@ class KafkaProducer_class:
     def write(self, topic: str, message):
         # if not self.check_topic_exist(topic):
         #     Kafka_class().create_topic(topic,5,1)
-        partition = self.get_partition(topic)
+        # partition = self.get_partition(topic)
         json_message = json.dumps(message).encode('utf-8')
-        self.producer.send(topic, json_message, partition=partition)
+        self.producer.send(topic, json_message)
         self.producer.flush()
         self.producer.close()
 
@@ -44,6 +44,7 @@ class KafkaProducer_class:
         admin_client = KafkaAdminClient(bootstrap_servers=settings.KAFKA_CONNECT.split(","))
         #print(2)
         topic_metadata = admin_client.list_topics()
+        admin_client.close()
         #print(3)
         if topic_name not in set(t for t in topic_metadata):
             return False

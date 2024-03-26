@@ -697,7 +697,7 @@ class FeedAction(BaseAction):
                                                     })
             if task_id is not None:
                 message["task_id"] = str(task_id)
-                KafkaProducer_class().write("crawling_", message)
+                KafkaProducer_class().write(settings.KAFKA_TOPIC_CRAWLING_NAME, message)
                 self.create_log(ActionStatus.INQUEUE, f"{data_feed['link']} is transported to queue", kwargs["pipeline_id"])
         except Exception as e:
             traceback.print_exc()
