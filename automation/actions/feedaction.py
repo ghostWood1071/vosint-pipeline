@@ -78,7 +78,8 @@ def feed(
     title_key: str = rss_version_1_0["titile"],
     pubDate_key: str = rss_version_1_0["pubDate"],
     author_key: str = rss_version_1_0["author"],
-    proxy:Dict[str, Any] = None
+    proxy:Dict[str, Any] = None,
+    xml_data:str = None
 ):
     # print('fedddddddddddddddddddddddddđ')
     if not url:
@@ -90,6 +91,8 @@ def feed(
     if proxy:
         raw_feed = pure_request(url, proxy)
         feed = feedparser.parse(raw_feed)
+    elif xml_data:
+        feed = feedparser.parse(xml_data)
     else:
         feed = feedparser.parse(url)
     if feed.bozo:
@@ -825,16 +828,18 @@ class FeedAction(BaseAction):
         is_send_queue = "False" if self.params.get("send_queue") == None or self.params.get("send_queue") == "False" else "True"  
         is_root = True if self.params.get("is_root") == None or self.params.get("is_root") =="True" else False
         result_test = None
+        xlm_data = None
         if is_root:
             try:
                 self.driver.goto(url)
+                xml_data = self.driver.select(self.driver.get_page(), "css", "body").innerText()
             except:
                 pass
             proxy = None 
             if kwargs.get("list_proxy"):
                 proxy_id =  self.random_proxy(kwargs.get("list_proxy"))
                 proxy = MongoRepository().get_one("proxy", {'_id': proxy_id})
-            data_feeds = feed(url=url, proxy=proxy)
+            data_feeds = feed(url=url, proxy=proxy, xml_data=xml_data)
             # data_feeds = feed(url=url)
             if len(data_feeds) == 0:
                 raise Exception("There is no news in this source")
