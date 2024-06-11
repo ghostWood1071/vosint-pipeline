@@ -10,7 +10,7 @@ class BaseDriver:
         raise NotImplementedError()
 
     @abstractmethod
-    def select(self, from_elem, by: str, expr: str):
+    def select(self, from_elem, by: str, expr: str, is_frame=False):
         raise NotImplementedError()
 
     @abstractmethod

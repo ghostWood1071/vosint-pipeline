@@ -45,4 +45,5 @@ class ClickAction(BaseAction):
         #print('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaâ')
         for i in range(int(self.params["number_click"]) -1):
             self.driver.click(from_elem[0], time_sleep=self.params["time_sleep"])
-        return self.driver.click(from_elem[0], time_sleep=self.params["time_sleep"])
+        clicked = self.driver.click(from_elem[0], time_sleep=self.params["time_sleep"])
+        return clicked

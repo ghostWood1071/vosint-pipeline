@@ -93,9 +93,13 @@ class PlaywrightDriver(BaseDriver):
                 raise e
         return self.page
 
-    def select(self, from_elem, by: str, expr: str):
+    def select(self, from_elem, by: str, expr: str, is_frame=False, frame_selector:str = ""):
         by = self.__map_selector_by(by)
-        elems = from_elem.locator(f"{by}{expr}")
+        if is_frame:
+            frame = from_elem.frame_locator(f"{by}{frame_selector}")
+            elems = frame.locator(f"{by}{expr}")
+        else:
+            elems = from_elem.locator(f"{by}{expr}")
         # Cast elems to list
         elems = [elems.nth(i) for i in range(elems.count())]
         return elems
