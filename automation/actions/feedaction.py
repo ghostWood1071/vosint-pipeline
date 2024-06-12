@@ -88,11 +88,11 @@ def feed(
         )
     # Parse the feed
     handlers = []
-    if proxy:
+    if xml_data and proxy:
+        feed = feedparser.parse(xml_data)
+    elif proxy and not xml_data:
         raw_feed = pure_request(url, proxy)
         feed = feedparser.parse(raw_feed)
-    elif xml_data:
-        feed = feedparser.parse(xml_data)
     else:
         feed = feedparser.parse(url)
     if feed.bozo:
@@ -828,12 +828,12 @@ class FeedAction(BaseAction):
         is_send_queue = "False" if self.params.get("send_queue") == None or self.params.get("send_queue") == "False" else "True"  
         is_root = True if self.params.get("is_root") == None or self.params.get("is_root") =="True" else False
         result_test = None
-        xlm_data = None
+        xml_data = None
         if is_root:
             try:
                 self.driver.goto(url)
-                xml_data = self.driver.select(self.driver.get_page(), "css", "body").innerText()
-            except:
+                xml_data = self.driver.select(self.driver.get_page(), "css", "body")[0].inner_text().replace("\n","")
+            except Exception as e:
                 pass
             proxy = None 
             if kwargs.get("list_proxy"):
