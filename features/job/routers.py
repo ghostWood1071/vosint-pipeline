@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from .jobcontroller import JobController
 from pydantic import BaseModel
 from typing import *
@@ -34,3 +34,7 @@ def run_only_job(pipeline_id: str, mode_test=True):
     if str(mode_test) == "True" or str(mode_test) == "true":
         mode_test = True
     return JSONResponse(job_controller.run_only(pipeline_id, mode_test))
+
+@router.get("/api/get-img-result")
+def get_image():
+    return FileResponse("./gotoresults/selenium.png")

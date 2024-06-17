@@ -111,7 +111,7 @@ class SeleniumWebDriver(BaseDriver):
                 raise e
         except NoSuchElementException as ne:
             raise e
-        # self.driver.save_screenshot("selenium.png")
+        self.driver.save_screenshot("./gotoresults/selenium.png")
         return self.driver
 
     def select(self, from_elem, by: str, expr: str):
