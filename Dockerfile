@@ -24,9 +24,9 @@ COPY . .
 
 EXPOSE 6101
 # master
-# CMD [ "python","main.py"]
+CMD [ "python","main.py"]
 #slave
-CMD [ "python","consumer.py"]
+# CMD [ "python","consumer.py"]
 
 #sed -i 's/$find/$replace/g' input
 ##sed -i 's/main.py/consumer.py/g' Dockerfile
