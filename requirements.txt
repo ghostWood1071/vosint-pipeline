@@ -66,6 +66,7 @@ pytz-deprecation-shim==0.1.0.post0
 PyYAML==6.0
 requests==2.31.0
 selenium==4.14.0
+selenium-stealth==1.0.6
 selenium-wire==5.1.0
 sgmllib3k==1.0.0
 six==1.16.0

@@ -5,6 +5,8 @@ from .baseaction import BaseAction
 from models import MongoRepository
 import json
 import time
+from playwright.sync_api import Page
+
 class GotoAction(BaseAction):
     @classmethod
     def get_action_info(cls) -> ActionInfo:
@@ -47,4 +49,7 @@ class GotoAction(BaseAction):
             time_wait_str = "0"
         time_wait = float(time_wait_str.strip())
         time.sleep(time_wait)
+        # img = self.driver.get_page().screenshot()
+        # with open("lol.jpg", mode="wb") as f:
+        #     f.write(img)
         return result

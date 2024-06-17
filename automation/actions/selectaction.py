@@ -28,6 +28,20 @@ class SelectAction(BaseAction):
                     default_val="",
                     validators=["required"],
                 ),
+                ParamInfo(
+                    name="isframe",
+                    display_name="Is in frame",
+                    val_type="bool",
+                    default_val=False,
+                    validators=["required"],
+                ),
+                ParamInfo(
+                    name="frameSelector",
+                    display_name="Frame Selector",
+                    val_type="str",
+                    default_val="",
+                    validators=["required"],
+                ),
             ],
             z_index=2,
         )
@@ -41,4 +55,7 @@ class SelectAction(BaseAction):
         from_elem = input_val
         by = self.params["by"]
         expr = self.params["expr"]
-        return self.driver.select(from_elem, by, expr)
+        isFrame = self.params.get("isframe")
+        frameSelector = self.params.get("frameSelector")
+        elem = self.driver.select(from_elem, by, expr, isFrame, frameSelector)
+        return elem

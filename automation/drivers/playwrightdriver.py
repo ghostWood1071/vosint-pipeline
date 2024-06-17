@@ -1,7 +1,6 @@
 import time
 
 from playwright.sync_api import sync_playwright, Locator, TimeoutError, Request, Error
-
 from ..common import SelectorBy
 from .basedriver import BaseDriver
 from core.config import settings
@@ -11,9 +10,9 @@ class PlaywrightDriver(BaseDriver):
         self.proxy_server = None
         self.devices = None
         if ip_proxy != None and port != None and username != None and password != None:
-            self.create_proxy_browser(ip_proxy, port, username, password)
+            self.create_proxy_browser(ip_proxy, port, username, password, headless=True )
         else:
-            self.create_browser()
+            self.create_browser(headless=True)
     
     def create_browser(self, headless=True):
         self.playwright = sync_playwright().start()
@@ -56,7 +55,7 @@ class PlaywrightDriver(BaseDriver):
     def request_failed(self, event:Request):
         response = event.response()
         if response and response.status == 407:  # 407 is the HTTP status code for Proxy Authentication Required
-            print("Proxy connection failed: HHHAHAHAHAHAHAHAHH")
+            print("Proxy connection failed")
         else:
             print("Request failed with an error")
 
@@ -93,9 +92,13 @@ class PlaywrightDriver(BaseDriver):
                 raise e
         return self.page
 
-    def select(self, from_elem, by: str, expr: str):
+    def select(self, from_elem, by: str, expr: str, is_frame=False, frame_selector:str = ""):
         by = self.__map_selector_by(by)
-        elems = from_elem.locator(f"{by}{expr}")
+        if is_frame:
+            frame = from_elem.frame_locator(f"{by}{frame_selector}")
+            elems = frame.locator(f"{by}{expr}")
+        else:
+            elems = from_elem.locator(f"{by}{expr}")
         # Cast elems to list
         elems = [elems.nth(i) for i in range(elems.count())]
         return elems

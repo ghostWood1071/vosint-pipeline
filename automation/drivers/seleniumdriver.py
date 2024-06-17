@@ -12,7 +12,7 @@ from seleniumwire.webdriver import Chrome as ProxyChrome
 from .basedriver import BaseDriver
 import time
 from core.config import settings
-
+from selenium_stealth import stealth
 
 KEY_MAP = {
     "Cancel":Keys.CANCEL,
@@ -76,6 +76,14 @@ class SeleniumWebDriver(BaseDriver):
         else:
             self.driver = Chrome(options = chrome_option)
         
+        stealth(self.driver,
+        languages=["en-US", "en"],
+        vendor="Google Inc.",
+        platform="Win32",
+        webgl_vendor="Intel Inc.",
+        renderer="Intel Iris OpenGL Engine",
+        fix_hairline=True)
+        
         
     def get_driver(self):
         return self.driver
@@ -103,6 +111,7 @@ class SeleniumWebDriver(BaseDriver):
                 raise e
         except NoSuchElementException as ne:
             raise e
+        # self.driver.save_screenshot("selenium.png")
         return self.driver
 
     def select(self, from_elem, by: str, expr: str):
