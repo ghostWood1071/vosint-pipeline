@@ -49,7 +49,7 @@ class GotoAction(BaseAction):
             time_wait_str = "0"
         time_wait = float(time_wait_str.strip())
         time.sleep(time_wait)
-        img = self.driver.get_page().screenshot()
-        with open("lol.jpg", mode="wb") as f:
-            f.write(img)
+        # img = self.driver.get_page().screenshot()
+        # with open("lol.jpg", mode="wb") as f:
+        #     f.write(img)
         return result

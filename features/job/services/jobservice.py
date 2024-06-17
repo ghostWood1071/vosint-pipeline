@@ -16,9 +16,9 @@ from threading import Lock
 
 my_es = My_ElasticSearch()
 
-def start_job(actions: list[dict], pipeline_id=None, source_favicon=None):
+def start_job(actions: list[dict], pipeline_id=None, source_favicon=None, driver = None):
     session = Session(
-        driver_name="playwright",
+        driver_name=driver,
         storage_name="hbase",
         actions=actions,
         pipeline_id=pipeline_id,
@@ -38,13 +38,12 @@ class JobService:
     def run_only(self, id: str, mode_test=None):
         pipeline_dto = self.__pipeline_service.get_pipeline_by_id(id)
         session = Session(
-            driver_name="playwright",
+            driver_name=pipeline_dto.driver,
             storage_name="hbase",
             actions=pipeline_dto.schema,
             pipeline_id=id,
             mode_test=mode_test,
-            source_favicon=pipeline_dto.source_favicon,
-            
+            source_favicon=pipeline_dto.source_favicon
         )
         result = session.start()
         return result
@@ -93,7 +92,7 @@ class JobService:
     def run_one_foreach(self, id: str):
         pipeline_dto = self.__pipeline_service.get_pipeline_by_id(id)
         session = Session(
-            driver_name="playwright",
+            driver_name=pipeline_dto.driver,
             storage_name="hbase",
             # flag = 0,
             actions=pipeline_dto.schema,
@@ -104,7 +103,7 @@ class JobService:
     def test_only(self, id: str):
         pipeline_dto = self.__pipeline_service.get_pipeline_by_id(id)
         session = Session(
-            driver_name="playwright", storage_name="hbase", actions=pipeline_dto.schema,
+            driver_name=pipeline_dto.driver, storage_name="hbase", actions=pipeline_dto.schema,
         )
         return session.start()
 
@@ -122,7 +121,7 @@ class JobService:
                 params={"code": ["PIPELINE"], "msg": [f"Pipeline with id: {id}"]},
             )
         source_favicon = pipeline_dto.source_favicon
-        start_job(pipeline_dto.schema, id, source_favicon)
+        start_job(pipeline_dto.schema, id, source_favicon, pipeline_dto.driver)
 
     def start_all_jobs(self, pipeline_ids: list[str] = None):
         # Split pipeline_ids from string to list of strings
@@ -130,7 +129,7 @@ class JobService:
         enabled_pipeline_dtos = self.__pipeline_service.get_pipelines_for_run(pipeline_ids)
         for pipeline_dto in enabled_pipeline_dtos:
             try:
-                session = Session(driver_name="playwright", storage_name="hbase", actions=pipeline_dto.schema)
+                session = Session(driver_name=pipeline_dto.driver, storage_name="hbase", actions=pipeline_dto.schema)
                 session.start()    
             except InternalError as error:
                 Logger.instance().error(str(error))
