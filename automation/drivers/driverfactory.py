@@ -22,7 +22,7 @@ class DriverFactory:
                     username=proxy['username'],
                     password=proxy['password']) 
         else:
-            driver_cls = PlaywrightDriver() if name in ["playwright", "None", None] == "playwright" else SeleniumWebDriver()
+            driver_cls = PlaywrightDriver() if name in ["playwright", "None", None] else SeleniumWebDriver()
         if driver_cls is None:
             raise InternalError(
                 ERROR_NOT_FOUND, params={"code": ["DRIVER"], "msg": [f"{name} driver"]}

@@ -114,12 +114,13 @@ class JobController:
 
     def run_only(self, pipeline_id: str, mode_test):
         result = self.__job_service.run_only(pipeline_id, mode_test)
+        if type(result) == dict:
+            result = [result]
         try:
             tmp = result.copy()
         except:
             tmp = result
-        # print('huuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu',get_depth(result))
-        # print(result)
+        
         try:
             depth = get_depth(result)
         except:
