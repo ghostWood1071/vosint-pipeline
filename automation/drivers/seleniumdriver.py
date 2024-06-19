@@ -113,6 +113,21 @@ class SeleniumWebDriver(BaseDriver):
             raise e
         self.driver.save_screenshot("./gotoresults/selenium.png")
         return self.driver
+    
+    def get_link(self, elems):
+        link=[]
+        for elem in elems:
+            elem.get_attribute("href")
+        return link
+
+    def select_hard(self, from_elem, selector:str):
+        selector = selector.strip(">").strip(" ")
+        elems  = []
+        selectors = selector.split(" ")
+        parents = from_elem.find_elements(By.CSS_SELECTOR, selectors[0])
+        for parent in parents:
+            elems.append(parent.find_elements(By.CSS_SELECTOR, selectors[1]))
+        return elems
 
     def select(self, from_elem, by: str, expr: str):
         by = self.__map_selector_by(by)
@@ -172,3 +187,6 @@ class SeleniumWebDriver(BaseDriver):
     
     def get_current_url(self):
         return self.driver.current_url
+    
+    def get_driver_name(self):
+        return "selenium"

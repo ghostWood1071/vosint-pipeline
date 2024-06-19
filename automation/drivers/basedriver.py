@@ -68,3 +68,7 @@ class BaseDriver:
     @abstractmethod
     def get_device(self, device_name):
         raise NotImplementedError()
+
+    @abstractmethod
+    def get_driver_name(self):
+        raise NotImplementedError()

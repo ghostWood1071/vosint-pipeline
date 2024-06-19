@@ -166,3 +166,6 @@ class PlaywrightDriver(BaseDriver):
     
     def get_device(self, device_name):
         return self.devices.get(device_name)
+    
+    def get_driver_name(self):
+        return "playwright"
