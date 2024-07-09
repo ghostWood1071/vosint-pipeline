@@ -59,7 +59,7 @@ class GetUrlsAction(BaseAction):
         input_links = self.params.get("input_links")
 
         #page = self.driver.goto(url)
-        if input_links not in [None, "None", ""]:
+        if input_links in [None, "None", ""]:
             page = input_val
 
             elems = self.driver.select(page, by, expr)
