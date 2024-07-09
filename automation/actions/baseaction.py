@@ -12,6 +12,7 @@ from utils import get_time_string_zone, parse_string_time
 import requests
 from core.config import settings
 import json
+import traceback
 
 class BaseAction:
     def __init__(self, driver: BaseDriver, storage: BaseStorage, **params):
@@ -96,6 +97,7 @@ class BaseAction:
                 except:
                     pass
         except Exception as e:
+            traceback.print_exc()
             history = self.return_str_status(ActionStatus.ERROR)
             his_log = {}
             his_log["pipeline_id"] = kwargs["pipeline_id"]

@@ -3,6 +3,7 @@ from common.internalerror import *
 from ..common import ActionInfo, ActionType, ParamInfo, SelectorBy
 from .baseaction import BaseAction
 from urllib.parse import urlparse
+import re
 
 class GetUrlsAction(BaseAction):
     @classmethod
@@ -30,16 +31,16 @@ class GetUrlsAction(BaseAction):
                 ),
                 ParamInfo(
                     name="origin",
-                    display_name="Origin address",
+                    display_name="Additional",
                     val_type="str",
                     default_val="",
                 ),
-                # ParamInfo(
-                #     name="replace",
-                #     display_name="Delete string address",
-                #     val_type="str",
-                #     default_val="",
-                # ),
+                ParamInfo(
+                    name="filter",
+                    display_name="Filter (Regex)",
+                    val_type="str",
+                    default_val="",
+                ),
             ],
             z_index=3,
         )
@@ -56,6 +57,8 @@ class GetUrlsAction(BaseAction):
 
         by = self.params["by"]
         expr = self.params["expr"]
+        filter_link = self.params.get("filter")
+        origin = self.params.get("origin")
 
         #page = self.driver.goto(url)
         page = input_val
@@ -63,7 +66,7 @@ class GetUrlsAction(BaseAction):
         elems = self.driver.select(page, by, expr)
 
         # Map from elements to urls
-        urls = list(map(self.__map_to_url, elems))
+        urls = list(map(self.__map_to_url, elems, str(filter_link), origin))
         # Ignore None items
         urls = list(filter(lambda url: url is not None and  url !="", urls))
         # Distinct value
@@ -72,8 +75,7 @@ class GetUrlsAction(BaseAction):
         #print(urls)
         return urls
 
-    def __map_to_url(self, elem):
-        origin = self.params["origin"] if "origin" in self.params else None
+    def __map_to_url(self, elem, filter_link, origin):
         href = self.driver.get_attr(elem, "href")
         if href is None:
             return None
@@ -81,7 +83,7 @@ class GetUrlsAction(BaseAction):
             url = href.lstrip("//")
         else:
             url = href
-        
+
         if 'http://' in url or 'www.' in url or 'https://' in url:
             pass
         else:
@@ -90,4 +92,7 @@ class GetUrlsAction(BaseAction):
         if "http://" not in url and "https://" not in url:
             protocol = urlparse(self.driver.get_current_url()).scheme
             url = f"{protocol}://{url}"
+        if filter_link not in ["None", None, ""]:
+            if not re.search(filter_link, url):
+                return None
         return url

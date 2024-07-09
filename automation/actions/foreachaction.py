@@ -28,6 +28,7 @@ from .typingaction import TypingAction
 from .inputs.urlinputaction import URLInputAction
 import traceback
 from core.config import settings
+import json
 
 def get_action_class(name: str):
     action_dict = {
@@ -162,7 +163,12 @@ class ForeachAction(BaseAction):
                 if str(self.params["send_queue"]) == "True" and kwargs["mode_test"] != True:
                     kwargs_leaf = kwargs.copy()
                     kwargs_leaf["list_proxy"] = [self.random_proxy(kwargs.get("list_proxy"))]
-                    message = {"actions": actions, "input_val": data_url, "kwargs": kwargs_leaf}
+                    kwargs_leaf["origin"] = 
+                    message = {
+                        "actions": actions, 
+                        "input_val": data_url, 
+                        "kwargs": kwargs_leaf
+                    }
                     try:
                         is_existed_inqueue = self.check_queue(data_url, check_time)
                         if not is_existed_inqueue:

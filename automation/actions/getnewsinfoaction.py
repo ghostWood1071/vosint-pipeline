@@ -70,6 +70,12 @@ class GetNewsInfoAction(BaseAction):
                     default_val="None",
                     validators=["required_"],
                 ),
+                ParamInfo(
+                    name="related_links",
+                    display_name="Content Expression",
+                    val_type="str",
+                    default_val="None"
+                ),
             ],
             z_index=4,
         )
@@ -186,7 +192,7 @@ class GetNewsInfoAction(BaseAction):
             pattern = self.get_keyword_regex(object.get("keywords"))
             if pattern == "":
                 continue
-            if re.search(pattern, news['data:content']) or \
+            if re.search(pattern, news['data:contencontent_exprt']) or \
                re.search(pattern, news['data:title']) or \
                re.search(pattern, news['data:title_translate'] if news['data:title_translate'] != None else ""):
                 object_ids.append(object.get('_id'))
@@ -501,6 +507,9 @@ class GetNewsInfoAction(BaseAction):
             self.send_event_to_queue(_id, news_info, detect_event)
             self.insert_elastic(news_info) 
 
+    def get_related_links(self, page, selector):
+        self.driver.get
+
     def exec_func(self, input_val=None, **kwargs):
         try: 
             collection_name = "News"
@@ -526,6 +535,8 @@ class GetNewsInfoAction(BaseAction):
             time_expr = self.params["time"]["time_expr"]
             time_format = self.params["time"]["time_format"]
             content_expr = self.params["content_expr"]
+            related_link_selector = self.params.get("related_links")
+
             news_info = {}
             news_info["source_favicon"]=kwargs["source_favicon"]
             news_info["source_name"] = kwargs["source_name"]
@@ -541,6 +552,9 @@ class GetNewsInfoAction(BaseAction):
 
             page = input_val
             # check_content = False
+
+            
+
             news_info["data:url"] = url
 
             news_info["data:title"] = self.get_title(page, by, title_expr)

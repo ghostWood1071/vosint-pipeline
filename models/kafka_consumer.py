@@ -132,11 +132,6 @@ class KafkaConsumer_class:
                 try:
                     task = self.get_task(message_data.get("task_id"))
                     if task is None:
-                        # task = {
-                        #     "executed": False,
-                        #     "source": "old news",
-                        #     "url": self.get_url(message_data)
-                        # }
                         return {}
                     if task.get("executed"):
                         continue

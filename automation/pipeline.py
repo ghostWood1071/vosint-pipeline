@@ -153,6 +153,7 @@ class Pipeline_Kafka:
         # Validate the first action must be input type
         
         first_action = actions[0]
+        self.actions = actions
         if "name" not in first_action or not first_action["name"]:
             raise InternalError(
                 ERROR_REQUIRED,
@@ -207,7 +208,8 @@ class Pipeline_Kafka:
                 "source_publishing_country":self.kwargs['source_publishing_country'],
                 "source_source_type":self.kwargs['source_source_type'],
                 "source_favicon": self.kwargs['source_favicon'],
-                "detect_event": self.kwargs.get('detect_event')
+                "detect_event": self.kwargs.get('detect_event'),
+                "actions": self.actions
             }
 
             # Run from 2nd action
