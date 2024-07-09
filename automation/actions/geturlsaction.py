@@ -34,12 +34,12 @@ class GetUrlsAction(BaseAction):
                     val_type="str",
                     default_val="",
                 ),
-                # ParamInfo(
-                #     name="replace",
-                #     display_name="Delete string address",
-                #     val_type="str",
-                #     default_val="",
-                # ),
+                ParamInfo(
+                    name="input_links",
+                    display_name="Input links",
+                    val_type="str",
+                    default_val="",
+                ),
             ],
             z_index=3,
         )
@@ -56,19 +56,23 @@ class GetUrlsAction(BaseAction):
 
         by = self.params["by"]
         expr = self.params["expr"]
+        input_links = self.params.get("input_links")
 
         #page = self.driver.goto(url)
-        page = input_val
+        if input_links not in [None, "None", ""]:
+            page = input_val
 
-        elems = self.driver.select(page, by, expr)
+            elems = self.driver.select(page, by, expr)
 
-        # Map from elements to urls
-        urls = list(map(self.__map_to_url, elems))
-        # Ignore None items
-        urls = list(filter(lambda url: url is not None and  url !="", urls))
-        # Distinct value
-        urls = list(set(urls))
-        
+            # Map from elements to urls
+            urls = list(map(self.__map_to_url, elems))
+            # Ignore None items
+            urls = list(filter(lambda url: url is not None and  url !="", urls))
+            # Distinct value
+            urls = list(set(urls))
+        else:
+            input_links = input_links.replace(" ", "")
+            urls = input_links.split(",")
         #print(urls)
         return urls
 
