@@ -13,9 +13,9 @@ def login(page:Page, account, password):
     page.context.clear_cookies()
     page.goto("https://mobile.facebook.com/login")
     page.type("input#m_login_email", account)
-    page.type('input[type="password"]', password)
+    page.type('#m_login_password', password)
     # page.type('input#m_login_password', password)
-    page.press('input[type="password"]', "Enter")
+    page.press('#m_login_password', "Enter")
     time.sleep(15)
     try:    
         confirm = page.locator('button[value="OK"]')
@@ -26,13 +26,13 @@ def login(page:Page, account, password):
 
 def authenticate(browser:Browser, cookies:Any, link, account, password, source_acc_id, device):
     user_agent = (
-        "Mozilla/5.0 (Linux; Android 12; Pixel 6 Build/SQ3A.220705.004; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/115.0.0.0 Mobile Safari/537.36 [FB_IAB/FB4A;FBAV/407.0.0.0.65;]"
+        'Mozilla/5.0 (Linux; Android 12; Pixel 6 Build/SQ3A.220705.004; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/122.0.0.0 Mobile Safari/537.36 [FB_IAB/FB4A;FBAV/407.0.0.0.65;]'
     )
     context = browser.new_context(user_agent=user_agent)
     browser.contexts[0].close()
     context.add_cookies(cookies)
     page:Page = context.new_page()
-    # page.set_viewport_size({"width": 768, "height": 1024})
+    page.set_viewport_size({"width": 768, "height": 1024})
     
     page.goto(link)
     try:

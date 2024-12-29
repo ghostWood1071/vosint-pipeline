@@ -56,12 +56,15 @@ class FacebookAction(BaseAction):
     def get_facebook_data(self, account:Dict[str, Any], source_account:Dict[str, Any], max_news:int, mode_test = True):
         device = self.driver.get_device('iPad (gen 6)')
         try:
-            cookies = json.loads(source_account.get("cookie")) if source_account.get("cookie") not in [" ", "", None, "None"] else []
+            if type(source_account.get("cookie")) != list:  
+                cookies = json.loads(source_account.get("cookie")) if source_account.get("cookie") not in [" ", "", None, "None"] else []
+            else:
+                cookies = source_account.get("cookie")
             username = source_account.get("username")
             password = source_account.get("password")
             source_account_id = str(source_account.get("_id"))
             link = account.get("account_link")
-            link = re.sub("www\.", "mobile.", link)
+            link = re.sub("www\.", "m.", link)
             data = None
             if str(account.get("social_type")) == "Object":
                 data = fb_canhan(

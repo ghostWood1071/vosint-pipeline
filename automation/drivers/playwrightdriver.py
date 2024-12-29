@@ -11,9 +11,9 @@ class PlaywrightDriver(BaseDriver):
         self.proxy_server = None
         self.devices = None
         if ip_proxy != None and port != None and username != None and password != None:
-            self.create_proxy_browser(ip_proxy, port, username, password)
+            self.create_proxy_browser(ip_proxy, port, username, password, headless=False)
         else:
-            self.create_browser()
+            self.create_browser(headless=False)
     
     def create_browser(self, headless=True):
         self.playwright = sync_playwright().start()
